@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Obelisk.Abstractions\Obelisk.Abstractions.csproj" />
+    <ProjectReference Include="..\Obelisk.Runtime\Obelisk.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SDL3-CS" Version="3.4.16.2" />
+    <PackageReference Include="SDL3-CS.Windows" Version="3.4.16.2" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

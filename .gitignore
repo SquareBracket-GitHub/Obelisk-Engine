@@ -1,0 +1,28 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+
+# Test output
+[Tt]est[Rr]esults/
+*.coverage
+*.coveragexml
+
+# IDE and user-local files
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+

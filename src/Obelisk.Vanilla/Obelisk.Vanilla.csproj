@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Obelisk.Abstractions\Obelisk.Abstractions.csproj" />
+    <ProjectReference Include="..\Obelisk.Runtime\Obelisk.Runtime.csproj" />
+    <ProjectReference Include="..\Obelisk.Platform.Sdl3\Obelisk.Platform.Sdl3.csproj" />
+    <ProjectReference Include="..\Obelisk.Graphics2D\Obelisk.Graphics2D.csproj" />
+    <ProjectReference Include="..\Obelisk.Assets\Obelisk.Assets.csproj" />
+    <ProjectReference Include="..\Obelisk.Plugin\Obelisk.Plugin.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

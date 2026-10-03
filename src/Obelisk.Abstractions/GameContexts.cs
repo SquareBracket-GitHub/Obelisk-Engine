@@ -1,0 +1,25 @@
+namespace Obelisk.Abstractions;
+
+public sealed class InitializeContext;
+
+public sealed class UpdateContext
+{
+    public UpdateContext(GameTime time)
+    {
+        Time = time;
+    }
+
+    public GameTime Time { get; }
+}
+
+public sealed class RenderContext
+{
+    public RenderContext(GameTime time)
+    {
+        Time = time;
+    }
+
+    public GameTime Time { get; }
+}
+
+public sealed class ShutdownContext;
