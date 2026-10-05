@@ -78,7 +78,7 @@ public sealed class ApplicationHost
                 simulationTime += deltaTime;
 
                 var time = new GameTime(simulationTime, deltaTime, frameNumber);
-                game.Update(new UpdateContext(time));
+                game.Update(new UpdateContext(time, _platform.Input));
                 game.Render(new RenderContext(time));
 
                 frameNumber++;

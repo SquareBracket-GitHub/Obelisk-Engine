@@ -73,19 +73,19 @@ public sealed class Sdl3ApplicationPlatformTests
     [Fact]
     public void PumpEvents_StopsForQuitEvent()
     {
-        AssertStopsForExitEvent(Sdl3PlatformEvent.QuitRequested);
+        AssertStopsForExitEvent(new Sdl3PlatformEvent(Sdl3EventType.QuitRequested));
     }
 
     [Fact]
     public void PumpEvents_StopsForEscapeKey()
     {
-        AssertStopsForExitEvent(Sdl3PlatformEvent.EscapePressed);
+        AssertStopsForExitEvent(new Sdl3PlatformEvent(Sdl3EventType.KeyDown, Key.Escape));
     }
 
     private static void AssertStopsForExitEvent(Sdl3PlatformEvent exitEvent)
     {
         var api = new FakeSdl3Api();
-        api.Events.Enqueue(Sdl3PlatformEvent.Other);
+        api.Events.Enqueue(new Sdl3PlatformEvent(Sdl3EventType.Other));
         api.Events.Enqueue(exitEvent);
         var platform = CreateInitializedPlatform(api);
 
@@ -99,7 +99,7 @@ public sealed class Sdl3ApplicationPlatformTests
     public void PumpEvents_ContinuesWhenNoExitWasRequested()
     {
         var api = new FakeSdl3Api();
-        api.Events.Enqueue(Sdl3PlatformEvent.Other);
+        api.Events.Enqueue(new Sdl3PlatformEvent(Sdl3EventType.Other));
         var platform = CreateInitializedPlatform(api);
 
         Assert.True(platform.PumpEvents());
@@ -123,6 +123,63 @@ public sealed class Sdl3ApplicationPlatformTests
                 "quit",
             ],
             api.Calls);
+    }
+
+    [Fact]
+    public void KeyboardSnapshot_TransitionsAcrossFramesAndIgnoresRepeatedDown()
+    {
+        var api = new FakeSdl3Api();
+        var platform = CreateInitializedPlatform(api);
+        api.Events.Enqueue(new Sdl3PlatformEvent(Sdl3EventType.KeyDown, Key.A));
+        api.Events.Enqueue(new Sdl3PlatformEvent(Sdl3EventType.KeyDown, Key.A));
+
+        Assert.True(platform.PumpEvents());
+        Assert.True(platform.Input.Keyboard.IsDown(Key.A));
+        Assert.True(platform.Input.Keyboard.WasPressed(Key.A));
+        Assert.False(platform.Input.Keyboard.WasReleased(Key.A));
+
+        Assert.True(platform.PumpEvents());
+        Assert.True(platform.Input.Keyboard.IsDown(Key.A));
+        Assert.False(platform.Input.Keyboard.WasPressed(Key.A));
+
+        api.Events.Enqueue(new Sdl3PlatformEvent(Sdl3EventType.KeyUp, Key.A));
+        Assert.True(platform.PumpEvents());
+        Assert.False(platform.Input.Keyboard.IsDown(Key.A));
+        Assert.True(platform.Input.Keyboard.WasReleased(Key.A));
+
+        Assert.True(platform.PumpEvents());
+        Assert.False(platform.Input.Keyboard.WasReleased(Key.A));
+    }
+
+    [Fact]
+    public void MouseSnapshot_TracksPositionAndButtonTransitions()
+    {
+        var api = new FakeSdl3Api();
+        var platform = CreateInitializedPlatform(api);
+        api.Events.Enqueue(new Sdl3PlatformEvent(Sdl3EventType.MouseMoved, MouseX: 12.5f, MouseY: 24.25f));
+        api.Events.Enqueue(new Sdl3PlatformEvent(
+            Sdl3EventType.MouseButtonDown,
+            MouseButton: MouseButton.Left,
+            MouseX: 13,
+            MouseY: 25));
+
+        Assert.True(platform.PumpEvents());
+        Assert.Equal(13, platform.Input.Mouse.X);
+        Assert.Equal(25, platform.Input.Mouse.Y);
+        Assert.True(platform.Input.Mouse.IsDown(MouseButton.Left));
+        Assert.True(platform.Input.Mouse.WasPressed(MouseButton.Left));
+
+        api.Events.Enqueue(new Sdl3PlatformEvent(
+            Sdl3EventType.MouseButtonUp,
+            MouseButton: MouseButton.Left,
+            MouseX: 18,
+            MouseY: 30));
+
+        Assert.True(platform.PumpEvents());
+        Assert.Equal(18, platform.Input.Mouse.X);
+        Assert.Equal(30, platform.Input.Mouse.Y);
+        Assert.False(platform.Input.Mouse.IsDown(MouseButton.Left));
+        Assert.True(platform.Input.Mouse.WasReleased(MouseButton.Left));
     }
 
     [Fact]
@@ -254,7 +311,7 @@ public sealed class Sdl3ApplicationPlatformTests
                 return true;
             }
 
-            platformEvent = Sdl3PlatformEvent.Other;
+            platformEvent = new Sdl3PlatformEvent(Sdl3EventType.Other);
             return false;
         }
 

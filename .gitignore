@@ -22,6 +22,9 @@
 .env.*
 !.env.example
 
+# Local planning files
+/PLAN.md
+
 # OS files
 .DS_Store
 Thumbs.db

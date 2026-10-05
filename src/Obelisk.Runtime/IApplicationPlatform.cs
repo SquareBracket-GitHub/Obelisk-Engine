@@ -1,3 +1,5 @@
+using Obelisk.Abstractions;
+
 namespace Obelisk.Runtime;
 
 /// <summary>
@@ -5,6 +7,8 @@ namespace Obelisk.Runtime;
 /// </summary>
 public interface IApplicationPlatform
 {
+    InputSnapshot Input { get; }
+
     void Initialize();
 
     /// <summary>

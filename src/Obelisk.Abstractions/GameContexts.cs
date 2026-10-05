@@ -4,12 +4,15 @@ public sealed class InitializeContext;
 
 public sealed class UpdateContext
 {
-    public UpdateContext(GameTime time)
+    public UpdateContext(GameTime time, InputSnapshot? input = null)
     {
         Time = time;
+        Input = input ?? InputSnapshot.Empty;
     }
 
     public GameTime Time { get; }
+
+    public InputSnapshot Input { get; }
 }
 
 public sealed class RenderContext

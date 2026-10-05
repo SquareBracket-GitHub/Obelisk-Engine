@@ -10,9 +10,12 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
 {
     private readonly AppOptions _options;
     private readonly ISdl3Api _api;
+    private readonly InputStateTracker _inputState = new();
     private nint _window;
     private bool _initialized;
     private int? _owningThreadId;
+
+    public InputSnapshot Input { get; private set; } = InputSnapshot.Empty;
 
     public Sdl3ApplicationPlatform(AppOptions options)
         : this(options, Sdl3NativeApi.Instance)
@@ -85,16 +88,22 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
     public bool PumpEvents()
     {
         EnsureInitializedOnOwningThread();
+        _inputState.BeginFrame();
+        var shouldRunFrame = true;
 
         while (_api.TryPollEvent(out var platformEvent))
         {
-            if (platformEvent is Sdl3PlatformEvent.QuitRequested or Sdl3PlatformEvent.EscapePressed)
+            _inputState.Apply(platformEvent);
+
+            if (platformEvent.Type is Sdl3EventType.QuitRequested ||
+                (platformEvent.Type is Sdl3EventType.KeyDown && platformEvent.Key is Key.Escape))
             {
-                return false;
+                shouldRunFrame = false;
             }
         }
 
-        return true;
+        Input = _inputState.Capture();
+        return shouldRunFrame;
     }
 
     public void Shutdown()

@@ -1,3 +1,5 @@
+using Obelisk.Abstractions;
+
 namespace Obelisk.Platform.Sdl3;
 
 internal interface ISdl3Api
@@ -17,9 +19,20 @@ internal interface ISdl3Api
     string GetError();
 }
 
-internal enum Sdl3PlatformEvent
+internal readonly record struct Sdl3PlatformEvent(
+    Sdl3EventType Type,
+    Key? Key = null,
+    MouseButton? MouseButton = null,
+    float MouseX = 0,
+    float MouseY = 0);
+
+internal enum Sdl3EventType
 {
     Other,
     QuitRequested,
-    EscapePressed,
+    KeyDown,
+    KeyUp,
+    MouseMoved,
+    MouseButtonDown,
+    MouseButtonUp,
 }

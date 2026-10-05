@@ -165,6 +165,8 @@ public sealed class ApplicationHostTests
             _frameDurations = frameDurations;
         }
 
+        public InputSnapshot Input { get; } = InputSnapshot.Empty;
+
         public void Initialize()
         {
             _events.Add("platform.initialize");
