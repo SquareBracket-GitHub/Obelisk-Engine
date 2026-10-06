@@ -1,4 +1,5 @@
 using Obelisk.Abstractions;
+using Obelisk.Graphics2D;
 using Obelisk.Runtime;
 
 namespace Obelisk.Platform.Sdl3;
@@ -148,13 +149,14 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
     {
         ArgumentNullException.ThrowIfNull(context);
         EnsureInitializedOnOwningThread();
+        var rectangles = context.Canvas.Commands.OfType<RectangleCommand>().ToArray();
 
         if (_gpuDevice == 0 || _solidRectanglePipeline == 0 ||
             !_api.RenderGpuFrame(
                 _gpuDevice,
                 _window,
                 _solidRectanglePipeline,
-                context.SolidRectangles))
+                rectangles))
         {
             throw CreateException("SDL_GPU frame rendering");
         }

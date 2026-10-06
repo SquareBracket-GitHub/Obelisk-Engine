@@ -1,4 +1,5 @@
 using Obelisk.Abstractions;
+using Obelisk.Graphics2D;
 using Obelisk.Vanilla;
 
 namespace MovingRectangle;
@@ -64,7 +65,7 @@ internal sealed class MovingRectangleGame : IGame
 
     public void Render(RenderContext context)
     {
-        context.FillRectangle(Bounds, ColorRgba.Orange);
+        context.Canvas.FillRectangle(Bounds, ColorRgba.Orange);
     }
 
     public void Shutdown(ShutdownContext context)

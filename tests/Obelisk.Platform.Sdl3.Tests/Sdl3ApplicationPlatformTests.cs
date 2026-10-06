@@ -1,4 +1,5 @@
 using Obelisk.Abstractions;
+using Obelisk.Graphics2D;
 using SDL3;
 
 namespace Obelisk.Platform.Sdl3.Tests;
@@ -66,7 +67,7 @@ public sealed class Sdl3ApplicationPlatformTests
         Assert.Equal(new OutputSize(pixelWidth, pixelHeight), platform.Platform.OutputSize);
 
         var context = new RenderContext(default, platform.Platform.OutputSize);
-        context.FillRectangle(new RectangleF(40, 30, 180, 110), ColorRgba.Orange);
+        context.Canvas.FillRectangle(new RectangleF(40, 30, 180, 110), ColorRgba.Orange);
         platform.Platform.Present(context);
     }
 
@@ -332,7 +333,7 @@ public sealed class Sdl3ApplicationPlatformTests
         var platform = CreateInitializedPlatform(api);
 
         var context = new RenderContext(default, new OutputSize(640, 480));
-        context.FillRectangle(new RectangleF(10, 20, 30, 40), ColorRgba.Orange);
+        context.Canvas.FillRectangle(new RectangleF(10, 20, 30, 40), ColorRgba.Orange);
 
         platform.Present(context);
 
@@ -400,7 +401,7 @@ public sealed class Sdl3ApplicationPlatformTests
 
         public List<string> Calls { get; } = [];
 
-        public IReadOnlyList<SolidRectangle> LastSolidRectangles { get; private set; } = [];
+        public IReadOnlyList<RectangleCommand> LastSolidRectangles { get; private set; } = [];
 
         public bool InitializeVideo()
         {
@@ -442,7 +443,7 @@ public sealed class Sdl3ApplicationPlatformTests
             nint device,
             nint window,
             nint pipeline,
-            IReadOnlyList<SolidRectangle> solidRectangles)
+            IReadOnlyList<RectangleCommand> solidRectangles)
         {
             Calls.Add($"render-frame:{device}:{window}:{pipeline}");
             LastSolidRectangles = solidRectangles.ToArray();

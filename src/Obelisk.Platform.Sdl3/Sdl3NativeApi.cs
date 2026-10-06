@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Obelisk.Abstractions;
+using Obelisk.Graphics2D;
 using SDL3;
 
 namespace Obelisk.Platform.Sdl3;
@@ -124,7 +125,7 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         nint device,
         nint window,
         nint pipeline,
-        IReadOnlyList<SolidRectangle> solidRectangles)
+        IReadOnlyList<RectangleCommand> rectangles)
     {
         var commandBuffer = SDL.AcquireGPUCommandBuffer(device);
 
@@ -169,7 +170,7 @@ internal sealed class Sdl3NativeApi : ISdl3Api
 
         SDL.BindGPUGraphicsPipeline(renderPass, pipeline);
 
-        foreach (var rectangle in solidRectangles)
+        foreach (var rectangle in rectangles)
         {
             var left = Math.Clamp(rectangle.Bounds.X, 0, swapchainWidth);
             var top = Math.Clamp(rectangle.Bounds.Y, 0, swapchainHeight);

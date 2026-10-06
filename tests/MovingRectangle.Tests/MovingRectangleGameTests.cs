@@ -1,5 +1,6 @@
 using MovingRectangle;
 using Obelisk.Abstractions;
+using Obelisk.Graphics2D;
 
 namespace MovingRectangle.Tests;
 
@@ -57,7 +58,7 @@ public sealed class MovingRectangleGameTests
 
         game.Render(context);
 
-        var command = Assert.Single(context.SolidRectangles);
+        var command = Assert.IsType<RectangleCommand>(Assert.Single(context.Canvas.Commands));
         Assert.Equal(game.Bounds, command.Bounds);
         Assert.Equal(ColorRgba.Orange, command.Color);
     }

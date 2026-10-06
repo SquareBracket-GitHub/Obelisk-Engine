@@ -1,3 +1,5 @@
+using Obelisk.Graphics2D;
+
 namespace Obelisk.Abstractions;
 
 public sealed class InitializeContext;
@@ -23,27 +25,18 @@ public sealed class UpdateContext
 
 public sealed class RenderContext
 {
-    private readonly List<SolidRectangle> _solidRectangles = [];
-
     public RenderContext(GameTime time, OutputSize outputSize = default)
     {
         Time = time;
         OutputSize = outputSize;
+        Canvas = new Canvas2D();
     }
 
     public GameTime Time { get; }
 
     public OutputSize OutputSize { get; }
 
-    public IReadOnlyList<SolidRectangle> SolidRectangles => _solidRectangles;
-
-    public void FillRectangle(RectangleF bounds, ColorRgba color)
-    {
-        if (bounds.IsVisible)
-        {
-            _solidRectangles.Add(new SolidRectangle(bounds, color));
-        }
-    }
+    public Canvas2D Canvas { get; }
 }
 
 public sealed class ShutdownContext;

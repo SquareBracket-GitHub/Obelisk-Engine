@@ -1,4 +1,5 @@
 using Obelisk.Abstractions;
+using Obelisk.Graphics2D;
 
 namespace Obelisk.Platform.Sdl3;
 
@@ -20,7 +21,7 @@ internal interface ISdl3Api
         nint device,
         nint window,
         nint pipeline,
-        IReadOnlyList<SolidRectangle> solidRectangles);
+        IReadOnlyList<RectangleCommand> rectangles);
 
     bool TryPollEvent(out Sdl3PlatformEvent platformEvent);
 
