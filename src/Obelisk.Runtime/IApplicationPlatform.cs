@@ -9,6 +9,8 @@ public interface IApplicationPlatform
 {
     InputSnapshot Input { get; }
 
+    OutputSize OutputSize { get; }
+
     void Initialize();
 
     /// <summary>
@@ -16,6 +18,9 @@ public interface IApplicationPlatform
     /// </summary>
     /// <returns><see langword="true"/> to run a frame; otherwise, <see langword="false"/> to stop.</returns>
     bool PumpEvents();
+
+    /// <summary>Submits the frame prepared by the game to the presentation backend.</summary>
+    void Present(RenderContext context);
 
     void Shutdown();
 }

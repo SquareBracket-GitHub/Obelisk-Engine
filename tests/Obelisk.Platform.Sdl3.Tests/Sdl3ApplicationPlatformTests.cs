@@ -47,7 +47,31 @@ public sealed class Sdl3ApplicationPlatformTests
     }
 
     [Fact]
-    public void Initialize_CreatesConfiguredWindowAndClearsItToBlack()
+    public void NativeBackend_RendersGameRectangleAfterResize()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var platform = new NativePlatformScope();
+        Assert.True(SDL.SetWindowSize(platform.Platform.WindowHandle, 480, 270));
+        Assert.True(SDL.SyncWindow(platform.Platform.WindowHandle));
+        Assert.True(SDL.GetWindowSizeInPixels(
+            platform.Platform.WindowHandle,
+            out var pixelWidth,
+            out var pixelHeight));
+
+        Assert.True(platform.Platform.PumpEvents());
+        Assert.Equal(new OutputSize(pixelWidth, pixelHeight), platform.Platform.OutputSize);
+
+        var context = new RenderContext(default, platform.Platform.OutputSize);
+        context.FillRectangle(new RectangleF(40, 30, 180, 110), ColorRgba.Orange);
+        platform.Platform.Present(context);
+    }
+
+    [Fact]
+    public void Initialize_CreatesWindowGpuDeviceSwapchainPipelineAndFirstFrame()
     {
         var api = new FakeSdl3Api();
         var options = new AppOptions
@@ -64,8 +88,12 @@ public sealed class Sdl3ApplicationPlatformTests
         Assert.Equal(
             [
                 "initialize-video",
+                "initialize-shader-compiler",
                 "create-window:Test Game:960:540:False",
-                "clear-window:42",
+                "create-gpu-device",
+                "claim-window:77:42",
+                "create-pipeline:77:42",
+                "render-frame:77:42:88",
             ],
             api.Calls);
     }
@@ -106,6 +134,20 @@ public sealed class Sdl3ApplicationPlatformTests
     }
 
     [Fact]
+    public void PumpEvents_UpdatesOutputSizeAfterWindowResize()
+    {
+        var api = new FakeSdl3Api();
+        var platform = CreateInitializedPlatform(api);
+        api.Events.Enqueue(new Sdl3PlatformEvent(
+            Sdl3EventType.WindowResized,
+            Width: 1024,
+            Height: 576));
+
+        Assert.True(platform.PumpEvents());
+        Assert.Equal(new OutputSize(1024, 576), platform.OutputSize);
+    }
+
+    [Fact]
     public void Shutdown_DestroysWindowBeforeQuittingSdl()
     {
         var api = new FakeSdl3Api();
@@ -117,9 +159,17 @@ public sealed class Sdl3ApplicationPlatformTests
         Assert.Equal(
             [
                 "initialize-video",
+                "initialize-shader-compiler",
                 "create-window:Test:640:480:True",
-                "clear-window:42",
+                "create-gpu-device",
+                "claim-window:77:42",
+                "create-pipeline:77:42",
+                "render-frame:77:42:88",
+                "release-pipeline:77:88",
+                "release-window:77:42",
+                "destroy-gpu-device:77",
                 "destroy-window:42",
+                "quit-shader-compiler",
                 "quit",
             ],
             api.Calls);
@@ -201,6 +251,24 @@ public sealed class Sdl3ApplicationPlatformTests
     }
 
     [Fact]
+    public void Initialize_ReportsShaderCompilerInitializationError()
+    {
+        var api = new FakeSdl3Api
+        {
+            ShaderCompilerResult = false,
+            Error = "shader compiler unavailable",
+        };
+        var platform = new Sdl3ApplicationPlatform(new AppOptions(), api);
+
+        var exception = Assert.Throws<Sdl3Exception>(platform.Initialize);
+
+        Assert.Equal("SDL_shadercross initialization", exception.Operation);
+        Assert.Contains("shader compiler unavailable", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("quit-shader-compiler", api.Calls);
+        Assert.Equal("quit", api.Calls[^1]);
+    }
+
+    [Fact]
     public void Initialize_CleansUpSdlWhenWindowCreationFails()
     {
         var api = new FakeSdl3Api
@@ -219,20 +287,58 @@ public sealed class Sdl3ApplicationPlatformTests
     }
 
     [Fact]
-    public void Initialize_DestroysWindowWhenInitialClearFails()
+    public void Initialize_CleansUpGpuResourcesWhenInitialFrameFails()
     {
         var api = new FakeSdl3Api
         {
-            ClearWindowResult = false,
-            Error = "surface unavailable",
+            RenderGpuFrameResult = false,
+            Error = "swapchain submission failed",
         };
         var platform = new Sdl3ApplicationPlatform(new AppOptions(), api);
 
         var exception = Assert.Throws<Sdl3Exception>(platform.Initialize);
 
-        Assert.Equal("SDL3 window surface clear", exception.Operation);
-        Assert.Equal("destroy-window:42", api.Calls[^2]);
+        Assert.Equal("SDL_GPU frame rendering", exception.Operation);
+        Assert.Equal("quit-shader-compiler", api.Calls[^2]);
         Assert.Equal("quit", api.Calls[^1]);
+    }
+
+    [Theory]
+    [InlineData("device", "SDL_GPU device creation")]
+    [InlineData("swapchain", "SDL_GPU swapchain creation")]
+    [InlineData("pipeline", "SDL_GPU solid rectangle pipeline creation")]
+    public void Initialize_ReportsTheFailingGpuStage(string failingStage, string expectedOperation)
+    {
+        var api = new FakeSdl3Api
+        {
+            GpuDevice = failingStage == "device" ? 0 : 77,
+            ClaimWindowResult = failingStage != "swapchain",
+            Pipeline = failingStage == "pipeline" ? 0 : 88,
+            Error = $"{failingStage} unavailable",
+        };
+        var platform = new Sdl3ApplicationPlatform(new AppOptions(), api);
+
+        var exception = Assert.Throws<Sdl3Exception>(platform.Initialize);
+
+        Assert.Equal(expectedOperation, exception.Operation);
+        Assert.Contains(failingStage, exception.Message, StringComparison.Ordinal);
+        Assert.Equal("quit", api.Calls[^1]);
+    }
+
+    [Fact]
+    public void Present_SubmitsAnotherGpuFrame()
+    {
+        var api = new FakeSdl3Api();
+        var platform = CreateInitializedPlatform(api);
+
+        var context = new RenderContext(default, new OutputSize(640, 480));
+        context.FillRectangle(new RectangleF(10, 20, 30, 40), ColorRgba.Orange);
+
+        platform.Present(context);
+
+        Assert.Equal(2, api.Calls.Count(call => call == "render-frame:77:42:88"));
+        Assert.Single(api.LastSolidRectangles);
+        Assert.Equal(new RectangleF(10, 20, 30, 40), api.LastSolidRectangles[0].Bounds);
     }
 
     private static Sdl3ApplicationPlatform CreateInitializedPlatform(FakeSdl3Api api)
@@ -278,13 +384,23 @@ public sealed class Sdl3ApplicationPlatformTests
 
         public nint Window { get; init; } = 42;
 
-        public bool ClearWindowResult { get; init; } = true;
+        public bool ShaderCompilerResult { get; init; } = true;
+
+        public nint GpuDevice { get; init; } = 77;
+
+        public bool ClaimWindowResult { get; init; } = true;
+
+        public nint Pipeline { get; init; } = 88;
+
+        public bool RenderGpuFrameResult { get; init; } = true;
 
         public string Error { get; init; } = string.Empty;
 
         public Queue<Sdl3PlatformEvent> Events { get; } = [];
 
         public List<string> Calls { get; } = [];
+
+        public IReadOnlyList<SolidRectangle> LastSolidRectangles { get; private set; } = [];
 
         public bool InitializeVideo()
         {
@@ -298,10 +414,39 @@ public sealed class Sdl3ApplicationPlatformTests
             return Window;
         }
 
-        public bool ClearWindowToBlack(nint window)
+        public bool InitializeShaderCompiler()
         {
-            Calls.Add($"clear-window:{window}");
-            return ClearWindowResult;
+            Calls.Add("initialize-shader-compiler");
+            return ShaderCompilerResult;
+        }
+
+        public nint CreateGpuDevice()
+        {
+            Calls.Add("create-gpu-device");
+            return GpuDevice;
+        }
+
+        public bool ClaimWindowForGpuDevice(nint device, nint window)
+        {
+            Calls.Add($"claim-window:{device}:{window}");
+            return ClaimWindowResult;
+        }
+
+        public nint CreateSolidRectanglePipeline(nint device, nint window)
+        {
+            Calls.Add($"create-pipeline:{device}:{window}");
+            return Pipeline;
+        }
+
+        public bool RenderGpuFrame(
+            nint device,
+            nint window,
+            nint pipeline,
+            IReadOnlyList<SolidRectangle> solidRectangles)
+        {
+            Calls.Add($"render-frame:{device}:{window}:{pipeline}");
+            LastSolidRectangles = solidRectangles.ToArray();
+            return RenderGpuFrameResult;
         }
 
         public bool TryPollEvent(out Sdl3PlatformEvent platformEvent)
@@ -318,6 +463,26 @@ public sealed class Sdl3ApplicationPlatformTests
         public void DestroyWindow(nint window)
         {
             Calls.Add($"destroy-window:{window}");
+        }
+
+        public void ReleaseGpuPipeline(nint device, nint pipeline)
+        {
+            Calls.Add($"release-pipeline:{device}:{pipeline}");
+        }
+
+        public void ReleaseWindowFromGpuDevice(nint device, nint window)
+        {
+            Calls.Add($"release-window:{device}:{window}");
+        }
+
+        public void DestroyGpuDevice(nint device)
+        {
+            Calls.Add($"destroy-gpu-device:{device}");
+        }
+
+        public void QuitShaderCompiler()
+        {
+            Calls.Add("quit-shader-compiler");
         }
 
         public void Quit()

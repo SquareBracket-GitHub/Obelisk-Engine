@@ -6,6 +6,34 @@ namespace Obelisk.Platform.Sdl3;
 
 internal sealed class Sdl3NativeApi : ISdl3Api
 {
+    private const string VertexShaderSource = """
+        static const float2 Positions[6] = {
+            float2(-1.0, -1.0),
+            float2( 1.0, -1.0),
+            float2(-1.0,  1.0),
+            float2(-1.0,  1.0),
+            float2( 1.0, -1.0),
+            float2( 1.0,  1.0)
+        };
+
+        float4 main(uint vertexId : SV_VertexID) : SV_Position
+        {
+            return float4(Positions[vertexId], 0.0, 1.0);
+        }
+        """;
+
+    private const string FragmentShaderSource = """
+        cbuffer RectangleColor : register(b0, space3)
+        {
+            float4 FillColor;
+        };
+
+        float4 main() : SV_Target0
+        {
+            return FillColor;
+        }
+        """;
+
     public static Sdl3NativeApi Instance { get; } = new();
 
     private Sdl3NativeApi()
@@ -23,26 +51,163 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         return SDL.CreateWindow(title, width, height, flags);
     }
 
-    public bool ClearWindowToBlack(nint window)
+    public bool InitializeShaderCompiler()
     {
-        var surfacePointer = SDL.GetWindowSurface(window);
+        return ShaderCross.Init();
+    }
 
-        if (surfacePointer == 0)
+    public nint CreateGpuDevice()
+    {
+        return SDL.CreateGPUDevice(ShaderCross.GetSPIRVShaderFormats(), debugMode: false, name: null);
+    }
+
+    public bool ClaimWindowForGpuDevice(nint device, nint window)
+    {
+        return SDL.ClaimWindowForGPUDevice(device, window);
+    }
+
+    public nint CreateSolidRectanglePipeline(nint device, nint window)
+    {
+        var vertexShader = CompileShader(device, VertexShaderSource, ShaderCross.ShaderStage.Vertex);
+
+        if (vertexShader == 0)
+        {
+            return 0;
+        }
+
+        var fragmentShader = CompileShader(device, FragmentShaderSource, ShaderCross.ShaderStage.Fragment);
+
+        if (fragmentShader == 0)
+        {
+            SDL.ReleaseGPUShader(device, vertexShader);
+            return 0;
+        }
+
+        try
+        {
+            var pipelineInfo = new SDL.GPUGraphicsPipelineCreateInfo
+            {
+                VertexShader = vertexShader,
+                FragmentShader = fragmentShader,
+                PrimitiveType = SDL.GPUPrimitiveType.TriangleList,
+                RasterizerState = new SDL.GPURasterizerState
+                {
+                    FillMode = SDL.GPUFillMode.Fill,
+                    CullMode = SDL.GPUCullMode.None,
+                    FrontFace = SDL.GPUFrontFace.CounterClockwise,
+                },
+                MultisampleState = new SDL.GPUMultisampleState
+                {
+                    SampleCount = SDL.GPUSampleCount.SampleCount1,
+                },
+            };
+            SDL.GPUColorTargetDescription[] colorTargets =
+            [
+                new() { Format = SDL.GetGPUSwapchainTextureFormat(device, window) },
+            ];
+
+            return SDL.CreateGPUGraphicsPipeline(
+                device,
+                in pipelineInfo,
+                [],
+                [],
+                colorTargets);
+        }
+        finally
+        {
+            SDL.ReleaseGPUShader(device, fragmentShader);
+            SDL.ReleaseGPUShader(device, vertexShader);
+        }
+    }
+
+    public bool RenderGpuFrame(
+        nint device,
+        nint window,
+        nint pipeline,
+        IReadOnlyList<SolidRectangle> solidRectangles)
+    {
+        var commandBuffer = SDL.AcquireGPUCommandBuffer(device);
+
+        if (commandBuffer == 0)
         {
             return false;
         }
 
-        var surface = Marshal.PtrToStructure<SDL.Surface>(surfacePointer);
-        var formatDetails = SDL.GetPixelFormatDetails(surface.Format);
-
-        if (formatDetails == 0)
+        if (!SDL.WaitAndAcquireGPUSwapchainTexture(
+                commandBuffer,
+                window,
+                out var swapchainTexture,
+                out var swapchainWidth,
+                out var swapchainHeight))
         {
+            SDL.CancelGPUCommandBuffer(commandBuffer);
             return false;
         }
 
-        var black = SDL.MapRGB(formatDetails, 0, 0, 0, 0);
-        return SDL.FillSurfaceRect(surfacePointer, 0, black)
-            && SDL.UpdateWindowSurface(window);
+        if (swapchainTexture == 0)
+        {
+            return SDL.SubmitGPUCommandBuffer(commandBuffer);
+        }
+
+        SDL.GPUColorTargetInfo[] colorTargets =
+        [
+            new()
+            {
+                Texture = swapchainTexture,
+                ClearColor = new SDL.FColor { R = 0.035f, G = 0.045f, B = 0.075f, A = 1 },
+                LoadOp = SDL.GPULoadOp.Clear,
+                StoreOp = SDL.GPUStoreOp.Store,
+            },
+        ];
+        var renderPass = SDL.BeginGPURenderPass(commandBuffer, colorTargets, 1, 0);
+
+        if (renderPass == 0)
+        {
+            SDL.CancelGPUCommandBuffer(commandBuffer);
+            return false;
+        }
+
+        SDL.BindGPUGraphicsPipeline(renderPass, pipeline);
+
+        foreach (var rectangle in solidRectangles)
+        {
+            var left = Math.Clamp(rectangle.Bounds.X, 0, swapchainWidth);
+            var top = Math.Clamp(rectangle.Bounds.Y, 0, swapchainHeight);
+            var right = Math.Clamp(rectangle.Bounds.X + rectangle.Bounds.Width, 0, swapchainWidth);
+            var bottom = Math.Clamp(rectangle.Bounds.Y + rectangle.Bounds.Height, 0, swapchainHeight);
+
+            if (right <= left || bottom <= top)
+            {
+                continue;
+            }
+
+            var viewport = new SDL.GPUViewport
+            {
+                X = left,
+                Y = top,
+                W = right - left,
+                H = bottom - top,
+                MinDepth = 0,
+                MaxDepth = 1,
+            };
+            Span<SDL.FColor> color =
+            [
+                new()
+                {
+                    R = rectangle.Color.R,
+                    G = rectangle.Color.G,
+                    B = rectangle.Color.B,
+                    A = rectangle.Color.A,
+                },
+            ];
+            var colorBytes = MemoryMarshal.AsBytes(color);
+            SDL.PushGPUFragmentUniformData(commandBuffer, 0, colorBytes, (uint)colorBytes.Length);
+            SDL.SetGPUViewport(renderPass, in viewport);
+            SDL.DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
+        }
+
+        SDL.EndGPURenderPass(renderPass);
+        return SDL.SubmitGPUCommandBuffer(commandBuffer);
     }
 
     public bool TryPollEvent(out Sdl3PlatformEvent platformEvent)
@@ -73,6 +238,10 @@ internal sealed class Sdl3NativeApi : ISdl3Api
                 MouseButton: MapMouseButton(nativeEvent.Button.Button),
                 MouseX: nativeEvent.Button.X,
                 MouseY: nativeEvent.Button.Y),
+            SDL.EventType.WindowResized or SDL.EventType.WindowPixelSizeChanged => new(
+                Sdl3EventType.WindowResized,
+                Width: nativeEvent.Window.Data1,
+                Height: nativeEvent.Window.Data2),
             _ => new(Sdl3EventType.Other),
         };
 
@@ -84,6 +253,27 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         SDL.DestroyWindow(window);
     }
 
+    public void ReleaseGpuPipeline(nint device, nint pipeline)
+    {
+        SDL.ReleaseGPUGraphicsPipeline(device, pipeline);
+    }
+
+    public void ReleaseWindowFromGpuDevice(nint device, nint window)
+    {
+        SDL.ReleaseWindowFromGPUDevice(device, window);
+    }
+
+    public void DestroyGpuDevice(nint device)
+    {
+        SDL.WaitForGPUIdle(device);
+        SDL.DestroyGPUDevice(device);
+    }
+
+    public void QuitShaderCompiler()
+    {
+        ShaderCross.Quit();
+    }
+
     public void Quit()
     {
         SDL.Quit();
@@ -92,6 +282,46 @@ internal sealed class Sdl3NativeApi : ISdl3Api
     public string GetError()
     {
         return SDL.GetError();
+    }
+
+    private static nint CompileShader(
+        nint device,
+        string source,
+        ShaderCross.ShaderStage stage)
+    {
+        var bytecode = ShaderCross.CompileSPIRVFromHLSL(
+            source,
+            "main",
+            stage,
+            out var bytecodeSize,
+            includeDir: null!,
+            props: 0);
+
+        if (bytecode == 0)
+        {
+            return 0;
+        }
+
+        try
+        {
+            var resources = new ShaderCross.GraphicsShaderResourceInfo
+            {
+                NumUniformBuffers = stage is ShaderCross.ShaderStage.Fragment ? 1U : 0U,
+            };
+            return ShaderCross.CompileGraphicsShaderFromSPIRV(
+                device,
+                bytecode,
+                bytecodeSize,
+                "main",
+                stage,
+                in resources,
+                infoProps: 0,
+                shaderProps: 0);
+        }
+        finally
+        {
+            SDL.Free(bytecode);
+        }
     }
 
     private static Key? MapKey(SDL.Keycode keycode)

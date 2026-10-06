@@ -12,10 +12,18 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
     private readonly ISdl3Api _api;
     private readonly InputStateTracker _inputState = new();
     private nint _window;
+    private nint _gpuDevice;
+    private nint _solidRectanglePipeline;
+    private bool _windowClaimedByGpu;
+    private bool _shaderCompilerInitialized;
     private bool _initialized;
     private int? _owningThreadId;
 
     public InputSnapshot Input { get; private set; } = InputSnapshot.Empty;
+
+    public OutputSize OutputSize { get; private set; }
+
+    internal nint WindowHandle => _window;
 
     public Sdl3ApplicationPlatform(AppOptions options)
         : this(options, Sdl3NativeApi.Instance)
@@ -41,6 +49,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
 
         _options = options;
         _api = api;
+        OutputSize = new OutputSize(options.Width, options.Height);
     }
 
     public void Initialize()
@@ -62,6 +71,12 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
 
         try
         {
+            if (!_api.InitializeShaderCompiler())
+            {
+                throw CreateException("SDL_shadercross initialization");
+            }
+
+            _shaderCompilerInitialized = true;
             _window = _api.CreateWindow(
                 _options.Title,
                 _options.Width,
@@ -73,10 +88,27 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
                 throw CreateException("SDL3 window creation");
             }
 
-            if (!_api.ClearWindowToBlack(_window))
+            _gpuDevice = _api.CreateGpuDevice();
+
+            if (_gpuDevice == 0)
             {
-                throw CreateException("SDL3 window surface clear");
+                throw CreateException("SDL_GPU device creation");
             }
+
+            if (!_api.ClaimWindowForGpuDevice(_gpuDevice, _window))
+            {
+                throw CreateException("SDL_GPU swapchain creation");
+            }
+
+            _windowClaimedByGpu = true;
+            _solidRectanglePipeline = _api.CreateSolidRectanglePipeline(_gpuDevice, _window);
+
+            if (_solidRectanglePipeline == 0)
+            {
+                throw CreateException("SDL_GPU solid rectangle pipeline creation");
+            }
+
+            Present(new RenderContext(default, OutputSize));
         }
         catch
         {
@@ -95,6 +127,12 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
         {
             _inputState.Apply(platformEvent);
 
+            if (platformEvent.Type is Sdl3EventType.WindowResized &&
+                platformEvent.Width > 0 && platformEvent.Height > 0)
+            {
+                OutputSize = new OutputSize(platformEvent.Width, platformEvent.Height);
+            }
+
             if (platformEvent.Type is Sdl3EventType.QuitRequested ||
                 (platformEvent.Type is Sdl3EventType.KeyDown && platformEvent.Key is Key.Escape))
             {
@@ -104,6 +142,22 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
 
         Input = _inputState.Capture();
         return shouldRunFrame;
+    }
+
+    public void Present(RenderContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        EnsureInitializedOnOwningThread();
+
+        if (_gpuDevice == 0 || _solidRectanglePipeline == 0 ||
+            !_api.RenderGpuFrame(
+                _gpuDevice,
+                _window,
+                _solidRectanglePipeline,
+                context.SolidRectangles))
+        {
+            throw CreateException("SDL_GPU frame rendering");
+        }
     }
 
     public void Shutdown()
@@ -117,6 +171,24 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
 
         try
         {
+            if (_solidRectanglePipeline != 0)
+            {
+                _api.ReleaseGpuPipeline(_gpuDevice, _solidRectanglePipeline);
+                _solidRectanglePipeline = 0;
+            }
+
+            if (_windowClaimedByGpu)
+            {
+                _api.ReleaseWindowFromGpuDevice(_gpuDevice, _window);
+                _windowClaimedByGpu = false;
+            }
+
+            if (_gpuDevice != 0)
+            {
+                _api.DestroyGpuDevice(_gpuDevice);
+                _gpuDevice = 0;
+            }
+
             if (_window != 0)
             {
                 _api.DestroyWindow(_window);
@@ -125,6 +197,12 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
         }
         finally
         {
+            if (_shaderCompilerInitialized)
+            {
+                _api.QuitShaderCompiler();
+                _shaderCompilerInitialized = false;
+            }
+
             _api.Quit();
             _initialized = false;
             _owningThreadId = null;

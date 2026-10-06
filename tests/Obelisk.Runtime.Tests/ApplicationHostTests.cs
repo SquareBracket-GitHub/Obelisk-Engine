@@ -29,9 +29,11 @@ public sealed class ApplicationHostTests
                 "platform.pump",
                 "game.update",
                 "game.render",
+                "platform.present",
                 "platform.pump",
                 "game.update",
                 "game.render",
+                "platform.present",
                 "platform.pump",
                 "game.shutdown",
                 "platform.shutdown",
@@ -167,6 +169,8 @@ public sealed class ApplicationHostTests
 
         public InputSnapshot Input { get; } = InputSnapshot.Empty;
 
+        public OutputSize OutputSize { get; } = new(640, 480);
+
         public void Initialize()
         {
             _events.Add("platform.initialize");
@@ -189,6 +193,11 @@ public sealed class ApplicationHostTests
         public void Shutdown()
         {
             _events.Add("platform.shutdown");
+        }
+
+        public void Present(RenderContext context)
+        {
+            _events.Add("platform.present");
         }
     }
 

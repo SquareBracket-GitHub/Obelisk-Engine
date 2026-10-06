@@ -1,7 +1,7 @@
 # Obelisk Engine
 
 Obelisk is an experimental, plugin-first 2D game engine for .NET 10 and SDL3.
-The repository is currently at the project-scaffolding stage of the v0.1 plan.
+The repository is currently building the first playable slice of the v0.1 engine.
 
 ## Prerequisites
 
@@ -21,10 +21,10 @@ dotnet test Obelisk.sln --no-build
 dotnet run --project samples/MovingRectangle/MovingRectangle.csproj
 ```
 
-The current sample opens a resizable black SDL3 window. Press Escape or use the
-window close button to exit. Rendering and movement are added in later stages.
-
-See [PLAN.md](PLAN.md) for the six-week implementation plan and scope.
+The sample opens a resizable SDL3 GPU window and draws an orange rectangle.
+Move it with the arrow keys. Movement uses frame delta time, and the rectangle
+remains inside the drawable area after a resize. Press Escape or use the window
+close button to exit.
 
 ## Repository layout
 
