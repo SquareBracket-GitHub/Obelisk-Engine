@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Obelisk.Abstractions;
 using Obelisk.Graphics2D;
 using SDL3;
@@ -7,35 +6,10 @@ namespace Obelisk.Platform.Sdl3;
 
 internal sealed class Sdl3NativeApi : ISdl3Api
 {
-    private const string VertexShaderSource = """
-        static const float2 Positions[6] = {
-            float2(-1.0, -1.0),
-            float2( 1.0, -1.0),
-            float2(-1.0,  1.0),
-            float2(-1.0,  1.0),
-            float2( 1.0, -1.0),
-            float2( 1.0,  1.0)
-        };
-
-        float4 main(uint vertexId : SV_VertexID) : SV_Position
-        {
-            return float4(Positions[vertexId], 0.0, 1.0);
-        }
-        """;
-
-    private const string FragmentShaderSource = """
-        cbuffer RectangleColor : register(b0, space3)
-        {
-            float4 FillColor;
-        };
-
-        float4 main() : SV_Target0
-        {
-            return FillColor;
-        }
-        """;
-
     public static Sdl3NativeApi Instance { get; } = new();
+
+    // Accessed only on the SDL owning thread. Resources are removed before device destruction.
+    private readonly Dictionary<nint, CanvasRenderer> _renderers = [];
 
     private Sdl3NativeApi()
     {
@@ -67,148 +41,34 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         return SDL.ClaimWindowForGPUDevice(device, window);
     }
 
-    public nint CreateSolidRectanglePipeline(nint device, nint window)
+    public nint CreateCanvasPipeline(nint device, nint window)
     {
-        var vertexShader = CompileShader(device, VertexShaderSource, ShaderCross.ShaderStage.Vertex);
+        var renderer = new CanvasRenderer(device, SDL.GetGPUSwapchainTextureFormat(device, window));
+        _renderers.Add(renderer.Pipeline, renderer);
+        return renderer.Pipeline;
+    }
 
-        if (vertexShader == 0)
-        {
-            return 0;
-        }
+    public Texture CreateTexture(nint device, RgbaImage image) =>
+        _renderers.Values.Single(r => r.Device == device).CreateTexture(image);
 
-        var fragmentShader = CompileShader(device, FragmentShaderSource, ShaderCross.ShaderStage.Fragment);
-
-        if (fragmentShader == 0)
-        {
-            SDL.ReleaseGPUShader(device, vertexShader);
-            return 0;
-        }
-
+    public bool RenderGpuFrame(nint device, nint window, nint pipeline, IReadOnlyList<RenderCommand2D> drawing)
+    {
+        var commands = SDL.AcquireGPUCommandBuffer(device);
+        if (commands == 0) return false;
+        var submitted = false;
         try
         {
-            var pipelineInfo = new SDL.GPUGraphicsPipelineCreateInfo
-            {
-                VertexShader = vertexShader,
-                FragmentShader = fragmentShader,
-                PrimitiveType = SDL.GPUPrimitiveType.TriangleList,
-                RasterizerState = new SDL.GPURasterizerState
-                {
-                    FillMode = SDL.GPUFillMode.Fill,
-                    CullMode = SDL.GPUCullMode.None,
-                    FrontFace = SDL.GPUFrontFace.CounterClockwise,
-                },
-                MultisampleState = new SDL.GPUMultisampleState
-                {
-                    SampleCount = SDL.GPUSampleCount.SampleCount1,
-                },
-            };
-            SDL.GPUColorTargetDescription[] colorTargets =
-            [
-                new() { Format = SDL.GetGPUSwapchainTextureFormat(device, window) },
-            ];
-
-            return SDL.CreateGPUGraphicsPipeline(
-                device,
-                in pipelineInfo,
-                [],
-                [],
-                colorTargets);
+            if (!SDL.WaitAndAcquireGPUSwapchainTexture(commands, window, out var target, out var width, out var height))
+                return false;
+            if (target != 0 && width > 0 && height > 0 &&
+                !_renderers[pipeline].Record(commands, target, width, height, drawing)) return false;
+            submitted = true; // SDL consumes the command buffer even if submission fails.
+            return SDL.SubmitGPUCommandBuffer(commands);
         }
         finally
         {
-            SDL.ReleaseGPUShader(device, fragmentShader);
-            SDL.ReleaseGPUShader(device, vertexShader);
+            if (!submitted) SDL.CancelGPUCommandBuffer(commands);
         }
-    }
-
-    public bool RenderGpuFrame(
-        nint device,
-        nint window,
-        nint pipeline,
-        IReadOnlyList<RectangleCommand> rectangles)
-    {
-        var commandBuffer = SDL.AcquireGPUCommandBuffer(device);
-
-        if (commandBuffer == 0)
-        {
-            return false;
-        }
-
-        if (!SDL.WaitAndAcquireGPUSwapchainTexture(
-                commandBuffer,
-                window,
-                out var swapchainTexture,
-                out var swapchainWidth,
-                out var swapchainHeight))
-        {
-            SDL.CancelGPUCommandBuffer(commandBuffer);
-            return false;
-        }
-
-        if (swapchainTexture == 0)
-        {
-            return SDL.SubmitGPUCommandBuffer(commandBuffer);
-        }
-
-        SDL.GPUColorTargetInfo[] colorTargets =
-        [
-            new()
-            {
-                Texture = swapchainTexture,
-                ClearColor = new SDL.FColor { R = 0.035f, G = 0.045f, B = 0.075f, A = 1 },
-                LoadOp = SDL.GPULoadOp.Clear,
-                StoreOp = SDL.GPUStoreOp.Store,
-            },
-        ];
-        var renderPass = SDL.BeginGPURenderPass(commandBuffer, colorTargets, 1, 0);
-
-        if (renderPass == 0)
-        {
-            SDL.CancelGPUCommandBuffer(commandBuffer);
-            return false;
-        }
-
-        SDL.BindGPUGraphicsPipeline(renderPass, pipeline);
-
-        foreach (var rectangle in rectangles)
-        {
-            var left = Math.Clamp(rectangle.Bounds.X, 0, swapchainWidth);
-            var top = Math.Clamp(rectangle.Bounds.Y, 0, swapchainHeight);
-            var right = Math.Clamp(rectangle.Bounds.X + rectangle.Bounds.Width, 0, swapchainWidth);
-            var bottom = Math.Clamp(rectangle.Bounds.Y + rectangle.Bounds.Height, 0, swapchainHeight);
-
-            if (right <= left || bottom <= top)
-            {
-                continue;
-            }
-
-            var viewport = new SDL.GPUViewport
-            {
-                X = left,
-                Y = top,
-                W = right - left,
-                H = bottom - top,
-                MinDepth = 0,
-                MaxDepth = 1,
-            };
-            Span<SDL.FColor> color =
-            [
-                new()
-                {
-                    R = rectangle.Color.R,
-                    G = rectangle.Color.G,
-                    B = rectangle.Color.B,
-                    A = rectangle.Color.A,
-                },
-            ];
-            var colorBytes = MemoryMarshal.AsBytes(color);
-            SDL.PushGPUFragmentUniformData(commandBuffer, 0, colorBytes, (uint)colorBytes.Length);
-            SDL.SetGPUViewport(renderPass, in viewport);
-            SDL.DrawGPUPrimitives(renderPass, 6, 1, 0, 0);
-        }
-
-        SDL.EndGPURenderPass(renderPass);
-        return SDL.SubmitGPUCommandBuffer(commandBuffer);
     }
 
     public bool TryPollEvent(out Sdl3PlatformEvent platformEvent)
@@ -223,6 +83,8 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         platformEvent = eventType switch
         {
             SDL.EventType.Quit => new(Sdl3EventType.QuitRequested),
+            SDL.EventType.WindowMinimized => new(Sdl3EventType.WindowMinimized),
+            SDL.EventType.WindowRestored or SDL.EventType.WindowMaximized => new(Sdl3EventType.WindowRestored),
             SDL.EventType.KeyDown => new(Sdl3EventType.KeyDown, MapKey(nativeEvent.Key.Key)),
             SDL.EventType.KeyUp => new(Sdl3EventType.KeyUp, MapKey(nativeEvent.Key.Key)),
             SDL.EventType.MouseMotion => new(
@@ -256,7 +118,7 @@ internal sealed class Sdl3NativeApi : ISdl3Api
 
     public void ReleaseGpuPipeline(nint device, nint pipeline)
     {
-        SDL.ReleaseGPUGraphicsPipeline(device, pipeline);
+        if (_renderers.Remove(pipeline, out var renderer)) renderer.Dispose();
     }
 
     public void ReleaseWindowFromGpuDevice(nint device, nint window)
@@ -285,7 +147,7 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         return SDL.GetError();
     }
 
-    private static nint CompileShader(
+    internal static nint CompileShader(
         nint device,
         string source,
         ShaderCross.ShaderStage stage)
@@ -307,7 +169,8 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         {
             var resources = new ShaderCross.GraphicsShaderResourceInfo
             {
-                NumUniformBuffers = stage is ShaderCross.ShaderStage.Fragment ? 1U : 0U,
+                NumUniformBuffers = 0,
+                NumSamplers = stage == ShaderCross.ShaderStage.Fragment ? 1U : 0U,
             };
             return ShaderCross.CompileGraphicsShaderFromSPIRV(
                 device,

@@ -26,6 +26,24 @@ Move it with the arrow keys. Movement uses frame delta time, and the rectangle
 remains inside the drawable area after a resize. Press Escape or use the window
 close button to exit.
 
+## Texture, Sprite and shapes sample
+
+```powershell
+dotnet run --project samples/CanvasShowcase
+dotnet run --project samples/CanvasShowcase -- --image "C:\images\sprite.png"
+dotnet run --project samples/CanvasShowcase -- --url "https://your-host.example/sprite.png"
+```
+
+The scene combines rotating/tinted sprites, translucent rectangles, lines and
+circles. Resize, minimize and restore the window; Escape exits. URL imports run
+asynchronously while the default image remains visible. A failure is reported to
+stderr and keeps the default image.
+
+Image importing is provided by the bundled `Obelisk.Plugins.Images` library,
+included by `Obelisk.Vanilla`. The renderer only receives RGBA pixels. See
+[the image and Canvas guide](docs/canvas-and-images.md) for resource lifetime,
+URL loading and the current limits.
+
 ## Repository layout
 
 - `src/`: engine libraries and the CLI

@@ -7,6 +7,8 @@ namespace Obelisk.Runtime;
 /// </summary>
 public interface IApplicationPlatform
 {
+    Obelisk.Graphics2D.ITextureDevice? Textures => null;
+
     InputSnapshot Input { get; }
 
     OutputSize OutputSize { get; }

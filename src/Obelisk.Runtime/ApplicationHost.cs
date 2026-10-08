@@ -51,7 +51,7 @@ public sealed class ApplicationHost
             _platform.Initialize();
             platformInitialized = true;
 
-            game.Initialize(new InitializeContext());
+            game.Initialize(new InitializeContext(_platform.Textures));
             gameInitialized = true;
 
             var previousTime = _clock.Elapsed;

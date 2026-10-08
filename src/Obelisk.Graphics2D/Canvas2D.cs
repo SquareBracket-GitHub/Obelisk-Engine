@@ -16,11 +16,20 @@ public sealed class Canvas2D
 
     public IReadOnlyList<RenderCommand2D> Commands { get; }
 
+    /// <summary>Captured by each draw call; Alpha uses straight-alpha source-over blending.</summary>
+    public BlendMode Blend { get; set; } = BlendMode.Alpha;
+
+    private void Add(RenderCommand2D command)
+    {
+        if (!Enum.IsDefined(Blend)) throw new ArgumentOutOfRangeException(nameof(Blend));
+        _commands.Add(command with { Blend = Blend });
+    }
+
     public void FillRectangle(RectangleF bounds, ColorRgba color)
     {
         EnsureVisible(bounds, nameof(bounds));
         EnsureFinite(color, nameof(color));
-        _commands.Add(new RectangleCommand(bounds, color));
+        Add(new RectangleCommand(bounds, color));
     }
 
     public void DrawLine(Vector2 start, Vector2 end, float thickness, ColorRgba color)
@@ -36,7 +45,7 @@ public sealed class Canvas2D
                 "Line thickness must be finite and greater than zero.");
         }
 
-        _commands.Add(new LineCommand(start, end, thickness, color));
+        Add(new LineCommand(start, end, thickness, color));
     }
 
     public void FillCircle(Vector2 center, float radius, ColorRgba color)
@@ -51,7 +60,7 @@ public sealed class Canvas2D
                 "Circle radius must be finite and greater than zero.");
         }
 
-        _commands.Add(new CircleCommand(center, radius, color));
+        Add(new CircleCommand(center, radius, color));
     }
 
     public void DrawSprite(
@@ -82,13 +91,21 @@ public sealed class Canvas2D
         EnsureFinite(origin, nameof(origin));
         var resolvedTint = tint ?? ColorRgba.White;
         EnsureFinite(resolvedTint, nameof(tint));
-        _commands.Add(new SpriteCommand(
+        Add(new SpriteCommand(
             texture,
             destination,
             source,
             resolvedTint,
             rotation,
             origin));
+    }
+
+    public void DrawSprite(Texture texture, RectangleF destination, RectangleF? source = null,
+        ColorRgba? tint = null, float rotation = 0, Vector2 origin = default)
+    {
+        ArgumentNullException.ThrowIfNull(texture);
+        ObjectDisposedException.ThrowIf(texture.IsDisposed, texture);
+        DrawSprite(texture.Handle, destination, source, tint, rotation, origin);
     }
 
     private static void EnsureVisible(RectangleF rectangle, string parameterName)

@@ -15,13 +15,15 @@ internal interface ISdl3Api
 
     bool ClaimWindowForGpuDevice(nint device, nint window);
 
-    nint CreateSolidRectanglePipeline(nint device, nint window);
+    nint CreateCanvasPipeline(nint device, nint window);
 
     bool RenderGpuFrame(
         nint device,
         nint window,
         nint pipeline,
-        IReadOnlyList<RectangleCommand> rectangles);
+        IReadOnlyList<RenderCommand2D> rectangles);
+
+    Texture CreateTexture(nint device, RgbaImage image) => throw new NotSupportedException();
 
     bool TryPollEvent(out Sdl3PlatformEvent platformEvent);
 
@@ -59,4 +61,6 @@ internal enum Sdl3EventType
     MouseButtonDown,
     MouseButtonUp,
     WindowResized,
+    WindowMinimized,
+    WindowRestored,
 }

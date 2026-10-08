@@ -7,22 +7,31 @@ namespace Obelisk.Platform.Sdl3;
 /// <summary>
 /// Provides the SDL3 window and event-pump implementation used by the runtime.
 /// </summary>
-public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
+public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevice
 {
     private readonly AppOptions _options;
     private readonly ISdl3Api _api;
     private readonly InputStateTracker _inputState = new();
     private nint _window;
     private nint _gpuDevice;
-    private nint _solidRectanglePipeline;
+    private nint _canvasPipeline;
     private bool _windowClaimedByGpu;
     private bool _shaderCompilerInitialized;
     private bool _initialized;
+    private bool _minimized;
     private int? _owningThreadId;
 
     public InputSnapshot Input { get; private set; } = InputSnapshot.Empty;
 
     public OutputSize OutputSize { get; private set; }
+
+    public ITextureDevice Textures => this;
+
+    public Texture CreateTexture(RgbaImage image)
+    {
+        EnsureInitializedOnOwningThread();
+        return _api.CreateTexture(_gpuDevice, image);
+    }
 
     internal nint WindowHandle => _window;
 
@@ -61,6 +70,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
         }
 
         _owningThreadId = Environment.CurrentManagedThreadId;
+        _minimized = false;
 
         if (!_api.InitializeVideo())
         {
@@ -102,11 +112,11 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
             }
 
             _windowClaimedByGpu = true;
-            _solidRectanglePipeline = _api.CreateSolidRectanglePipeline(_gpuDevice, _window);
+            _canvasPipeline = _api.CreateCanvasPipeline(_gpuDevice, _window);
 
-            if (_solidRectanglePipeline == 0)
+            if (_canvasPipeline == 0)
             {
-                throw CreateException("SDL_GPU solid rectangle pipeline creation");
+                throw CreateException("SDL_GPU Canvas pipeline creation");
             }
 
             Present(new RenderContext(default, OutputSize));
@@ -128,8 +138,11 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
         {
             _inputState.Apply(platformEvent);
 
+            if (platformEvent.Type == Sdl3EventType.WindowMinimized) _minimized = true;
+            if (platformEvent.Type == Sdl3EventType.WindowRestored) _minimized = false;
+
             if (platformEvent.Type is Sdl3EventType.WindowResized &&
-                platformEvent.Width > 0 && platformEvent.Height > 0)
+                platformEvent.Width >= 0 && platformEvent.Height >= 0)
             {
                 OutputSize = new OutputSize(platformEvent.Width, platformEvent.Height);
             }
@@ -149,14 +162,18 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
     {
         ArgumentNullException.ThrowIfNull(context);
         EnsureInitializedOnOwningThread();
-        var rectangles = context.Canvas.Commands.OfType<RectangleCommand>().ToArray();
+        if (_minimized || OutputSize.Width == 0 || OutputSize.Height == 0)
+        {
+            Thread.Sleep(16); // Keep pumping input without spinning while presentation is suspended.
+            return;
+        }
 
-        if (_gpuDevice == 0 || _solidRectanglePipeline == 0 ||
+        if (_gpuDevice == 0 || _canvasPipeline == 0 ||
             !_api.RenderGpuFrame(
                 _gpuDevice,
                 _window,
-                _solidRectanglePipeline,
-                rectangles))
+                _canvasPipeline,
+                context.Canvas.Commands))
         {
             throw CreateException("SDL_GPU frame rendering");
         }
@@ -173,10 +190,10 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform
 
         try
         {
-            if (_solidRectanglePipeline != 0)
+            if (_canvasPipeline != 0)
             {
-                _api.ReleaseGpuPipeline(_gpuDevice, _solidRectanglePipeline);
-                _solidRectanglePipeline = 0;
+                _api.ReleaseGpuPipeline(_gpuDevice, _canvasPipeline);
+                _canvasPipeline = 0;
             }
 
             if (_windowClaimedByGpu)

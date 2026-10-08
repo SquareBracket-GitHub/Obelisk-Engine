@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\Obelisk.Plugins.Images\Obelisk.Plugins.Images.csproj" />
     <ProjectReference Include="..\Obelisk.Abstractions\Obelisk.Abstractions.csproj" />
     <ProjectReference Include="..\Obelisk.Runtime\Obelisk.Runtime.csproj" />
     <ProjectReference Include="..\Obelisk.Platform.Sdl3\Obelisk.Platform.Sdl3.csproj" />

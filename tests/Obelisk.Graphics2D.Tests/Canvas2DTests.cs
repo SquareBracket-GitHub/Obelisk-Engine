@@ -54,7 +54,7 @@ public sealed class Canvas2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             canvas.FillCircle(Vector2.Zero, float.NaN, ColorRgba.White));
         Assert.Throws<ArgumentException>(() =>
-            canvas.DrawSprite(default, new RectangleF(0, 0, 10, 10)));
+            canvas.DrawSprite(default(TextureHandle), new RectangleF(0, 0, 10, 10)));
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             canvas.FillRectangle(
                 new RectangleF(0, 0, 10, 10),

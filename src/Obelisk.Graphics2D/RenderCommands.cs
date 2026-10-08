@@ -3,7 +3,10 @@ using System.Numerics;
 namespace Obelisk.Graphics2D;
 
 /// <summary>An immutable 2D drawing instruction collected for one frame.</summary>
-public abstract record RenderCommand2D;
+public abstract record RenderCommand2D
+{
+    public BlendMode Blend { get; init; } = BlendMode.Alpha;
+}
 
 /// <summary>Fills a rectangle with a solid color.</summary>
 public sealed record RectangleCommand(RectangleF Bounds, ColorRgba Color) : RenderCommand2D;

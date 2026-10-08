@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Obelisk.Platform.Sdl3.Tests" />
+    <ProjectReference Include="..\..\src\Obelisk.Vanilla\Obelisk.Vanilla.csproj" />
+    <None Update="assets\checker.png.base64" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,11 +1,137 @@
+using System.Runtime.InteropServices;
 using Obelisk.Abstractions;
 using Obelisk.Graphics2D;
 using SDL3;
 
 namespace Obelisk.Platform.Sdl3.Tests;
 
-public sealed class Sdl3ApplicationPlatformTests
+public sealed partial class Sdl3ApplicationPlatformTests
 {
+    [Fact]
+    public void NativeBuffers_ReuseGrowAndUploadLatestBytes()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using var platform = new NativePlatformScope();
+        using var device = new GpuResource(Sdl3NativeApi.Instance.CreateGpuDevice(), h =>
+        {
+            SDL.WaitForGPUIdle(h);
+            SDL.DestroyGPUDevice(h);
+        });
+        Assert.NotEqual(0, device.Handle);
+        using var buffers = new QuadBuffers(device.Handle);
+        nint previousVertex = 0;
+        nint previousIndex = 0;
+        foreach (var count in new[] { 1, 2, 80, 3 })
+        {
+            var rectangles = Enumerable.Range(0, count).Select(i =>
+                new RectangleCommand(new RectangleF(count + i, i * 2, 12, 18), ColorRgba.Orange)).ToArray();
+            var mesh = QuadMesh.Create(rectangles, 320, 180);
+            var commandBuffer = SDL.AcquireGPUCommandBuffer(device.Handle);
+            Assert.NotEqual(0, commandBuffer);
+            Assert.True(buffers.Upload(commandBuffer, mesh));
+            Assert.True(SDL.SubmitGPUCommandBuffer(commandBuffer));
+            if (count is 2 or 3)
+            {
+                Assert.Equal(previousVertex, buffers.VertexHandle);
+                Assert.Equal(previousIndex, buffers.IndexHandle);
+            }
+            if (count == 80)
+            {
+                Assert.NotEqual(previousVertex, buffers.VertexHandle);
+                Assert.NotEqual(previousIndex, buffers.IndexHandle);
+            }
+            previousVertex = buffers.VertexHandle;
+            previousIndex = buffers.IndexHandle;
+            var vertexBytes = MemoryMarshal.AsBytes(mesh.Vertices.AsSpan()).ToArray();
+            var indexBytes = MemoryMarshal.AsBytes(mesh.Indices.AsSpan()).ToArray();
+            Assert.Equal(vertexBytes, DownloadBuffer(device.Handle, buffers.VertexHandle, vertexBytes.Length));
+            Assert.Equal(indexBytes, DownloadBuffer(device.Handle, buffers.IndexHandle, indexBytes.Length));
+        }
+        buffers.Dispose();
+        buffers.Dispose();
+        Assert.Equal(0, buffers.VertexHandle);
+        Assert.Throws<ObjectDisposedException>(() => buffers.Upload(0, QuadMesh.Create([], 1, 1)));
+    }
+
+    private static byte[] DownloadBuffer(nint device, nint buffer, int size)
+    {
+        var info = new SDL.GPUTransferBufferCreateInfo
+        {
+            Usage = SDL.GPUTransferBufferUsage.Download,
+            Size = (uint)size,
+        };
+        using var transfer = new GpuResource(SDL.CreateGPUTransferBuffer(device, in info),
+            h => SDL.ReleaseGPUTransferBuffer(device, h));
+        Assert.NotEqual(0, transfer.Handle);
+        var commands = SDL.AcquireGPUCommandBuffer(device);
+        Assert.NotEqual(0, commands);
+        var copy = SDL.BeginGPUCopyPass(commands);
+        Assert.NotEqual(0, copy);
+        var source = new SDL.GPUBufferRegion { Buffer = buffer, Size = (uint)size };
+        var target = new SDL.GPUTransferBufferLocation { TransferBuffer = transfer.Handle };
+        SDL.DownloadFromGPUBuffer(copy, in source, in target);
+        SDL.EndGPUCopyPass(copy);
+        Assert.True(SDL.SubmitGPUCommandBuffer(commands));
+        Assert.True(SDL.WaitForGPUIdle(device));
+        var mapped = SDL.MapGPUTransferBuffer(device, transfer.Handle, false);
+        Assert.NotEqual(0, mapped);
+        var bytes = new byte[size];
+        Marshal.Copy(mapped, bytes, 0, size);
+        SDL.UnmapGPUTransferBuffer(device, transfer.Handle);
+        return bytes;
+    }
+
+    [Fact]
+    public void QuadMesh_MapsPixelsToClipSpaceAndOffsetsIndices()
+    {
+        RectangleCommand[] rectangles =
+        [
+            new(new RectangleF(0, 0, 100, 50), ColorRgba.Orange),
+            new(new RectangleF(-25, 25, 50, 50), ColorRgba.White),
+        ];
+        var mesh = QuadMesh.Create(rectangles, 100, 100);
+        Assert.Equal(8, mesh.Vertices.Length);
+        Assert.Equal(-1, mesh.Vertices[0].X);
+        Assert.Equal(1, mesh.Vertices[0].Y);
+        Assert.Equal(1, mesh.Vertices[3].X);
+        Assert.Equal(0, mesh.Vertices[3].Y);
+        Assert.Equal(-1.5f, mesh.Vertices[4].X); // GPU clips geometry; do not distort it on CPU.
+        Assert.Equal(ColorRgba.Orange.R, mesh.Vertices[0].R);
+        Assert.Equal(new uint[] { 0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7 }, mesh.Indices);
+        Assert.Empty(QuadMesh.Create([], 100, 100).Indices);
+    }
+
+    [Fact]
+    public void GpuResource_ReleasesExactlyOnceAndIgnoresNullHandles()
+    {
+        var released = new List<nint>();
+        var resource = new GpuResource(42, released.Add);
+        resource.Dispose();
+        resource.Dispose();
+        new GpuResource(0, released.Add).Dispose();
+        Assert.Equal(new nint[] { 42 }, released);
+        Assert.Equal(0, resource.Handle);
+    }
+
+    [Fact]
+    public void NativeBackend_RendersChangingQuadsAcrossGrowthAndEmptyFrames()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using var platform = new NativePlatformScope();
+        for (var frame = 0; frame < 24; frame++)
+        {
+            var context = new RenderContext(default, platform.Platform.OutputSize);
+            var count = frame % 6 == 0 ? 0 : frame * 5;
+            for (var i = 0; i < count; i++)
+            {
+                context.Canvas.FillRectangle(
+                    new RectangleF(i * 3 - 20, frame * 4, 24, 18),
+                    i % 2 == 0 ? ColorRgba.Orange : ColorRgba.White);
+            }
+            platform.Platform.Present(context);
+        }
+    }
+
     [Fact]
     public void NativeBackend_InitializesWindowAndConsumesQuitEvent()
     {
@@ -307,7 +433,7 @@ public sealed class Sdl3ApplicationPlatformTests
     [Theory]
     [InlineData("device", "SDL_GPU device creation")]
     [InlineData("swapchain", "SDL_GPU swapchain creation")]
-    [InlineData("pipeline", "SDL_GPU solid rectangle pipeline creation")]
+    [InlineData("pipeline", "SDL_GPU Canvas pipeline creation")]
     public void Initialize_ReportsTheFailingGpuStage(string failingStage, string expectedOperation)
     {
         var api = new FakeSdl3Api
@@ -433,7 +559,7 @@ public sealed class Sdl3ApplicationPlatformTests
             return ClaimWindowResult;
         }
 
-        public nint CreateSolidRectanglePipeline(nint device, nint window)
+        public nint CreateCanvasPipeline(nint device, nint window)
         {
             Calls.Add($"create-pipeline:{device}:{window}");
             return Pipeline;
@@ -443,10 +569,10 @@ public sealed class Sdl3ApplicationPlatformTests
             nint device,
             nint window,
             nint pipeline,
-            IReadOnlyList<RectangleCommand> solidRectangles)
+            IReadOnlyList<RenderCommand2D> solidRectangles)
         {
             Calls.Add($"render-frame:{device}:{window}:{pipeline}");
-            LastSolidRectangles = solidRectangles.ToArray();
+            LastSolidRectangles = solidRectangles.OfType<RectangleCommand>().ToArray();
             return RenderGpuFrameResult;
         }
 

@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Obelisk.Platform.Sdl3\Obelisk.Platform.Sdl3.csproj" />
+    <ProjectReference Include="..\..\src\Obelisk.Plugins.Images\Obelisk.Plugins.Images.csproj" />
+    <ProjectReference Include="..\..\samples\CanvasShowcase\CanvasShowcase.csproj" />
   </ItemGroup>
 
 </Project>
