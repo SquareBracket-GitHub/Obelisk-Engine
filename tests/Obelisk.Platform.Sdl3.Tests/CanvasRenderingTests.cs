@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Obelisk.Abstractions;
+using Obelisk.Assets;
 using Obelisk.Graphics2D;
 using Obelisk.Plugins.Images;
 using SDL3;
@@ -9,6 +10,28 @@ namespace Obelisk.Platform.Sdl3.Tests;
 
 public sealed partial class Sdl3ApplicationPlatformTests
 {
+    [Fact]
+    public void NativeText_LatinAndKoreanGlyphsProduceVisiblePixels()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var fontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf");
+        if (!File.Exists(fontPath)) return;
+        using var platform = new NativePlatformScope();
+        using var device = TestDevice();
+        using var renderer = new CanvasRenderer(device.Handle, SDL.GPUTextureFormat.R8G8B8A8Unorm);
+        using var font = new FontLoader(renderer, 24, "안녕").LoadFile(fontPath);
+        foreach (var text in new[] { "Hello", "안녕" })
+        {
+            var canvas = new Canvas2D();
+            canvas.DrawText(font, text, new(4, 4), ColorRgba.White);
+            var pixels = RenderPixels(renderer, canvas, 160);
+            var bright = 0;
+            for (var i = 0; i < pixels.Length; i += 4)
+                if (pixels[i] > 80 && pixels[i + 1] > 80 && pixels[i + 2] > 80) bright++;
+            Assert.True(bright > 20, $"Expected visible '{text}' glyph pixels, got {bright}.");
+        }
+    }
+
     [Fact]
     public void NativeShowcase_DefaultImageAndMixedSceneRunThroughShutdown()
     {

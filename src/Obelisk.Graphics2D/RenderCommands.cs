@@ -32,3 +32,6 @@ public sealed record SpriteCommand(
     ColorRgba Tint,
     float Rotation,
     Vector2 Origin) : RenderCommand2D;
+
+/// <summary>Draws pre-rasterized glyphs from an owned font atlas.</summary>
+public sealed record TextCommand(Font Font, string Text, Vector2 Position, ColorRgba Color) : RenderCommand2D;

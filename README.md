@@ -34,8 +34,10 @@ dotnet run --project samples/CanvasShowcase -- --image "C:\images\sprite.png"
 dotnet run --project samples/CanvasShowcase -- --url "https://your-host.example/sprite.png"
 ```
 
-The scene combines rotating/tinted sprites, translucent rectangles, lines and
-circles. Resize, minimize and restore the window; Escape exits. URL imports run
+The scene combines rotating/tinted sprites, translucent rectangles, lines,
+circles, and Latin/Korean text. The text sample uses Windows' Malgun Gothic
+(`malgun.ttf`); that font must be installed. Resize, minimize and restore the
+window; Escape exits. URL imports run
 asynchronously while the default image remains visible. A failure is reported to
 stderr and keeps the default image.
 
@@ -43,6 +45,29 @@ Image importing is provided by the bundled `Obelisk.Plugins.Images` library,
 included by `Obelisk.Vanilla`. The renderer only receives RGBA pixels. See
 [the image and Canvas guide](docs/canvas-and-images.md) for resource lifetime,
 URL loading and the current limits.
+
+## Asset URIs and text
+
+`AssetStore` confines `project:///file` to a project asset root and
+`plugin://name/file` to a registered plugin root. Traversal and symlink paths
+are rejected. Register a loader once per type, then `Load<T>` caches the first
+result for each URI/type pair. Dispose the store after game shutdown to release
+cached `IDisposable` assets. A missing file reports both the URI and resolved
+path; loader errors retain the original exception as their inner exception.
+
+```csharp
+using var assets = new AssetStore("assets"); // using Obelisk.Assets;
+assets.RegisterLoader<string>(File.ReadAllText);
+var message = assets.Load<string>("project:///message.txt");
+```
+
+For text, create `FontLoader` with `context.Textures`, font size, and any
+non-ASCII characters your game will use. `LoadFile` rasterizes the basic Latin
+set plus those characters into an immutable GPU atlas. Use `font.Measure(text)`
+and `context.Canvas.DrawText(font, text, position, color)`, then dispose the font
+on the game's owning thread. Unlisted characters fail with their Unicode code
+point; advanced shaping and runtime glyph insertion are not yet supported.
+Font rasterization uses SkiaSharp 4.148.0 and its Windows native assets.
 
 ## Repository layout
 

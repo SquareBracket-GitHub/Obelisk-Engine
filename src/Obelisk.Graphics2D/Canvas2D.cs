@@ -108,6 +108,18 @@ public sealed class Canvas2D
         DrawSprite(texture.Handle, destination, source, tint, rotation, origin);
     }
 
+    public void DrawText(Font font, string text, Vector2 position, ColorRgba? color = null)
+    {
+        ArgumentNullException.ThrowIfNull(font);
+        ArgumentNullException.ThrowIfNull(text);
+        ObjectDisposedException.ThrowIf(font.IsDisposed, font);
+        EnsureFinite(position, nameof(position));
+        var resolvedColor = color ?? ColorRgba.White;
+        EnsureFinite(resolvedColor, nameof(color));
+        _ = font.Measure(text); // Reject glyphs missing from the atlas before recording commands.
+        if (text.Length != 0) Add(new TextCommand(font, text, position, resolvedColor));
+    }
+
     private static void EnsureVisible(RectangleF rectangle, string parameterName)
     {
         if (!rectangle.IsVisible)

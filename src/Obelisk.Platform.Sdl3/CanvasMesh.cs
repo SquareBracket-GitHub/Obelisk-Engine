@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text;
 using Obelisk.Graphics2D;
 
 namespace Obelisk.Platform.Sdl3;
@@ -55,6 +56,28 @@ internal sealed record CanvasMesh(QuadMesh Mesh, IReadOnlyList<DrawBatch> Batche
                         points[i] = Vector2.Transform(points[i] - sprite.Origin, rotation) + sprite.Origin + position;
                     AddQuad(points, sprite.Tint, new RectangleF(source.X / size.Width, source.Y / size.Height,
                         source.Width / size.Width, source.Height / size.Height));
+                    break;
+                case TextCommand text:
+                    ObjectDisposedException.ThrowIf(text.Font.IsDisposed, text.Font);
+                    texture = text.Font.Atlas.Handle;
+                    var atlasSize = textureSize(texture);
+                    var pen = text.Position;
+                    foreach (var rune in text.Text.EnumerateRunes())
+                    {
+                        if (rune.Value == '\n')
+                        {
+                            pen.X = text.Position.X;
+                            pen.Y += text.Font.LineHeight;
+                            continue;
+                        }
+                        if (rune.Value == '\r') continue;
+                        var glyph = text.Font.GetGlyph(rune);
+                        var cell = glyph.Source;
+                        AddQuad(Corners(new RectangleF(pen.X, pen.Y, cell.Width, cell.Height)), text.Color,
+                            new RectangleF(cell.X / atlasSize.Width, cell.Y / atlasSize.Height,
+                                cell.Width / atlasSize.Width, cell.Height / atlasSize.Height));
+                        pen.X += glyph.Advance;
+                    }
                     break;
                 default:
                     throw new NotSupportedException($"Unsupported Canvas command: {command.GetType().Name}");
