@@ -5,6 +5,7 @@ namespace Obelisk.Platform.Sdl3;
 
 internal interface ISdl3Api
 {
+    ISdlAudioApi? AudioApi => null;
     bool InitializeVideo();
 
     nint CreateWindow(string title, int width, int height, bool resizable);

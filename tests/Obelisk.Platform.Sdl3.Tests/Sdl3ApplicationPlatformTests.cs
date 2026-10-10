@@ -507,6 +507,7 @@ public sealed partial class Sdl3ApplicationPlatformTests
 
     private sealed class FakeSdl3Api : ISdl3Api
     {
+        public ISdlAudioApi? AudioApi { get; init; }
         public bool InitializeVideoResult { get; init; } = true;
 
         public nint Window { get; init; } = 42;

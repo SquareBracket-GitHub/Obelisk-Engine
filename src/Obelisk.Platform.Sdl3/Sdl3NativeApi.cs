@@ -7,6 +7,7 @@ namespace Obelisk.Platform.Sdl3;
 internal sealed class Sdl3NativeApi : ISdl3Api
 {
     public static Sdl3NativeApi Instance { get; } = new();
+    public ISdlAudioApi AudioApi { get; } = new SdlAudioApi();
 
     // Accessed only on the SDL owning thread. Resources are removed before device destruction.
     private readonly Dictionary<nint, CanvasRenderer> _renderers = [];

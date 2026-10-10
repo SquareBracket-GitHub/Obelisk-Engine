@@ -8,6 +8,7 @@ namespace Obelisk.Runtime;
 public interface IApplicationPlatform
 {
     Obelisk.Graphics2D.ITextureDevice? Textures => null;
+    IAudioDevice Audio => SilentAudioDevice.Instance;
 
     InputSnapshot Input { get; }
 

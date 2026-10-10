@@ -69,6 +69,55 @@ on the game's owning thread. Unlisted characters fail with their Unicode code
 point; advanced shaping and runtime glyph insertion are not yet supported.
 Font rasterization uses SkiaSharp 4.148.0 and its Windows native assets.
 
+## Play Pong
+
+```powershell
+dotnet run --project samples/Pong
+```
+
+Enter starts a local two-player match. The left player uses W/S and the right
+player uses Up/Down. First to five points wins; Enter on the result screen
+restarts with fresh scores. M toggles sound, and Escape or the window close
+button exits. The court and text scale together with the window.
+The sample requires Windows' Malgun Gothic font, like CanvasShowcase.
+It includes textured paddles, text, three effect sounds and looping WAV music.
+The PCM tones and melody were generated for this sample, with no external audio
+assets; its checker image is shared with CanvasShowcase.
+
+## Audio
+
+`InitializeContext.Audio` supplies an `IAudioDevice`, without SDL types. Load a
+sound with `WavLoader.LoadFile(path)` or register `WavLoader.LoadFile` as an
+`AssetStore` loader for `Sound`. The WAV loader works without an audio device,
+owns a copy of the decoded PCM, and supports RIFF/WAVE PCM16 mono/stereo at
+8–192 kHz. Encoded files are limited to 17 MiB and PCM data to 16 MiB. Compressed
+WAV, floating point WAV, OGG and streaming file decoding are not supported yet.
+
+```csharp
+var sound = WavLoader.LoadFile("assets/hit.wav");
+using var playback = context.Audio.Play(sound, loop: false, volume: 0.5f);
+playback.Volume = 0.25f; // Finite range: 0 through 1.
+playback.Stop();        // Also released by Dispose or platform shutdown.
+```
+
+Use the audio API on the thread that initialized the platform. Each playback
+owns one SDL stream and supports independent volume; SDL performs conversion
+and mixing. At most 128 simultaneous voices are allowed. Completed one-shots
+are released automatically when the platform next presents a frame. Sound is
+managed immutable data and does not require disposal. Device shutdown stops
+all remaining voices before releasing SDL's audio subsystem; stop/dispose is
+idempotent, including after shutdown.
+
+The backend queues about 100 ms of source PCM and replenishes it on each frame,
+including while minimized. A long blocked game frame can interrupt looping
+audio. `IsPlaying` tracks source and stream data, so the final hardware-buffered
+tail may remain briefly after it becomes false. This implementation follows
+[SDL's audio stream API](https://wiki.libsdl.org/SDL3/SDL_OpenAudioDeviceStream).
+If the audio subsystem or default playback device cannot open, `IsAvailable`
+is false and `UnavailableReason` explains why. `Play` then returns an inactive,
+safe playback and the game continues silently. Stream failures after a device
+has opened are reported as audio-specific exceptions.
+
 ## Repository layout
 
 - `src/`: engine libraries and the CLI

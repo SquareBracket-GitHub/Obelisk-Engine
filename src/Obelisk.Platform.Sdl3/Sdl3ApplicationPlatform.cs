@@ -20,6 +20,8 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
     private bool _initialized;
     private bool _minimized;
     private int? _owningThreadId;
+    private SdlAudioDevice? _audio;
+    public IAudioDevice Audio => (IAudioDevice?)_audio ?? SilentAudioDevice.Instance;
 
     public InputSnapshot Input { get; private set; } = InputSnapshot.Empty;
 
@@ -82,6 +84,11 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
 
         try
         {
+            if (_api.AudioApi is { } audioApi)
+            {
+                _audio = new SdlAudioDevice(audioApi);
+                _audio.Initialize();
+            }
             if (!_api.InitializeShaderCompiler())
             {
                 throw CreateException("SDL_shadercross initialization");
@@ -162,6 +169,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
     {
         ArgumentNullException.ThrowIfNull(context);
         EnsureInitializedOnOwningThread();
+        _audio?.Update();
         if (_minimized || OutputSize.Width == 0 || OutputSize.Height == 0)
         {
             Thread.Sleep(16); // Keep pumping input without spinning while presentation is suspended.
@@ -190,6 +198,8 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
 
         try
         {
+            _audio?.Dispose();
+            _audio = null;
             if (_canvasPipeline != 0)
             {
                 _api.ReleaseGpuPipeline(_gpuDevice, _canvasPipeline);

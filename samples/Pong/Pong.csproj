@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Obelisk.Vanilla\Obelisk.Vanilla.csproj" />
+    <Content Include="assets\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <PropertyGroup>
