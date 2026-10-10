@@ -4,6 +4,19 @@ namespace Obelisk.Runtime.Tests;
 
 public sealed class ApplicationHostTests
 {
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ShutdownFailureStillStopsHostAndReleasesPlatform(bool gameFails)
+    {
+        var events = new List<string>();
+        var platform = new FakePlatform(new FakeClock(), events) { ShutdownException = gameFails ? null : new TestException() };
+        var game = new RecordingGame(events) { ShutdownException = gameFails ? new TestException() : null };
+        var host = new ApplicationHost(platform);
+        Assert.Throws<TestException>(() => host.Run(game));
+        Assert.Equal(ApplicationState.Stopped, host.State);
+        Assert.Equal("platform.shutdown", events[^1]);
+    }
     [Fact]
     public void Run_ExecutesLifecycleInOrderAndSharesFrameTime()
     {
@@ -152,6 +165,7 @@ public sealed class ApplicationHostTests
 
     private sealed class FakePlatform : IApplicationPlatform
     {
+        public Exception? ShutdownException { get; init; }
         private readonly FakeClock _clock;
         private readonly List<string> _events;
         private readonly IReadOnlyList<TimeSpan> _frameDurations;
@@ -193,6 +207,7 @@ public sealed class ApplicationHostTests
         public void Shutdown()
         {
             _events.Add("platform.shutdown");
+            if (ShutdownException is not null) throw ShutdownException;
         }
 
         public void Present(RenderContext context)
@@ -213,6 +228,7 @@ public sealed class ApplicationHostTests
         public Func<ApplicationState>? GetState { get; set; }
 
         public Exception? UpdateException { get; init; }
+        public Exception? ShutdownException { get; init; }
 
         public List<ApplicationState> ObservedStates { get; } = [];
 
@@ -249,6 +265,7 @@ public sealed class ApplicationHostTests
         {
             _events.Add("game.shutdown");
             ObserveState();
+            if (ShutdownException is not null) throw ShutdownException;
         }
 
         private void ObserveState()

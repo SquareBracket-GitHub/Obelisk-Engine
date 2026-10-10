@@ -9,15 +9,23 @@ internal static class Program
     [STAThread]
     private static int Main()
     {
-        return ObeliskApp.Run(
-            new MovingRectangleGame(),
-            new AppOptions
-            {
-                Title = "Obelisk — Moving Rectangle",
-                Width = 1280,
-                Height = 720,
-                Resizable = true,
-            });
+        try
+        {
+            return ObeliskApp.Run(
+                new MovingRectangleGame(),
+                new AppOptions
+                {
+                    Title = "Obelisk — Moving Rectangle",
+                    Width = 1280,
+                    Height = 720,
+                    Resizable = true,
+                });
+        }
+        catch (Exception error)
+        {
+            Console.Error.WriteLine(error.Message);
+            return 1;
+        }
     }
 }
 

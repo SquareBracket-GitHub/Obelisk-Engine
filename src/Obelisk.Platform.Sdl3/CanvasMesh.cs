@@ -59,6 +59,7 @@ internal sealed record CanvasMesh(QuadMesh Mesh, IReadOnlyList<DrawBatch> Batche
                     break;
                 case TextCommand text:
                     ObjectDisposedException.ThrowIf(text.Font.IsDisposed, text.Font);
+                    _ = text.Font.Measure(text.Text, text.Scale);
                     texture = text.Font.Atlas.Handle;
                     var atlasSize = textureSize(texture);
                     var pen = text.Position;
@@ -67,16 +68,16 @@ internal sealed record CanvasMesh(QuadMesh Mesh, IReadOnlyList<DrawBatch> Batche
                         if (rune.Value == '\n')
                         {
                             pen.X = text.Position.X;
-                            pen.Y += text.Font.LineHeight;
+                            pen.Y += text.Font.LineHeight * text.Scale;
                             continue;
                         }
                         if (rune.Value == '\r') continue;
                         var glyph = text.Font.GetGlyph(rune);
                         var cell = glyph.Source;
-                        AddQuad(Corners(new RectangleF(pen.X, pen.Y, cell.Width, cell.Height)), text.Color,
+                        AddQuad(Corners(new RectangleF(pen.X, pen.Y, cell.Width * text.Scale, cell.Height * text.Scale)), text.Color,
                             new RectangleF(cell.X / atlasSize.Width, cell.Y / atlasSize.Height,
                                 cell.Width / atlasSize.Width, cell.Height / atlasSize.Height));
-                        pen.X += glyph.Advance;
+                        pen.X += glyph.Advance * text.Scale;
                     }
                     break;
                 default:

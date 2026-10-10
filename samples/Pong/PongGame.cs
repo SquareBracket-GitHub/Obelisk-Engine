@@ -68,18 +68,7 @@ internal sealed class PongGame : IGame, IDisposable
         void Text(string text, float y)
         {
             var x = (960 - _font!.Measure(text).X) / 2;
-            if (scale == 1)
-            {
-                canvas.DrawText(_font, text, origin + new Vector2(x, y), ColorRgba.White);
-                return;
-            }
-            // Use the public glyph atlas and Sprite API to scale text with the court.
-            foreach (var rune in text.EnumerateRunes())
-            {
-                var glyph = _font.GetGlyph(rune);
-                canvas.DrawSprite(_font.Atlas, Rect(x, y, glyph.Source.Width, glyph.Source.Height), glyph.Source);
-                x += glyph.Advance;
-            }
+            canvas.DrawText(_font, text, origin + new Vector2(x, y) * scale, ColorRgba.White, scale);
         }
         canvas.FillRectangle(Rect(0, 0, 960, 540), new(0.04f, 0.07f, 0.12f));
         for (var y = 20; y < 520; y += 30) canvas.FillRectangle(Rect(478, y, 4, 15), new(0.2f, 0.3f, 0.4f));

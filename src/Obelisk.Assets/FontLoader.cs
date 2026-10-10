@@ -26,7 +26,7 @@ public sealed class FontLoader
     public Font LoadFile(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        if (!File.Exists(path)) throw new FileNotFoundException($"Font file '{path}' was not found.", path);
+        if (!File.Exists(path)) throw new FileNotFoundException($"Font file '{path}' was not found. Supply an installed .ttf or .otf font file.", path);
         using var face = SKTypeface.FromFile(path) ?? throw new InvalidDataException($"Font file '{path}' could not be decoded.");
         using var font = new SKFont(face, _size);
         using var paint = new SKPaint { IsAntialias = true, Color = SKColors.White };

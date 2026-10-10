@@ -101,12 +101,11 @@ public sealed class ApplicationHost
             }
             finally
             {
-                if (platformInitialized)
+                try
                 {
-                    _platform.Shutdown();
+                    if (platformInitialized) _platform.Shutdown();
                 }
-
-                State = ApplicationState.Stopped;
+                finally { State = ApplicationState.Stopped; }
             }
         }
     }

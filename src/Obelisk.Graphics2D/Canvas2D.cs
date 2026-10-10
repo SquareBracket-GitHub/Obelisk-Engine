@@ -108,7 +108,8 @@ public sealed class Canvas2D
         DrawSprite(texture.Handle, destination, source, tint, rotation, origin);
     }
 
-    public void DrawText(Font font, string text, Vector2 position, ColorRgba? color = null)
+    /// <summary>Draws text at a positive uniform scale, without creating another font atlas.</summary>
+    public void DrawText(Font font, string text, Vector2 position, ColorRgba? color = null, float scale = 1)
     {
         ArgumentNullException.ThrowIfNull(font);
         ArgumentNullException.ThrowIfNull(text);
@@ -116,8 +117,9 @@ public sealed class Canvas2D
         EnsureFinite(position, nameof(position));
         var resolvedColor = color ?? ColorRgba.White;
         EnsureFinite(resolvedColor, nameof(color));
-        _ = font.Measure(text); // Reject glyphs missing from the atlas before recording commands.
-        if (text.Length != 0) Add(new TextCommand(font, text, position, resolvedColor));
+        var extent = font.Measure(text, scale); // Validate scale and glyphs before recording commands.
+        EnsureFinite(position + extent, nameof(position));
+        if (text.Length != 0) Add(new TextCommand(font, text, position, resolvedColor, scale));
     }
 
     private static void EnsureVisible(RectangleF rectangle, string parameterName)

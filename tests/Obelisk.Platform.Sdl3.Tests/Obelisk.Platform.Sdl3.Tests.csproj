@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\Obelisk.Plugins.Images\Obelisk.Plugins.Images.csproj" />
     <ProjectReference Include="..\..\samples\CanvasShowcase\CanvasShowcase.csproj" />
     <ProjectReference Include="..\..\samples\Pong\Pong.csproj" />
+    <ProjectReference Include="..\..\samples\MovingRectangle\MovingRectangle.csproj" />
   </ItemGroup>
 
 </Project>
