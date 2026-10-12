@@ -1,0 +1,11 @@
+using global::Obelisk.Abstractions;
+using global::Obelisk.Vanilla;
+
+namespace {{Name}};
+
+internal static class Program
+{
+    [STAThread]
+    private static int Main() => ObeliskApp.Run(new Game(),
+        new AppOptions { Title = "{{Name}}", Width = 960, Height = 540 });
+}

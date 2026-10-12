@@ -3,7 +3,8 @@
 Obelisk is an experimental, plugin-first 2D game engine for .NET 10 and SDL3.
 The Vanilla MVP includes a moving rectangle and a complete local two-player Pong
 game, with local Plugin discovery, scoped Asset loaders and Module lifecycle hooks.
-The v0.1 public API is still experimental while CLI and packaging work continues.
+An installable CLI generates independent package-based projects. The v0.1 public
+API is still experimental while development-loop and distribution work continues.
 
 ## Prerequisites
 
@@ -12,7 +13,82 @@ The v0.1 public API is still experimental while CLI and packaging work continues
 - Windows x64 with an SDL_GPU-compatible graphics driver for the native samples
 - Windows' Malgun Gothic (`malgun.ttf`) for Pong and CanvasShowcase
 
-## Quick Start (draft)
+## Install the CLI and create a game
+
+During development the `0.1.0` packages are built locally; they have not been
+published to nuget.org. From the repository root, create the local feed and install
+the .NET global tool using standard .NET packaging:
+
+```powershell
+foreach ($project in Get-ChildItem src/*/*.csproj) {
+    dotnet pack $project.FullName -c Release -o artifacts/packages
+    if ($LASTEXITCODE -ne 0) { throw "Package build failed: $project" }
+}
+$obeliskFeed = (Resolve-Path artifacts/packages).Path
+dotnet tool install --global Obelisk.Cli --version 0.1.0 --add-source $obeliskFeed
+obelisk --help
+obelisk info
+```
+
+If .NET asks you to reopen the terminal, do so to make the tool directory available
+on PATH. For an existing CLI installation use `dotnet tool update --global
+Obelisk.Cli --version 0.1.0 --add-source $obeliskFeed`; remove it with `dotnet tool
+uninstall --global Obelisk.Cli`. Installation follows the
+[.NET tool options](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install).
+
+Create an independent game beside the engine checkout, then restore from the local
+feed and NuGet for third-party dependencies:
+
+```powershell
+New-Item -ItemType Directory -Force ../Obelisk-Games
+Set-Location ../Obelisk-Games
+obelisk new MyGame
+Set-Location MyGame
+dotnet restore --source $obeliskFeed --source https://api.nuget.org/v3/index.json
+dotnet build --no-restore
+dotnet run --no-build
+```
+
+The generated project references only `Obelisk.Vanilla` at exact version `[0.1.0]`,
+with no engine source path. Arrow keys move the rectangle; close the window to exit.
+It includes Program.cs, Game.cs, the standard .csproj, obelisk.json, assets/,
+plugins/, .gitignore and README.md. Assets and Plugin files are copied to build and
+publish output. Open the .csproj in Visual Studio or Rider, or the folder in VS Code
+with C# support. Later restore operations must still have access to the local feed
+until public packages are published; configure a NuGet source or keep passing
+`--source` as above.
+
+`new` accepts 1–64 ASCII identifier characters, starting with a letter or underscore;
+C# keywords and Windows device names are reserved. It creates a new child directory,
+rejects existing paths, and stages the complete template before moving it into
+place. Failed writes or a concurrent destination collision remove only its temporary
+directory, preserving existing files. If cleanup itself fails, the error identifies
+the leftover temporary path. No restore or build runs implicitly during generation.
+
+Commands are `new <name>`, `info`, `help`, `--help`, `-h` and `--version`. `info`
+reports CLI/template versions, runtime and platform without requiring a project.
+Exit codes are 0 for success, 1 for operational failures and 2 for invalid arguments;
+diagnostics go to stderr. CLI `run`/`dev` and `build`/Plugin management are scheduled
+for Days 10 and 11. For now use `dotnet` directly. The emitted `obelisk.json` contains
+schemaVersion, name, engineVersion, project, assets and plugins; manifest parsing
+is part of Day 10.
+
+To reproduce the Day 9 packaging Gate on Windows:
+
+```powershell
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1
+```
+
+The script creates a fresh directory outside the repository, packs the engine and
+CLI, installs the global CLI in an isolated `DOTNET_CLI_HOME`, and uses an isolated
+NuGet cache. It checks commands/exit codes, generates MyGame and legal name edge
+cases, restores/builds from packages only, opens the generated game's native window
+and closes it normally. Default cleanup removes its own temporary workspace;
+`-KeepWorkspace` retains it for inspection. Existing user global tools remain
+unchanged. Package README/license metadata and public publication remain later
+packaging work.
+
+## Run the repository samples
 
 Clone the source, restore dependencies, and run either sample:
 
@@ -30,9 +106,9 @@ An unavailable audio device makes Pong continue silently. Dependency restoration
 requires access to NuGet; the native libraries are supplied by the referenced
 packages.
 
-To start your own game, run these commands from the repository root. Public
-NuGet packages and the CLI are scheduled for later stages, so this draft uses
-one source reference to the Vanilla meta-project:
+To start your own game directly from source, run these commands from the repository
+root. This alternative uses one source reference to the Vanilla meta-project;
+the CLI above generates a package-only project instead:
 
 ```powershell
 dotnet new console -n MyGame --framework net10.0

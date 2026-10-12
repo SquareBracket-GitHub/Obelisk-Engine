@@ -1,0 +1,23 @@
+using global::System.Numerics;
+using global::Obelisk.Abstractions;
+using global::Obelisk.Graphics2D;
+
+namespace {{Name}};
+
+public sealed class Game : IGame
+{
+    private Vector2 _position = new(80, 80);
+    public void Initialize(InitializeContext context) { }
+    public void Update(UpdateContext context)
+    {
+        var direction = Vector2.Zero;
+        if (context.Input.Keyboard.IsDown(Key.Left)) direction.X--;
+        if (context.Input.Keyboard.IsDown(Key.Right)) direction.X++;
+        if (context.Input.Keyboard.IsDown(Key.Up)) direction.Y--;
+        if (context.Input.Keyboard.IsDown(Key.Down)) direction.Y++;
+        _position += direction * 200 * (float)context.Time.DeltaTime.TotalSeconds;
+    }
+    public void Render(RenderContext context) => context.Canvas.FillRectangle(
+        new RectangleF(_position.X, _position.Y, 64, 64), new ColorRgba(0.15f, 0.8f, 0.45f, 1));
+    public void Shutdown(ShutdownContext context) { }
+}
