@@ -15,6 +15,9 @@ use the local feed described in the Obelisk Engine repository README.
 dotnet restore
 dotnet build
 dotnet run
+# With an installed Obelisk CLI and a configured NuGet source:
+obelisk run
+obelisk dev
 ```
 
 Move the rectangle with arrow keys. Close the window to exit. Edit Game.cs to
@@ -31,5 +34,11 @@ in VS Code with C# support. No engine source checkout or ProjectReference is nee
 - plugins/: copied local packages; install/remove while the process is stopped
 
 Plugin rendering uses public Canvas commands. See the engine README for the local
-Plugin manifest and lifecycle. CLI run/dev/build commands arrive in later stages;
-use the standard dotnet commands above for this template.
+Plugin manifest and lifecycle. `obelisk run -- <arguments>` restores, builds and
+executes once. `obelisk dev -- <arguments>` combines saves over a 300 ms quiet period,
+stops the previous game and restarts after rebuilding. Source/configuration and
+assets/plugins changes are watched; bin/obj are ignored. Fix build errors and save
+again to retry. Close the game to wait for another change, or press Ctrl+C in the
+CLI to stop development and release its child processes. On Windows, assigned
+descendants are also stopped if the CLI is forcibly terminated. CLI build and
+Plugin management commands arrive in a later stage.

@@ -4,7 +4,7 @@ Obelisk is an experimental, plugin-first 2D game engine for .NET 10 and SDL3.
 The Vanilla MVP includes a moving rectangle and a complete local two-player Pong
 game, with local Plugin discovery, scoped Asset loaders and Module lifecycle hooks.
 An installable CLI generates independent package-based projects. The v0.1 public
-API is still experimental while development-loop and distribution work continues.
+API is still experimental while distribution work continues.
 
 ## Prerequisites
 
@@ -65,25 +65,55 @@ place. Failed writes or a concurrent destination collision remove only its tempo
 directory, preserving existing files. If cleanup itself fails, the error identifies
 the leftover temporary path. No restore or build runs implicitly during generation.
 
-Commands are `new <name>`, `info`, `help`, `--help`, `-h` and `--version`. `info`
+Commands are `new <name>`, `run [-- <game arguments>]`, `dev [-- <game arguments>]`,
+`info`, `help`, `--help`, `-h` and `--version`. `info`
 reports CLI/template versions, runtime and platform without requiring a project.
 Exit codes are 0 for success, 1 for operational failures and 2 for invalid arguments;
-diagnostics go to stderr. CLI `run`/`dev` and `build`/Plugin management are scheduled
-for Days 10 and 11. For now use `dotnet` directly. The emitted `obelisk.json` contains
-schemaVersion, name, engineVersion, project, assets and plugins; manifest parsing
-is part of Day 10.
+diagnostics go to stderr. `run` also propagates SDK/game exit codes; Ctrl+C returns
+130 after stopping owned processes. Build/Plugin management is scheduled for Day 11.
+
+Inside a generated game directory, use `obelisk run` for one execution or
+`obelisk dev` for automatic restarts. Both validate obelisk.json, then run standard
+`dotnet restore`, `dotnet build --no-restore`, and `dotnet run --no-build --no-restore`.
+Configure a NuGet source for the local feed before using these commands. Arguments
+after `--` are passed unchanged to the game, for example `obelisk run -- "two words"`.
+
+The manifest requires exactly schemaVersion (1), name, engineVersion (0.1.0),
+project, assets and plugins. Unknown, duplicate or missing fields are errors.
+Paths must be relative, without traversal or reparse points; project must name an
+existing .csproj. Asset/Plugin directories may be absent. Those fields determine
+watched content roots; custom output paths still require matching .csproj content
+rules and game startup options.
+
+`dev` watches source/project/configuration files and all files under the configured
+assets/plugins roots. It ignores bin/obj, version-control/editor metadata and
+artifacts. A 300 ms quiet period combines save bursts. It stops the previous process
+tree before rebuilding and starts one game for the latest changes. Changes during
+preparation discard the stale launch. Build or subsequent manifest errors wait for
+another save; a normally closed game also waits for a change. An invalid initial
+manifest fails immediately with its path and repair guidance.
+
+On Windows, SDK processes and their descendants are assigned to private Job Objects.
+Restart waits for the owned tree to terminate, and closing or forcibly terminating
+the CLI releases the job handles and stops assigned descendants. Other platforms
+use normal cancellation and process-tree termination; forced CLI termination cleanup
+is currently guaranteed only by the Windows implementation.
 
 To reproduce the Day 9 packaging Gate on Windows:
 
 ```powershell
 pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1
+# Include the Day 10 run/dev Gate:
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -DevelopmentLoop
 ```
 
 The script creates a fresh directory outside the repository, packs the engine and
 CLI, installs the global CLI in an isolated `DOTNET_CLI_HOME`, and uses an isolated
 NuGet cache. It checks commands/exit codes, generates MyGame and legal name edge
 cases, restores/builds from packages only, opens the generated game's native window
-and closes it normally. Default cleanup removes its own temporary workspace;
+and closes it normally. `-DevelopmentLoop` additionally checks exact game argument
+forwarding, a burst of code saves causing one restart, previous-game termination,
+and descendant cleanup after killing only the CLI. Default cleanup removes its own temporary workspace;
 `-KeepWorkspace` retains it for inspection. Existing user global tools remain
 unchanged. Package README/license metadata and public publication remain later
 packaging work.

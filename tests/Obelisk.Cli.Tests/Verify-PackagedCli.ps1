@@ -1,4 +1,4 @@
-param([switch]$KeepWorkspace)
+param([switch]$KeepWorkspace, [switch]$DevelopmentLoop)
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
@@ -11,6 +11,42 @@ $workspace = Join-Path $taskRoot 'empty workspace'
 $cliHome = Join-Path $taskRoot 'cli-home'
 $savedEnvironment = @{}
 $gameProcess = $null
+$cliProcess = $null
+
+function Wait-Until([scriptblock]$Condition, [string]$Message) {
+    $deadline = [DateTime]::UtcNow.AddSeconds(40)
+    while (-not (& $Condition)) {
+        if ([DateTime]::UtcNow -gt $deadline) { throw $Message }
+        Start-Sleep -Milliseconds 100
+    }
+}
+
+function Start-Cli([string[]]$Arguments) {
+    $start = [Diagnostics.ProcessStartInfo]::new($cli)
+    $start.WorkingDirectory = $project
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    $start.RedirectStandardOutput = $true
+    $start.RedirectStandardError = $true
+    foreach ($argument in $Arguments) { $start.ArgumentList.Add($argument) }
+    $script:cliProcess = [Diagnostics.Process]::Start($start)
+    $script:cliOutput = $cliProcess.StandardOutput.ReadToEndAsync()
+    $script:cliErrors = $cliProcess.StandardError.ReadToEndAsync()
+}
+
+function Read-Starts {
+    if (Test-Path -LiteralPath $probe) {
+        foreach ($line in Get-Content -LiteralPath $probe) {
+            if ($line) { ConvertFrom-Json $line }
+        }
+    }
+}
+
+function Test-Alive([int]$ProcessId) {
+    $candidate = Get-Process -Id $ProcessId -ErrorAction SilentlyContinue
+    if ($candidate) { $candidate.Dispose(); return $true }
+    return $false
+}
 
 function Invoke-Dotnet([string[]]$Arguments) {
     & dotnet @Arguments
@@ -93,8 +129,70 @@ try {
         if (-not $gameProcess.WaitForExit(10000) -or $gameProcess.ExitCode -ne 0) { throw 'Generated game did not exit normally.' }
         if ((Get-Content -Raw -LiteralPath (Join-Path $taskRoot 'game.stderr.txt'))) { throw 'Generated game reported errors.' }
         Write-Output 'DAY 9 GATE PASSED: isolated global CLI -> new -> package-only restore -> build -> native window -> normal exit.'
+        if ($DevelopmentLoop) {
+            $probe = Join-Path $taskRoot 'starts.jsonl'
+            $probeLiteral = $probe.Replace('"', '""')
+            # Instrument only the external generated game; exercise the installed CLI unchanged.
+            Set-Content -LiteralPath (Join-Path $project 'Program.cs') -Encoding utf8 -Value @"
+using Obelisk.Abstractions;
+using Obelisk.Vanilla;
+internal static class Program
+{
+    [STAThread]
+    private static int Main(string[] args)
+    {
+        File.AppendAllText(@"$probeLiteral", System.Text.Json.JsonSerializer.Serialize(new { pid = Environment.ProcessId, args }) + "\n");
+        return ObeliskApp.Run(new MyGame.Game(), new AppOptions { Title = "Day 10 Gate", Width = 960, Height = 540 });
+    }
+}
+"@
+            Start-Cli @('run', '--', 'two words', 'quote"value', '$literal')
+            Wait-Until { @(Read-Starts).Count -eq 1 -or $cliProcess.HasExited } 'CLI run did not start a game.'
+            if ($cliProcess.HasExited) { throw "CLI run failed: $($cliErrors.GetAwaiter().GetResult())" }
+            $run = @(Read-Starts)[0]
+            if (($run.args | ConvertTo-Json -Compress) -ne ('two words', 'quote"value', '$literal' | ConvertTo-Json -Compress)) { throw 'Game arguments were changed.' }
+            $runningGame = Get-Process -Id $run.pid
+            try {
+                Wait-Until { $runningGame.Refresh(); $runningGame.MainWindowHandle -ne 0 } 'CLI run game has no native window.'
+                if (-not $runningGame.CloseMainWindow()) { throw 'Could not close CLI run game.' }
+            } finally { $runningGame.Dispose() }
+            if (-not $cliProcess.WaitForExit(10000) -or $cliProcess.ExitCode -ne 0) { throw 'CLI run did not return the game exit code.' }
+            $cliProcess.Dispose(); $cliProcess = $null
+            Remove-Item -LiteralPath $probe
+
+            Start-Cli @('dev')
+            Wait-Until { @(Read-Starts).Count -eq 1 -or $cliProcess.HasExited } 'CLI dev did not start a game.'
+            if ($cliProcess.HasExited) { throw "CLI dev failed: $($cliErrors.GetAwaiter().GetResult())" }
+            $firstId = @(Read-Starts)[0].pid
+            $gameSource = Join-Path $project 'Game.cs'
+            $original = Get-Content -Raw -LiteralPath $gameSource
+            foreach ($change in 1..5) {
+                Set-Content -LiteralPath $gameSource -Encoding utf8 -Value ($original + "`n// debounce probe $change")
+                Start-Sleep -Milliseconds 20
+            }
+            Wait-Until { @(Read-Starts).Count -ge 2 -or $cliProcess.HasExited } 'File changes did not restart the game.'
+            if ($cliProcess.HasExited) { throw "CLI dev exited: $($cliErrors.GetAwaiter().GetResult())" }
+            Start-Sleep -Milliseconds 1200
+            $starts = @(Read-Starts)
+            if ($starts.Count -ne 2 -or (Test-Alive $firstId)) { throw 'Debounced restart duplicated or retained the previous game.' }
+            $currentId = $starts[1].pid
+            if (-not (Test-Alive $currentId)) { throw 'Restarted game did not remain running.' }
+            # Killing only the CLI proves OS job ownership also cleans descendants on forced exit.
+            $cliProcess.Kill(); $cliProcess.WaitForExit()
+            Wait-Until { -not (Test-Alive $currentId) } 'CLI exit left an orphan game.'
+            $output = $cliOutput.GetAwaiter().GetResult()
+            foreach ($match in [regex]::Matches($output, 'Game started \(process (\d+)\)')) {
+                if (Test-Alive ([int]$match.Groups[1].Value)) { throw 'CLI exit left an orphan SDK process.' }
+            }
+            $cliProcess.Dispose(); $cliProcess = $null
+            Write-Output 'DAY 10 GATE PASSED: installed run + exact arguments + dev burst -> one restart + previous game stopped + forced CLI exit cleans SDK/game descendants.'
+        }
     } finally { Pop-Location }
 } finally {
+    if ($null -ne $cliProcess) {
+        if (-not $cliProcess.HasExited) { $cliProcess.Kill($true); $cliProcess.WaitForExit() }
+        $cliProcess.Dispose()
+    }
     if ($null -ne $gameProcess) {
         if (-not $gameProcess.HasExited) { $gameProcess.Kill($true); $gameProcess.WaitForExit() }
         $gameProcess.Dispose()

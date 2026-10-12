@@ -51,6 +51,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Obelisk.Plugin.Tests", "tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Obelisk.Cli.Tests", "tests\Obelisk.Cli.Tests\Obelisk.Cli.Tests.csproj", "{F5663ED4-6F9D-4B96-8CCA-DEDA1ED80838}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Obelisk.Cli.TestChild", "tests\Obelisk.Cli.TestChild\Obelisk.Cli.TestChild.csproj", "{15A40601-4E39-476E-BCD0-4D73AE2C35B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -313,6 +315,18 @@ Global
 		{F5663ED4-6F9D-4B96-8CCA-DEDA1ED80838}.Release|x64.Build.0 = Release|Any CPU
 		{F5663ED4-6F9D-4B96-8CCA-DEDA1ED80838}.Release|x86.ActiveCfg = Release|Any CPU
 		{F5663ED4-6F9D-4B96-8CCA-DEDA1ED80838}.Release|x86.Build.0 = Release|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Debug|x64.Build.0 = Debug|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Debug|x86.Build.0 = Debug|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Release|x64.ActiveCfg = Release|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Release|x64.Build.0 = Release|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Release|x86.ActiveCfg = Release|Any CPU
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -339,5 +353,6 @@ Global
 		{68422B60-42A9-4AC0-A74C-741DECEFC779} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{BF3D51EA-AA0E-4538-9E24-2847ADB00EDB} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{F5663ED4-6F9D-4B96-8CCA-DEDA1ED80838} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{15A40601-4E39-476E-BCD0-4D73AE2C35B9} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

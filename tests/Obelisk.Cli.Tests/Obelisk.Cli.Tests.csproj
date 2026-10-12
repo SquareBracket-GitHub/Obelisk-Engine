@@ -7,5 +7,6 @@
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\src\Obelisk.Cli\Obelisk.Cli.csproj" />
+    <ProjectReference Include="..\Obelisk.Cli.TestChild\Obelisk.Cli.TestChild.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
