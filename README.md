@@ -2,7 +2,8 @@
 
 Obelisk is an experimental, plugin-first 2D game engine for .NET 10 and SDL3.
 The Vanilla MVP includes a moving rectangle and a complete local two-player Pong
-game. The v0.1 public API is still experimental while plugin and CLI work continues.
+game, with local Plugin discovery, scoped Asset loaders and Module lifecycle hooks.
+The v0.1 public API is still experimental while CLI and packaging work continues.
 
 ## Prerequisites
 
@@ -217,6 +218,113 @@ If the audio subsystem or default playback device cannot open, `IsAvailable`
 is false and `UnavailableReason` explains why. `Play` then returns an inactive,
 safe playback and the game continues silently. Stream failures after a device
 has opened are reported as audio-specific exceptions.
+
+## Local Plugins
+
+A Plugin is a trusted distribution package with one `IObeliskPlugin` entry point.
+A Module is a registered `IObeliskModule` that participates in the game loop.
+`ObeliskApp.Run` discovers immediate subdirectories of `plugins` beside the game
+executable. Each package needs `obelisk.plugin.json`, its DLL, private managed
+dependencies and optional `assets`, `shaders` and `native` directories. An absent
+`plugins` directory means no external plugins. A present package without a manifest
+fails startup rather than being silently ignored.
+
+Install the sample from the repository root, with the game stopped:
+
+```powershell
+dotnet build samples/SamplePlugin -c Debug
+dotnet build samples/MovingRectangle -c Debug
+New-Item -ItemType Directory -Force samples/MovingRectangle/bin/Debug/net10.0/plugins/sample
+Copy-Item samples/SamplePlugin/bin/Debug/net10.0/* samples/MovingRectangle/bin/Debug/net10.0/plugins/sample -Recurse -Force
+dotnet run --project samples/MovingRectangle -c Debug --no-build
+```
+
+The green pulsing badge comes from a dynamically loaded Module; its RGB accent is
+loaded through `plugin://sample/accent.txt`. The game references only Vanilla.
+Close the game, then remove the package and run it again:
+
+```powershell
+Remove-Item samples/MovingRectangle/bin/Debug/net10.0/plugins/sample -Recurse
+dotnet run --project samples/MovingRectangle -c Debug --no-build
+```
+
+Removal takes effect on the next startup. Assemblies are not unloaded; native
+libraries can remain mapped until process exit. Hot reload and removal while
+running are outside v0.1. Plugin code executes with the game's permissions;
+path checks do not provide a security sandbox.
+
+The schema uses stable three-part versions and an inclusive/exclusive engine
+range. The current engine version is `0.1.0`:
+
+```json
+{
+  "schemaVersion": 1,
+  "name": "sample",
+  "version": "0.1.0",
+  "engineMinimum": "0.1.0",
+  "engineMaximumExclusive": "0.2.0",
+  "assembly": "SamplePlugin.dll",
+  "entryPoint": "SamplePlugin.PulsePlugin",
+  "assets": "assets",
+  "shaders": "shaders",
+  "native": "native"
+}
+```
+
+Names use lowercase ASCII letters, digits and hyphens, starting with a letter.
+Path fields are relative to the package; absolute paths, traversal and reparse
+points are rejected. Unknown or duplicate JSON fields are rejected. The entire
+discovered set is checked for compatibility and duplicate names before external
+entry points run. Set the sample's range to `[0.2.0, 0.3.0)` to reproduce an
+incompatible startup: the error identifies `sample`, engine `0.1.0` and the range.
+Restore the manifest before running again.
+
+Entry points must be public concrete types with a public parameterless constructor:
+
+```csharp
+public sealed class MyPlugin : IObeliskPlugin
+{
+    public void Register(PluginRegistrationContext context)
+    {
+        context.RegisterAssetLoader<string>(File.ReadAllText);
+        context.RegisterModule(new MyModule());
+    }
+}
+```
+
+Registration closes after `Register` returns. A scoped loader handles only this
+Plugin's `plugin://name/...` URIs; a shared default loader can serve project assets
+or plugins without their own override. Vanilla registers the bundled `images`
+Plugin and its `RgbaImage` decoder by default. Games and Modules can use
+`InitializeContext.Assets.Load<RgbaImage>("project:///image.png")`; the host owns
+cached disposable assets, so callers borrow them rather than disposing them.
+Module callbacks run on the host's owning thread: initialize before the game,
+update before the game, render after the game, then reverse-order shutdown after
+the game. Render appends public Canvas commands and restores Canvas blend state;
+it exposes no GPU device or native handle. `PluginRegistrationContext.Paths`
+resolves package-owned assets, shader files and private native dependencies.
+
+Use `EnableDynamicLoading=true` in Plugin projects and copy/publish their complete
+output. Engine contracts retain host type identity; private managed dependencies
+load only from the package and cannot borrow arbitrary application dependencies.
+Native dependencies resolve from the package/deps metadata or its native directory,
+with normal OS library resolution as a fallback. Custom paths and optional images:
+
+```csharp
+ObeliskApp.Run(new MyGame(), plugins: new PluginOptions
+{
+    Directory = Path.Combine(AppContext.BaseDirectory, "extensions"),
+    ProjectAssetRoot = Path.Combine(AppContext.BaseDirectory, "assets"),
+    IncludeImages = false,
+});
+```
+
+If loading the images Plugin dynamically, disable its bundled registration to avoid
+a duplicate `images` name. Errors name the Plugin and operation; failed registration
+closes the host and disposes earlier registrations. Module initialization failure
+also shuts down partially initialized Modules. Shutdown continues through cleanup
+errors, releases cached assets and disposes Plugins before platform shutdown.
+See [ADR 0006](docs/adr/0006-local-plugin-lifecycle.md) for the design and limits.
 
 ## Repository layout
 

@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\samples\CanvasShowcase\CanvasShowcase.csproj" />
     <ProjectReference Include="..\..\samples\Pong\Pong.csproj" />
     <ProjectReference Include="..\..\samples\MovingRectangle\MovingRectangle.csproj" />
+    <ProjectReference Include="..\..\samples\SamplePlugin\SamplePlugin.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

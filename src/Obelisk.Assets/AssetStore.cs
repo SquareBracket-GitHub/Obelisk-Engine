@@ -1,11 +1,12 @@
 namespace Obelisk.Assets;
 
 /// <summary>Loads typed assets from confined roots and owns cached disposable results.</summary>
-public sealed class AssetStore : IDisposable
+public sealed class AssetStore : IDisposable, Obelisk.Abstractions.IAssetSource
 {
     private readonly string _projectRoot;
     private readonly Dictionary<string, string> _pluginRoots = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Type, Func<string, object>> _loaders = [];
+    private readonly Dictionary<(string Plugin, Type Type), Func<string, object>> _pluginLoaders = [];
     private readonly Dictionary<(AssetUri Uri, Type Type), object> _cache = [];
     private bool _disposed;
 
@@ -38,7 +39,9 @@ public sealed class AssetStore : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         var key = AssetUri.Parse(uri);
         if (_cache.TryGetValue((key, typeof(T)), out var cached)) return (T)cached;
-        if (!_loaders.TryGetValue(typeof(T), out var loader))
+        Func<string, object>? loader = null;
+        if (key.Plugin is not null) _pluginLoaders.TryGetValue((key.Plugin, typeof(T)), out loader);
+        if (loader is null && !_loaders.TryGetValue(typeof(T), out loader))
             throw new InvalidOperationException($"No asset loader for '{typeof(T).Name}' while loading '{key}'.");
         var path = Resolve(key);
         if (!File.Exists(path)) throw new FileNotFoundException($"Asset '{key}' was not found at '{path}'.", path);
@@ -77,12 +80,28 @@ public sealed class AssetStore : IDisposable
         return path;
     }
 
+    public string ResolvePath(string uri) => Resolve(AssetUri.Parse(uri));
+
+    /// <summary>Registers a loader only for this plugin's URI authority, leaving other roots unaffected.</summary>
+    public void RegisterPluginLoader<T>(string plugin, Func<string, T> loader) where T : class
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(loader);
+        if (!_pluginRoots.ContainsKey(plugin)) throw new InvalidOperationException($"Plugin asset root '{plugin}' is not registered.");
+        var normalized = plugin.ToLowerInvariant();
+        if (!_pluginLoaders.TryAdd((normalized, typeof(T)), path => loader(path)))
+            throw new InvalidOperationException($"Asset loader for '{typeof(T).Name}' in plugin '{plugin}' is already registered.");
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
+        var errors = new List<Exception>();
         foreach (var value in _cache.Values.Distinct(ReferenceEqualityComparer.Instance))
-            if (value is IDisposable disposable) disposable.Dispose();
+            if (value is IDisposable disposable)
+                try { disposable.Dispose(); } catch (Exception error) { errors.Add(error); }
         _cache.Clear();
+        if (errors.Count != 0) throw new AggregateException("Asset cleanup failed.", errors);
     }
 }

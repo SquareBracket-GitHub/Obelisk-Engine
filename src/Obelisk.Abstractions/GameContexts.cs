@@ -2,8 +2,14 @@ using Obelisk.Graphics2D;
 
 namespace Obelisk.Abstractions;
 
-public sealed class InitializeContext(ITextureDevice? textures = null, IAudioDevice? audio = null)
+public sealed class InitializeContext(ITextureDevice? textures = null, IAudioDevice? audio = null, IAssetSource? assets = null)
 {
+    public InitializeContext WithAssets(IAssetSource source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        return new InitializeContext(textures, audio, source);
+    }
+    public IAssetSource Assets => assets ?? throw new NotSupportedException("This context does not provide an asset source.");
     public ITextureDevice Textures => textures ?? throw new NotSupportedException("This platform does not provide textures.");
     public IAudioDevice Audio => audio ?? SilentAudioDevice.Instance;
 }

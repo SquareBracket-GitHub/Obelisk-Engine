@@ -4,13 +4,20 @@ using StbImageSharp;
 namespace Obelisk.Plugins.Images;
 
 /// <summary>Bundled, optional image importer. Decoding/downloading never accesses a GPU.</summary>
-public sealed class ImagePlugin : IDisposable
+public sealed class ImagePlugin : Obelisk.Plugin.IObeliskPlugin
 {
+    public void Register(Obelisk.Plugin.PluginRegistrationContext context)
+    {
+        context.RegisterDefaultAssetLoader<RgbaImage>(LoadFile);
+        context.RegisterAssetLoader<RgbaImage>(LoadFile);
+    }
     public const int MaximumEncodedBytes = 16 * 1024 * 1024;
     private readonly HttpClient _http;
     private readonly bool _ownsHttp;
 
-    public ImagePlugin(HttpClient? http = null)
+    public ImagePlugin() : this(null) { }
+
+    public ImagePlugin(HttpClient? http)
     {
         _ownsHttp = http is null;
         _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };

@@ -2,7 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Obelisk.Abstractions\Obelisk.Abstractions.csproj" />
-    <ProjectReference Include="..\Obelisk.Runtime\Obelisk.Runtime.csproj" />
+    <ProjectReference Include="..\Obelisk.Assets\Obelisk.Assets.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

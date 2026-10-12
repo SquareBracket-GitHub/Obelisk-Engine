@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "sample",
+  "version": "0.1.0",
+  "engineMinimum": "0.1.0",
+  "engineMaximumExclusive": "0.2.0",
+  "assembly": "SamplePlugin.dll",
+  "entryPoint": "SamplePlugin.PulsePlugin",
+  "assets": "assets",
+  "shaders": "shaders",
+  "native": "native"
+}
