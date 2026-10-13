@@ -23,6 +23,10 @@ public static class CliApplication
           new <name>    Create a .NET 10 game in a new child directory.
           run [-- args] Restore, build and run the current project.
           dev [-- args] Rebuild/restart after debounced file changes.
+          build         Publish Release self-contained Windows x64 to artifacts/build/win-x64.
+          add <path>    Install a local Plugin package directory (game must be stopped).
+          remove <name> Remove an installed Plugin (game must be stopped).
+          list          List installed local Plugins and versions.
           info          Show CLI, template and runtime versions.
           help          Show this help (--help or -h also work).
           --version     Show CLI version.
@@ -36,13 +40,13 @@ public static class CliApplication
         => RunAsync(args, context, generator).GetAwaiter().GetResult();
 
     public static async Task<int> RunAsync(string[] args, CliContext context, ProjectGenerator? generator = null,
-        DevelopmentCommands? development = null, CancellationToken cancellation = default)
+        DevelopmentCommands? development = null, CancellationToken cancellation = default, BuildCommand? build = null)
     {
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(context);
         try
         {
-            if (args.Length == 0 || args is ["help" or "--help" or "-h"] || args is ["new" or "info" or "run" or "dev", "--help" or "-h"])
+            if (args.Length == 0 || args is ["help" or "--help" or "-h"] || args is ["new" or "info" or "run" or "dev" or "build" or "add" or "remove" or "list", "--help" or "-h"])
             {
                 context.Output.WriteLine(Help);
                 return CliExitCodes.Success;
@@ -73,6 +77,14 @@ public static class CliApplication
                 if (args.Length > 1 && args[1] != "--") return Usage(context, "Use 'obelisk run/dev -- <game arguments>'. Run 'obelisk --help'.");
                 return await (development ?? new DevelopmentCommands()).RunAsync(context,
                     args.Length > 1 ? args[2..] : [], args[0] == "dev", cancellation).ConfigureAwait(false);
+            }
+            if (args is ["build"]) return await (build ?? new BuildCommand()).RunAsync(context, cancellation).ConfigureAwait(false);
+            if (args is ["list"]) return new PluginCommands().Run(context, "list");
+            if (args is ["add" or "remove", var value])
+            {
+                if (string.IsNullOrWhiteSpace(value) || (args[0] == "remove" && !PluginCommands.IsValidName(value)))
+                    return Usage(context, "Use 'obelisk add <local-path>' or 'obelisk remove <manifest-name>', without a path for removal.");
+                return new PluginCommands().Run(context, args[0], value);
             }
             return Usage(context, "Unknown command or invalid arguments. Run 'obelisk --help'.");
         }

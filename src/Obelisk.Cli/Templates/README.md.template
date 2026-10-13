@@ -32,6 +32,7 @@ in VS Code with C# support. No engine source checkout or ProjectReference is nee
 - obelisk.json: schema 1 project metadata for CLI development commands
 - assets/: copied to build/publish output; project:/// asset root
 - plugins/: copied local packages; install/remove while the process is stopped
+- artifacts/: CLI locks, temporary files and generated distribution (ignored)
 
 Plugin rendering uses public Canvas commands. See the engine README for the local
 Plugin manifest and lifecycle. `obelisk run -- <arguments>` restores, builds and
@@ -40,5 +41,18 @@ stops the previous game and restarts after rebuilding. Source/configuration and
 assets/plugins changes are watched; bin/obj are ignored. Fix build errors and save
 again to retry. Close the game to wait for another change, or press Ctrl+C in the
 CLI to stop development and release its child processes. On Windows, assigned
-descendants are also stopped if the CLI is forcibly terminated. CLI build and
-Plugin management commands arrive in a later stage.
+descendants are also stopped if the CLI is forcibly terminated.
+
+With the game stopped, install a complete local Plugin package using
+`obelisk add "C:\packages\sample"`, inspect versions with `obelisk list`, and remove
+by manifest name using `obelisk remove sample`. Install/remove/build cannot overlap
+another CLI run/dev or mutation; stop the other command first. Direct dotnet/.exe
+processes must also be stopped before changing Plugins. Packages are trusted code;
+the installer checks metadata and paths without executing them.
+
+`obelisk build` publishes Release self-contained Windows x64 output to
+artifacts/build/win-x64. Copy that whole folder and run {{Name}}.exe on a compatible
+Windows x64 machine; the recipient needs no .NET SDK or installed shared runtime.
+The directory includes native dependencies, assets and Plugin packages. Rebuild
+replaces only output marked as owned by this CLI/project and removes stale files.
+Failures preserve the previous build; save custom files outside generated output.

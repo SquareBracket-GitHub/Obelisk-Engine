@@ -11,6 +11,7 @@
     <Description>Obelisk Engine project creation and development CLI.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../Obelisk.Plugin/Obelisk.Plugin.csproj" />
     <EmbeddedResource Include="Templates/*.template" LogicalName="Templates/%(Filename)%(Extension)" WithCulture="false" />
   </ItemGroup>
 </Project>

@@ -8,6 +8,7 @@ public sealed class DevelopmentCommands(IProcessRunner? runner = null, Func<CliC
     {
         context = context with { Output = TextWriter.Synchronized(context.Output), Error = TextWriter.Synchronized(context.Error) };
         var manifest = ProjectManifest.Read(context.WorkingDirectory);
+        using var operation = ProjectOperation.Acquire(context.WorkingDirectory);
         if (!watch)
         {
             var code = await Prepare(context, manifest, cancellation).ConfigureAwait(false);

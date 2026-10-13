@@ -66,11 +66,12 @@ directory, preserving existing files. If cleanup itself fails, the error identif
 the leftover temporary path. No restore or build runs implicitly during generation.
 
 Commands are `new <name>`, `run [-- <game arguments>]`, `dev [-- <game arguments>]`,
-`info`, `help`, `--help`, `-h` and `--version`. `info`
+`build`, `add <local-path>`, `remove <plugin>`, `list`, `info`, `help`, `--help`, `-h`
+and `--version`. `info`
 reports CLI/template versions, runtime and platform without requiring a project.
 Exit codes are 0 for success, 1 for operational failures and 2 for invalid arguments;
 diagnostics go to stderr. `run` also propagates SDK/game exit codes; Ctrl+C returns
-130 after stopping owned processes. Build/Plugin management is scheduled for Day 11.
+130 after stopping owned processes. `build` propagates publish exit codes too.
 
 Inside a generated game directory, use `obelisk run` for one execution or
 `obelisk dev` for automatic restarts. Both validate obelisk.json, then run standard
@@ -84,6 +85,45 @@ Paths must be relative, without traversal or reparse points; project must name a
 existing .csproj. Asset/Plugin directories may be absent. Those fields determine
 watched content roots; custom output paths still require matching .csproj content
 rules and game startup options.
+
+With the game stopped, install a local Plugin package directory with
+`obelisk add "C:\packages\sample"`, inspect installed versions and engine ranges
+with `obelisk list`, and remove by manifest name with `obelisk remove sample`.
+The package needs obelisk.plugin.json and its entry DLL; assets, shaders, native
+files and private dependencies are copied with the complete folder. Installation
+uses the existing Plugin schema/version checks and validates every path without
+executing Plugin code. The game's loader validates the DLL and entry type on startup.
+Unknown, duplicate or incompatible manifests, missing DLLs, links and path traversal
+are rejected. Packages are staged before moving into the manifest's plugins root.
+An existing installation is preserved; remove it before installing a new version.
+Removal takes effect on the next process startup. If cleanup is blocked by file
+permissions or locks, the error identifies the owned leftover staging directory.
+
+`run`, `dev`, `build`, `add` and `remove` share an OS file lock under artifacts;
+concurrent CLI operations fail with guidance to stop the other command. Stop a
+game started directly with dotnet or its .exe yourself before changing Plugins.
+`list` is read-only and remains available while development runs. Plugin code is
+trusted and runs with game permissions; installation is not a sandbox or dependency
+solver.
+
+`obelisk build` runs standard dotnet publish in Release for win-x64 with
+`--self-contained true`, apphost enabled, and single-file, trimming and AOT disabled
+to preserve dynamic Plugin loading. It builds in a fresh staging directory, checks
+the runtime/apphost, and copies the configured assets/plugins roots to canonical
+`assets`/`plugins` directories beside the executable. Use Vanilla's default runtime
+paths for this layout. Source roots cannot use artifacts, bin/obj or editor metadata.
+Native engine dependencies come from SDK publish; Plugin-private native files retain
+their package layout.
+
+Output is `artifacts/build/win-x64`. Copy this whole folder to a Windows x64 machine
+with a compatible graphics driver and run the game's .exe; no .NET SDK or shared
+runtime installation is needed. Generated .gitignore and .csproj exclude artifacts
+from source control and default build items. Rebuild replaces only an output with
+this CLI/project's ownership marker, eliminating stale files and removed Plugins.
+Unowned output is preserved and rejected. Publish failures or cancellation preserve
+the previous build. Treat the output as generated: save custom files elsewhere.
+Older templates should add `artifacts/` to .gitignore and `artifacts/**` to
+DefaultItemExcludes before repeated publishing.
 
 `dev` watches source/project/configuration files and all files under the configured
 assets/plugins roots. It ignores bin/obj, version-control/editor metadata and
@@ -105,6 +145,8 @@ To reproduce the Day 9 packaging Gate on Windows:
 pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1
 # Include the Day 10 run/dev Gate:
 pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -DevelopmentLoop
+# Include Days 9–11 and the relocated distribution Gate:
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -Distribution
 ```
 
 The script creates a fresh directory outside the repository, packs the engine and
@@ -113,7 +155,13 @@ NuGet cache. It checks commands/exit codes, generates MyGame and legal name edge
 cases, restores/builds from packages only, opens the generated game's native window
 and closes it normally. `-DevelopmentLoop` additionally checks exact game argument
 forwarding, a burst of code saves causing one restart, previous-game termination,
-and descendant cleanup after killing only the CLI. Default cleanup removes its own temporary workspace;
+and descendant cleanup after killing only the CLI. `-Distribution` includes those
+checks, then installs/lists/removes SamplePlugin, builds self-contained output,
+and runs a relocated native game with dotnet removed from PATH and DOTNET_ROOT
+pointing to an empty directory. It verifies that the game's loaded coreclr comes
+from its deployed folder and that Plugin/project assets work; a repeat build must
+remove stale output. This simulates an unavailable SDK/shared runtime on the test
+machine, rather than uninstalling its SDK. Default cleanup removes its own temporary workspace;
 `-KeepWorkspace` retains it for inspection. Existing user global tools remain
 unchanged. Package README/license metadata and public publication remain later
 packaging work.

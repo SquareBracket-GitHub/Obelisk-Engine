@@ -1,4 +1,4 @@
-param([switch]$KeepWorkspace, [switch]$DevelopmentLoop)
+param([switch]$KeepWorkspace, [switch]$DevelopmentLoop, [switch]$Distribution)
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
@@ -61,6 +61,9 @@ try {
             'Obelisk.Plugin', 'Obelisk.Plugins.Images', 'Obelisk.Platform.Sdl3', 'Obelisk.Vanilla', 'Obelisk.Cli')) {
             Invoke-Dotnet @('pack', "src/$package/$package.csproj", '-c', 'Release', '-o', $feed,
                 '-m:1', '-p:MSBuildEnableWorkloadResolver=false')
+        }
+        if ($Distribution) {
+            Invoke-Dotnet @('build', 'samples/SamplePlugin/SamplePlugin.csproj', '-c', 'Release', '-m:1', '-p:MSBuildEnableWorkloadResolver=false')
         }
     } finally { Pop-Location }
 
@@ -129,7 +132,7 @@ try {
         if (-not $gameProcess.WaitForExit(10000) -or $gameProcess.ExitCode -ne 0) { throw 'Generated game did not exit normally.' }
         if ((Get-Content -Raw -LiteralPath (Join-Path $taskRoot 'game.stderr.txt'))) { throw 'Generated game reported errors.' }
         Write-Output 'DAY 9 GATE PASSED: isolated global CLI -> new -> package-only restore -> build -> native window -> normal exit.'
-        if ($DevelopmentLoop) {
+        if ($DevelopmentLoop -or $Distribution) {
             $probe = Join-Path $taskRoot 'starts.jsonl'
             $probeLiteral = $probe.Replace('"', '""')
             # Instrument only the external generated game; exercise the installed CLI unchanged.
@@ -186,6 +189,100 @@ internal static class Program
             }
             $cliProcess.Dispose(); $cliProcess = $null
             Write-Output 'DAY 10 GATE PASSED: installed run + exact arguments + dev burst -> one restart + previous game stopped + forced CLI exit cleans SDK/game descendants.'
+        }
+        if ($Distribution) {
+            Push-Location $project
+            try {
+                $pluginPackage = Join-Path $repository 'samples/SamplePlugin/bin/Release/net10.0'
+                $linkedPackage = Join-Path $taskRoot 'linked package'
+                $linkTarget = Join-Path $taskRoot 'preserved link target'
+                Copy-Item -LiteralPath $pluginPackage -Destination $linkedPackage -Recurse
+                New-Item -ItemType Directory -Path $linkTarget | Out-Null
+                $sentinel = Join-Path $linkTarget 'keep.txt'
+                Set-Content -LiteralPath $sentinel -Value 'preserve outside package'
+                $junction = Join-Path $linkedPackage 'escape'
+                New-Item -ItemType Junction -Path $junction -Target $linkTarget | Out-Null
+                try {
+                    & $cli add $linkedPackage
+                    if ($LASTEXITCODE -ne 1 -or -not (Test-Path -LiteralPath $sentinel)) { throw 'Linked Plugin package was accepted or its target was modified.' }
+                } finally { Remove-Item -LiteralPath $junction -Force }
+                & $cli add $pluginPackage
+                if ($LASTEXITCODE -ne 0) { throw 'CLI Plugin installation failed.' }
+                $listing = & $cli list
+                if ($LASTEXITCODE -ne 0 -or "$listing" -notmatch 'sample 0\.1\.0') { throw 'Installed Plugin was not listed.' }
+                & $cli add $pluginPackage
+                if ($LASTEXITCODE -ne 1) { throw 'Duplicate Plugin installation was accepted.' }
+                $asset = Join-Path $project 'assets/distribution.txt'
+                Set-Content -LiteralPath $asset -Encoding utf8 -Value 'day11-project-asset'
+                $pluginProbe = Join-Path $taskRoot 'plugin-loaded.txt'
+                $probeLiteral = $pluginProbe.Replace('"', '""')
+                $gameSource = Join-Path $project 'Game.cs'
+                $code = Get-Content -Raw -LiteralPath $gameSource
+                $initialize = @"
+public void Initialize(InitializeContext context)
+    {
+        var accent = context.Assets.Load<string>("plugin://sample/accent.txt");
+        var asset = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "assets", "distribution.txt"));
+        File.WriteAllText(@"$probeLiteral", accent + "|" + asset);
+    }
+"@
+                if (-not $code.Contains('public void Initialize(InitializeContext context) { }')) { throw 'Unexpected generated Game source.' }
+                Set-Content -LiteralPath $gameSource -Encoding utf8 -Value ($code.Replace('public void Initialize(InitializeContext context) { }', $initialize))
+                & $cli build
+                if ($LASTEXITCODE -ne 0) { throw 'CLI self-contained build failed.' }
+                $published = Join-Path $project 'artifacts/build/win-x64'
+                $deployed = Join-Path $taskRoot 'relocated deployed game'
+                Copy-Item -LiteralPath $published -Destination $deployed -Recurse
+                foreach ($file in @('MyGame.exe', 'coreclr.dll', 'hostfxr.dll', 'hostpolicy.dll', 'System.Private.CoreLib.dll',
+                    'assets/distribution.txt', 'plugins/sample/obelisk.plugin.json', 'plugins/sample/SamplePlugin.dll', 'plugins/sample/assets/accent.txt')) {
+                    if (-not (Test-Path -LiteralPath (Join-Path $deployed $file))) { throw "Distribution lacks '$file'." }
+                }
+                foreach ($folder in @('assets', 'shaders', 'native')) {
+                    foreach ($file in Get-ChildItem -LiteralPath (Join-Path $pluginPackage $folder) -File -Recurse) {
+                        $relative = [IO.Path]::GetRelativePath($pluginPackage, $file.FullName)
+                        $copy = Join-Path $deployed "plugins/sample/$relative"
+                        if ((Get-FileHash -LiteralPath $file.FullName).Hash -ne (Get-FileHash -LiteralPath $copy).Hash) { throw "Plugin file changed: '$relative'." }
+                    }
+                }
+                if (-not (Get-ChildItem -LiteralPath $deployed -Filter SDL3.dll -Recurse)) { throw 'SDL3 native dependency was not published.' }
+                $runtime = Get-Content -Raw -LiteralPath (Join-Path $deployed 'MyGame.runtimeconfig.json') | ConvertFrom-Json
+                if ($runtime.runtimeOptions.framework -or $runtime.runtimeOptions.frameworks -or -not $runtime.runtimeOptions.includedFrameworks) { throw 'Distribution requires a shared .NET runtime.' }
+                $noDotnet = Join-Path $taskRoot 'no-dotnet'
+                New-Item -ItemType Directory -Path $noDotnet | Out-Null
+                $start = [Diagnostics.ProcessStartInfo]::new((Join-Path $deployed 'MyGame.exe'))
+                $start.WorkingDirectory = $deployed
+                $start.UseShellExecute = $false
+                $start.CreateNoWindow = $true
+                $start.RedirectStandardOutput = $true
+                $start.RedirectStandardError = $true
+                $start.Environment['PATH'] = "$env:SystemRoot\System32;$env:SystemRoot"
+                $start.Environment['DOTNET_ROOT'] = $noDotnet
+                $start.Environment['DOTNET_ROOT_X64'] = $noDotnet
+                $start.Environment['DOTNET_ROOT(x86)'] = $noDotnet
+                $start.Environment['DOTNET_MULTILEVEL_LOOKUP'] = '0'
+                $gameProcess.Dispose()
+                $gameProcess = [Diagnostics.Process]::Start($start)
+                $deploymentOutput = $gameProcess.StandardOutput.ReadToEndAsync()
+                $deploymentErrors = $gameProcess.StandardError.ReadToEndAsync()
+                Wait-Until { $gameProcess.Refresh(); $gameProcess.HasExited -or ($gameProcess.MainWindowHandle -ne 0 -and (Test-Path -LiteralPath $pluginProbe)) } 'Relocated distribution did not open its native window and load Plugin assets.'
+                if ($gameProcess.HasExited) { throw "Deployed game failed: $($deploymentErrors.GetAwaiter().GetResult())" }
+                if ((Get-Content -Raw -LiteralPath $pluginProbe) -notmatch 'day11-project-asset') { throw 'Deployed game did not use copied project assets.' }
+                $coreclr = @($gameProcess.Modules | Where-Object { $_.ModuleName -eq 'coreclr.dll' })
+                if ($coreclr.Count -ne 1 -or [IO.Path]::GetDirectoryName($coreclr[0].FileName) -ne $deployed) { throw 'Game did not load its private deployed runtime.' }
+                if (-not $gameProcess.CloseMainWindow() -or -not $gameProcess.WaitForExit(10000) -or $gameProcess.ExitCode -ne 0) { throw 'Deployed game did not exit normally.' }
+                if ($deploymentErrors.GetAwaiter().GetResult()) { throw 'Deployed game reported errors.' }
+
+                & $cli remove sample
+                if ($LASTEXITCODE -ne 0) { throw 'CLI Plugin removal failed.' }
+                $listing = & $cli list
+                if ($LASTEXITCODE -ne 0 -or "$listing" -notmatch 'No local Plugins') { throw 'Removed Plugin is still listed.' }
+                Set-Content -LiteralPath (Join-Path $published 'stale-file.txt') -Value 'old output'
+                & $cli build
+                if ($LASTEXITCODE -ne 0) { throw 'Repeat CLI build failed.' }
+                if ((Test-Path -LiteralPath (Join-Path $published 'stale-file.txt')) -or
+                    (Test-Path -LiteralPath (Join-Path $published 'plugins/sample'))) { throw 'Rebuild retained removed Plugin or stale output.' }
+                Write-Output 'DAY 11 GATE PASSED: independent new -> run -> add/list -> Windows x64 self-contained build -> relocate -> native game using local runtime + Plugin/project assets without SDK PATH -> remove/list -> clean rebuild.'
+            } finally { Pop-Location }
         }
     } finally { Pop-Location }
 } finally {
