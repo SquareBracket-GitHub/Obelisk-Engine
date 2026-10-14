@@ -21,8 +21,19 @@ obelisk dev
 ```
 
 Move the rectangle with arrow keys. Close the window to exit. Edit Game.cs to
-develop your game. Open {{Name}}.csproj in Visual Studio or Rider, or this folder
-in VS Code with C# support. No engine source checkout or ProjectReference is needed.
+develop your game. No engine source checkout or ProjectReference is needed.
+
+## Open in an editor
+
+- VS Code: install the [C# Dev Kit](https://code.visualstudio.com/docs/csharp/get-started),
+  open this folder with `code .`, and run the commands above in its terminal.
+- Visual Studio 2026 (18.0+) supports targeting `net10.0`: choose
+  **File > Open > Project/Solution**, then select `{{Name}}.csproj`.
+- Rider: choose **File > Open**, then select `{{Name}}.csproj` so Rider loads it
+  as a .NET project rather than just opening the folder.
+
+Configure the same NuGet source in the editor as for command-line restore. Until
+the Obelisk packages are published, the local feed must remain available.
 
 ## Project layout
 

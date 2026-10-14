@@ -58,6 +58,40 @@ with C# support. Later restore operations must still have access to the local fe
 until public packages are published; configure a NuGet source or keep passing
 `--source` as above.
 
+## Starter ZIP and editor setup
+
+The Starter archive is generated from the same CLI template and version as
+`obelisk new ObeliskStarter`:
+
+```powershell
+pwsh -NoProfile -File scripts/Build-Starter.ps1
+Expand-Archive artifacts/starter/Obelisk-Starter-v0.1.0.zip -DestinationPath ../Obelisk-Games
+Set-Location ../Obelisk-Games/ObeliskStarter
+dotnet restore --source $obeliskFeed --source https://api.nuget.org/v3/index.json
+dotnet build --no-restore
+dotnet run --no-build
+```
+
+`$obeliskFeed` is the local feed from the installation steps above. Copy or move
+the extracted `ObeliskStarter` directory wherever you work; the project contains
+no link to the engine checkout. Until the packages are published, each machine
+must have the local feed available for restore.
+
+After extraction or `obelisk new`, open the project in an editor:
+
+- VS Code: install the [C# Dev Kit](https://code.visualstudio.com/docs/csharp/get-started),
+  open the project folder with `code .`, and use its terminal for the commands above.
+- Visual Studio 2026 (18.0+) is required for supported `net10.0` targeting.
+  Choose **File > Open > Project/Solution** and select `ObeliskStarter.csproj`
+  (or the generated project's `.csproj`). See the
+  [.NET/Visual Studio version matrix](https://learn.microsoft.com/en-us/dotnet/core/porting/versioning-sdk-msbuild-vs).
+- Rider: choose **File > Open** and select the `.csproj`; selecting only the
+  directory opens a folder rather than a .NET solution.
+
+The CLI and SDK commands work independently of these editors. The Starter archive
+is a generated artifact under `artifacts/starter/`; regenerate it after changing
+the CLI template or engine version.
+
 `new` accepts 1–64 ASCII identifier characters, starting with a letter or underscore;
 C# keywords and Windows device names are reserved. It creates a new child directory,
 rejects existing paths, and stages the complete template before moving it into
@@ -147,6 +181,8 @@ pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1
 pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -DevelopmentLoop
 # Include Days 9–11 and the relocated distribution Gate:
 pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -Distribution
+# Include the Day 12 Starter equivalence, relocation and native-run Gate:
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -Starter
 ```
 
 The script creates a fresh directory outside the repository, packs the engine and
@@ -165,6 +201,12 @@ machine, rather than uninstalling its SDK. Default cleanup removes its own tempo
 `-KeepWorkspace` retains it for inspection. Existing user global tools remain
 unchanged. Package README/license metadata and public publication remain later
 packaging work.
+
+`-Starter` generates the ZIP, compares its project files byte-for-byte with the
+installed CLI output, copies and moves the extracted project, then restores,
+builds and runs both projects with a native SDL window. This Gate currently uses
+isolated **local** packages; its public-NuGet requirement remains open until
+`Obelisk.Vanilla` and its dependencies are published.
 
 ## Run the repository samples
 

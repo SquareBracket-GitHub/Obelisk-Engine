@@ -1,4 +1,4 @@
-param([switch]$KeepWorkspace, [switch]$DevelopmentLoop, [switch]$Distribution)
+param([switch]$KeepWorkspace, [switch]$DevelopmentLoop, [switch]$Distribution, [switch]$Starter)
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
@@ -48,6 +48,73 @@ function Test-Alive([int]$ProcessId) {
     return $false
 }
 
+function Verify-Template([string]$Directory, [string]$RepositoryPath) {
+    [xml]$projectXml = Get-Content -Raw -LiteralPath (Join-Path $Directory 'ObeliskStarter.csproj')
+    $references = @($projectXml.Project.ItemGroup.PackageReference | Where-Object { $_ })
+    if ($references.Count -ne 1 -or $references[0].Include -ne 'Obelisk.Vanilla' -or
+        $references[0].Version -ne '[0.1.0]' -or $projectXml.Project.ItemGroup.ProjectReference) {
+        throw "'$Directory' must use only Obelisk.Vanilla [0.1.0], without source references."
+    }
+    $manifest = Get-Content -Raw -LiteralPath (Join-Path $Directory 'obelisk.json') | ConvertFrom-Json
+    if ($manifest.engineVersion -ne '0.1.0' -or $manifest.project -ne 'ObeliskStarter.csproj') {
+        throw "'$Directory' has mismatched manifest metadata."
+    }
+    foreach ($file in Get-ChildItem -LiteralPath $Directory -File -Recurse -Force) {
+        $contents = Get-Content -Raw -LiteralPath $file.FullName
+        if ($contents.Contains($RepositoryPath, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "'$($file.FullName)' contains an engine checkout path."
+        }
+    }
+}
+
+function Verify-TemplateRun([string]$Directory, [string]$Probe, [switch]$UseCli) {
+    $source = Join-Path $Directory 'Game.cs'
+    $gameCode = Get-Content -Raw -LiteralPath $source
+    $old = 'public void Initialize(InitializeContext context) { }'
+    if (-not $gameCode.Contains($old)) { throw "Unexpected game template in '$Directory'." }
+    $literal = $Probe.Replace('"', '""')
+    $replacement = "public void Initialize(InitializeContext context) => File.WriteAllText(@`"$literal`", Environment.ProcessId.ToString());"
+    Set-Content -LiteralPath $source -Encoding utf8 -Value ($gameCode.Replace($old, $replacement))
+    if ($UseCli) {
+        $script:project = $Directory
+        Start-Cli @('run')
+    } else {
+        $projectFile = Join-Path $Directory 'ObeliskStarter.csproj'
+        Invoke-Dotnet @('restore', $projectFile, '--configfile', $configuration)
+        Invoke-Dotnet @('build', $projectFile, '-c', 'Release', '--no-restore')
+        $run = [Diagnostics.ProcessStartInfo]::new('dotnet')
+        $run.WorkingDirectory = $Directory
+        $run.UseShellExecute = $false
+        $run.CreateNoWindow = $true
+        $run.RedirectStandardOutput = $true
+        $run.RedirectStandardError = $true
+        foreach ($part in @('run', '--project', $projectFile, '-c', 'Release', '--no-build', '--no-restore')) {
+            $run.ArgumentList.Add($part)
+        }
+        $script:cliProcess = [Diagnostics.Process]::Start($run)
+        $script:cliOutput = $cliProcess.StandardOutput.ReadToEndAsync()
+        $script:cliErrors = $cliProcess.StandardError.ReadToEndAsync()
+    }
+    Wait-Until { (Test-Path -LiteralPath $Probe) -or $cliProcess.HasExited } "Game from '$Directory' did not initialize."
+    if ($cliProcess.HasExited) { throw "Game from '$Directory' exited: $($cliErrors.GetAwaiter().GetResult())" }
+    $id = [int](Get-Content -Raw -LiteralPath $Probe)
+    $running = Get-Process -Id $id
+    try {
+        Wait-Until { $running.Refresh(); $running.HasExited -or $running.MainWindowHandle -ne 0 } "Game from '$Directory' did not open an SDL window."
+        if ($running.HasExited -or -not $running.CloseMainWindow()) { throw "Game from '$Directory' could not close normally." }
+        if (-not $running.WaitForExit(10000)) {
+            $errorText = if ($cliErrors) { $cliErrors.GetAwaiter().GetResult() } else { '' }
+            $outputText = if ($cliOutput) { $cliOutput.GetAwaiter().GetResult() } else { '' }
+            throw "Game from '$Directory' did not exit after closing its window. stderr: $errorText stdout: $outputText"
+        }
+    } finally { $running.Dispose() }
+    if (-not $cliProcess.WaitForExit(10000) -or $cliProcess.ExitCode -ne 0) {
+        throw "Run command failed for '$Directory' (exit $($cliProcess.ExitCode)): $($cliErrors.GetAwaiter().GetResult())"
+    }
+    if ($cliErrors.GetAwaiter().GetResult()) { throw "Run command reported errors for '$Directory'." }
+    $cliProcess.Dispose(); $script:cliProcess = $null
+}
+
 function Invoke-Dotnet([string[]]$Arguments) {
     & dotnet @Arguments
     if ($LASTEXITCODE -ne 0) { throw "dotnet $($Arguments -join ' ') failed with exit code $LASTEXITCODE." }
@@ -64,6 +131,10 @@ try {
         }
         if ($Distribution) {
             Invoke-Dotnet @('build', 'samples/SamplePlugin/SamplePlugin.csproj', '-c', 'Release', '-m:1', '-p:MSBuildEnableWorkloadResolver=false')
+        }
+        if ($Starter) {
+            & pwsh -NoProfile -File (Join-Path $repository 'scripts/Build-Starter.ps1')
+            if ($LASTEXITCODE -ne 0) { throw 'Starter ZIP generation failed.' }
         }
     } finally { Pop-Location }
 
@@ -283,6 +354,49 @@ public void Initialize(InitializeContext context)
                     (Test-Path -LiteralPath (Join-Path $published 'plugins/sample'))) { throw 'Rebuild retained removed Plugin or stale output.' }
                 Write-Output 'DAY 11 GATE PASSED: independent new -> run -> add/list -> Windows x64 self-contained build -> relocate -> native game using local runtime + Plugin/project assets without SDK PATH -> remove/list -> clean rebuild.'
             } finally { Pop-Location }
+        }
+        if ($Starter) {
+            $zip = Join-Path $repository 'artifacts/starter/Obelisk-Starter-v0.1.0.zip'
+            if (-not (Test-Path -LiteralPath $zip)) { throw 'Starter ZIP was not created.' }
+            & $cli new ObeliskStarter
+            if ($LASTEXITCODE -ne 0) { throw 'Packaged CLI could not generate the matching Starter project.' }
+            $cliTemplate = Join-Path $workspace 'ObeliskStarter'
+            $extracted = Join-Path $taskRoot 'extracted'
+            [IO.Compression.ZipFile]::ExtractToDirectory($zip, $extracted)
+            $zipTemplate = Join-Path $extracted 'ObeliskStarter'
+            Verify-Template $cliTemplate $repository
+            Verify-Template $zipTemplate $repository
+            $cliFiles = @(Get-ChildItem -LiteralPath $cliTemplate -File -Recurse -Force | ForEach-Object {
+                [IO.Path]::GetRelativePath($cliTemplate, $_.FullName).Replace('\', '/')
+            } | Sort-Object)
+            $zipFiles = @(Get-ChildItem -LiteralPath $zipTemplate -File -Recurse -Force | ForEach-Object {
+                [IO.Path]::GetRelativePath($zipTemplate, $_.FullName).Replace('\', '/')
+            } | Sort-Object)
+            if (($cliFiles | ConvertTo-Json -Compress) -ne ($zipFiles | ConvertTo-Json -Compress)) { throw 'CLI and ZIP template file sets differ.' }
+            foreach ($relative in $cliFiles) {
+                $left = Join-Path $cliTemplate $relative
+                $right = Join-Path $zipTemplate $relative
+                if ((Get-FileHash -LiteralPath $left).Hash -ne (Get-FileHash -LiteralPath $right).Hash) {
+                    throw "CLI and ZIP template differ: '$relative'."
+                }
+            }
+            $copyRoot = Join-Path $taskRoot 'copied workspace'
+            $moveRoot = Join-Path $taskRoot 'moved workspace'
+            New-Item -ItemType Directory -Path $copyRoot, $moveRoot | Out-Null
+            Copy-Item -LiteralPath $zipTemplate -Destination $copyRoot -Recurse
+            $copiedTemplate = Join-Path $copyRoot 'ObeliskStarter'
+            $movedTemplate = Join-Path $moveRoot 'ObeliskStarter'
+            $allowed = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($taskRoot)) + [IO.Path]::DirectorySeparatorChar
+            foreach ($path in @($copiedTemplate, $movedTemplate)) {
+                if (-not [IO.Path]::GetFullPath($path).StartsWith($allowed, [StringComparison]::OrdinalIgnoreCase)) {
+                    throw 'Refusing to move Starter outside the verification workspace.'
+                }
+            }
+            Move-Item -LiteralPath $copiedTemplate -Destination $movedTemplate
+            Verify-Template $movedTemplate $repository
+            Verify-TemplateRun $movedTemplate (Join-Path $taskRoot 'zip-game.pid')
+            Verify-TemplateRun $cliTemplate (Join-Path $taskRoot 'cli-game.pid') -UseCli
+            Write-Output 'DAY 12 LOCAL GATE PASSED: packaged CLI and Starter ZIP render byte-identical projects, copied/moved ZIP project and CLI project restore/build/run native SDL windows from isolated local packages; no engine checkout references.'
         }
     } finally { Pop-Location }
 } finally {
