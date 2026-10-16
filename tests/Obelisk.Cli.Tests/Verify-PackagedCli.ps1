@@ -120,6 +120,25 @@ function Invoke-Dotnet([string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "dotnet $($Arguments -join ' ') failed with exit code $LASTEXITCODE." }
 }
 
+function Verify-Notices([string]$Directory) {
+    $native = @(Get-ChildItem -LiteralPath $Directory -Filter SDL3.dll -Recurse)
+    $expectedNative = (Get-FileHash -LiteralPath (Join-Path $repository 'native/sdl3/win-x64/SDL3.dll')).Hash
+    if ($native.Count -eq 0 -or @($native | Where-Object { (Get-FileHash -LiteralPath $_.FullName).Hash -ne $expectedNative }).Count -ne 0) {
+        throw 'The generated/published game did not receive the pinned patched SDL native runtime.'
+    }
+    foreach ($component in @('sdl3', 'skiasharp', 'stbimagesharp')) {
+        $source = Join-Path $repository "licenses/$component"
+        foreach ($file in Get-ChildItem -LiteralPath $source -Recurse -File) {
+            $relative = [IO.Path]::GetRelativePath($source, $file.FullName)
+            $target = Join-Path $Directory "licenses/$component/$relative"
+            if (-not (Test-Path -LiteralPath $target) -or
+                (Get-FileHash -LiteralPath $file.FullName).Hash -ne (Get-FileHash -LiteralPath $target).Hash) {
+                throw "Missing or altered third-party notice '$target'."
+            }
+        }
+    }
+}
+
 try {
     New-Item -ItemType Directory -Path $feed, $workspace, $cliHome | Out-Null
     Push-Location $repository
@@ -178,6 +197,7 @@ try {
         if ($LASTEXITCODE -ne 2) { throw 'An invalid name did not return exit code 2.' }
         Invoke-Dotnet @('restore', (Join-Path $project 'MyGame.csproj'), '--configfile', $configuration)
         Invoke-Dotnet @('build', (Join-Path $project 'MyGame.csproj'), '-c', 'Release', '--no-restore')
+        Verify-Notices (Join-Path $project 'bin/Release/net10.0')
         # Legal names that also name a generated type/framework namespace must compile.
         foreach ($edgeName in @('Program', 'Game', 'System')) {
             & $cli new $edgeName
@@ -317,6 +337,16 @@ public void Initialize(InitializeContext context)
                 }
                 if (-not (Get-ChildItem -LiteralPath $deployed -Filter SDL3.dll -Recurse)) { throw 'SDL3 native dependency was not published.' }
                 $runtime = Get-Content -Raw -LiteralPath (Join-Path $deployed 'MyGame.runtimeconfig.json') | ConvertFrom-Json
+                Verify-Notices $deployed
+                $runtimeVersion = ($runtime.runtimeOptions.includedFrameworks | Where-Object name -eq 'Microsoft.NETCore.App').version
+                foreach ($notice in @('LICENSE.TXT', 'THIRD-PARTY-NOTICES.TXT')) {
+                    $original = Join-Path $env:NUGET_PACKAGES "microsoft.netcore.app.runtime.win-x64/$runtimeVersion/$notice"
+                    $copied = Join-Path $deployed "licenses/dotnet/$notice"
+                    if (-not (Test-Path -LiteralPath $copied) -or
+                        (Get-FileHash -LiteralPath $original).Hash -ne (Get-FileHash -LiteralPath $copied).Hash) {
+                        throw "Missing or altered .NET runtime notice '$copied'."
+                    }
+                }
                 if ($runtime.runtimeOptions.framework -or $runtime.runtimeOptions.frameworks -or -not $runtime.runtimeOptions.includedFrameworks) { throw 'Distribution requires a shared .NET runtime.' }
                 $noDotnet = Join-Path $taskRoot 'no-dotnet'
                 New-Item -ItemType Directory -Path $noDotnet | Out-Null

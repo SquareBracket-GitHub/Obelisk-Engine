@@ -1,0 +1,17 @@
+<Project>
+  <Target Name="ObeliskIncludeRuntimeNotices" AfterTargets="ComputeResolvedFilesToPublishList"
+          Condition="'$(SelfContained)' == 'true'">
+    <ItemGroup>
+      <_ObeliskRuntimePack Include="@(ResolvedRuntimePack)"
+                           Condition="'%(ResolvedRuntimePack.FrameworkName)' == 'Microsoft.NETCore.App'" />
+      <_ObeliskRuntimeNotice Include="@(_ObeliskRuntimePack->'%(PackageDirectory)/LICENSE.TXT');@(_ObeliskRuntimePack->'%(PackageDirectory)/THIRD-PARTY-NOTICES.TXT')" />
+    </ItemGroup>
+    <Error Condition="'@(_ObeliskRuntimePack)' == ''" Text="Obelisk could not resolve the published .NET runtime license source." />
+    <Error Condition="!Exists('%(_ObeliskRuntimeNotice.Identity)')" Text="Missing runtime notice: %(_ObeliskRuntimeNotice.Identity). Restore the runtime pack before publishing." />
+    <ItemGroup>
+      <ResolvedFileToPublish Include="@(_ObeliskRuntimeNotice)"
+                             RelativePath="licenses/dotnet/%(Filename)%(Extension)"
+                             CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -7,4 +7,12 @@
 *.md text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+*.patch text eol=lf whitespace=-trailing-space
+native/**/*.dll binary
+# Keep the build manifest byte-identical to its packaged notice copy.
+native/sdl3/build.json -text whitespace=cr-at-eol
+
+# Preserve vendored license/notice bytes from fixed upstream packages.
+licenses/** -text whitespace=-trailing-space,cr-at-eol
+licenses/README.md text eol=lf whitespace
 

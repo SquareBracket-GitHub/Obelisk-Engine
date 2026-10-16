@@ -1,0 +1,3 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)src/Obelisk.Vanilla/buildTransitive/Obelisk.Vanilla.targets" />
+</Project>

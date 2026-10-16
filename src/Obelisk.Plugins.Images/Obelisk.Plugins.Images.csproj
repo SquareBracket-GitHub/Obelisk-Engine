@@ -2,6 +2,12 @@
   <PropertyGroup><EnableDynamicLoading>true</EnableDynamicLoading></PropertyGroup>
   <ItemGroup><None Update="obelisk.plugin.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup>
+    <Content Include="../../licenses/stbimagesharp/**" Link="licenses/stbimagesharp/%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+             Pack="true" PackagePath="contentFiles/any/any/licenses/stbimagesharp/"
+             PackageCopyToOutput="true" PackageFlatten="false" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Obelisk.Plugin\Obelisk.Plugin.csproj" />
     <ProjectReference Include="..\Obelisk.Graphics2D\Obelisk.Graphics2D.csproj" />
     <PackageReference Include="StbImageSharp" Version="2.30.16" />

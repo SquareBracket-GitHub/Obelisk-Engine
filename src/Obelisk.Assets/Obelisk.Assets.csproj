@@ -12,4 +12,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Content Include="../../licenses/skiasharp/**" Link="licenses/skiasharp/%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+             Pack="true" PackagePath="contentFiles/any/any/licenses/skiasharp/"
+             PackageCopyToOutput="true" PackageFlatten="false" />
+  </ItemGroup>
+
 </Project>

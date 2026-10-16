@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <PackageReference Include="SDL3-CS" Version="3.4.16.2" />
-    <PackageReference Include="SDL3-CS.Windows" Version="3.4.16.2" />
     <PackageReference Include="SDL3-CS.Windows.Shadercross" Version="3.0.0.12" />
   </ItemGroup>
 
@@ -16,5 +15,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../native/sdl3/win-x64/SDL3.dll" Link="SDL3.dll"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+          Pack="true" PackagePath="runtimes/win-x64/native/SDL3.dll" />
+    <Content Include="../../licenses/sdl3/**" Link="licenses/sdl3/%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+             Pack="true" PackagePath="contentFiles/any/any/licenses/sdl3/"
+             PackageCopyToOutput="true" PackageFlatten="false" />
+  </ItemGroup>
 
 </Project>

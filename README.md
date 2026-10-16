@@ -11,6 +11,8 @@ API is still experimental while distribution work continues.
 - .NET SDK 10.0.401 (pinned by `global.json`)
 - Git
 - Windows x64 with an SDL_GPU-compatible graphics driver for the native samples
+- [Microsoft Visual C++ v14 Redistributable (x64)](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist):
+  the native SDL/Shadercross binaries import the VC++ runtime, including in self-contained games
 - Windows' Malgun Gothic (`malgun.ttf`) for Pong and CanvasShowcase
 
 ## Install the CLI and create a game
@@ -150,7 +152,7 @@ Native engine dependencies come from SDK publish; Plugin-private native files re
 their package layout.
 
 Output is `artifacts/build/win-x64`. Copy this whole folder to a Windows x64 machine
-with a compatible graphics driver and run the game's .exe; no .NET SDK or shared
+with a compatible graphics driver and the VC++ x64 runtime above, then run the game's .exe; no .NET SDK or shared
 runtime installation is needed. Generated .gitignore and .csproj exclude artifacts
 from source control and default build items. Rebuild replaces only an output with
 this CLI/project's ownership marker, eliminating stale files and removed Plugins.
@@ -281,6 +283,117 @@ dotnet test Obelisk.sln --no-build
 dotnet build Obelisk.sln -c Release
 dotnet test Obelisk.sln -c Release --no-build
 ```
+
+## Stability verification and distribution notices
+
+On Windows, run the complete Day 13 scenario with a compatible GPU, the pinned
+.NET SDK and the sample prerequisites above:
+
+```powershell
+pwsh -NoProfile -File scripts/Verify-Stability.ps1
+# Only open/close the three original Sample executables in Debug and Release:
+pwsh -NoProfile -File scripts/Verify-Stability.ps1 -SmokeOnly
+# Short diagnostic run; this does not satisfy the 30-minute Gate:
+pwsh -NoProfile -File scripts/Verify-Stability.ps1 -Quick
+```
+
+The full command runs the regression suites and all six Sample/configuration
+combinations, then repeats the actual Sample game implementations for at least
+30 real minutes in one process. The stability executable links their source files
+to avoid adding test switches to the games. Each cycle initializes a fresh SDL/GPU
+platform, renders, minimizes/restores twice, resizes the two resizable samples,
+churns textures and exits through the normal SDL quit path. Pong automatically
+starts/restarts matches to exercise audio and gameplay. Window requests use SDL
+on the owning thread and affect only the test's own windows.
+
+`artifacts/stability/` contains JSONL measurements and `summary.json`/`gate.json`.
+Running samples are recorded every five seconds; stopped measurements follow an
+explicit full GC. The first three cycles allow JIT, shader and driver caches to
+warm up. Owned GPU handles must remain stable during each cycle and return to zero
+after every shutdown. This is an ownership count, not driver residency. Windows
+GPU process-memory counters are recorded separately. A full Gate requires enough
+valid CPU/GPU measurements; missing GPU counters cannot establish a pass.
+
+The average of the final three stopped measurements may exceed the first three
+post-warm-up measurements by at most 64 MiB private memory, 16 MiB managed memory,
+16 OS handles and eight threads. CPU usage may grow by at most 0.10 of one CPU
+core. GPU dedicated/shared/committed memory averages use six-sample windows after
+warm-up and a 32 MiB growth tolerance. These tolerances detect sustained growth
+while allowing allocator/driver cache noise; a pass covers the measured workload,
+duration and machine. Keep the raw measurements for review. Use
+`-AnalyzeOnly -OutputDirectory <existing-results>` to repeat analysis without rerunning games.
+
+The initial 2026-10-15 Day 13 run **failed**: 30 cycles over
+1,813.92 seconds left zero owned GPU resources after every shutdown, but stopped
+OS handle averages grew from 436.67 to 456.67, exceeding the predeclared +16 limit.
+Private memory grew by 13.53 MiB; managed memory grew by about 2.4 KiB. CPU and GPU
+memory did not exceed their thresholds, and the runner/children exited. Debug and
+Release each passed 256 tests; all three original Sample executables opened and
+closed normally in both configurations. Packaged CLI/distribution/Starter local
+Gates passed, including preservation of native and .NET runtime notices.
+
+The native isolation probe reproduces approximately one extra OS handle per
+SDL video initialization/shutdown without creating a window or GPU device:
+
+```powershell
+dotnet run --project tests/Obelisk.Stability -c Release -- --probe init --cycles 40
+# Controls: event-only initialization and audio-only initialization remain flat
+# after warm-up; use --probe events / --probe audio / --probe empty.
+```
+
+With the pinned packages, warm cycles 3–5 averaged 305.67 handles and final three
+cycles averaged 341.00. The corresponding event-only control was 287.67 to 289.00,
+and audio-only was 330.67 to 332.00. The binding directly calls SDL's native init
+and quit exports. In [SDL 3.4.16's Windows device-notification implementation](https://github.com/libsdl-org/SDL/blob/release-3.4.16/src/core/windows/SDL_hid.c),
+`WIN_InitDeviceNotification` creates `s_HotplugEvent`, while
+`WIN_QuitDeviceNotification` joins the hotplug thread and unregisters callbacks
+without closing that event. This matches the observed growth. The same omission
+was present in upstream `main` when inspected on 2026-10-15.
+
+On 2026-10-16 the project owner approved the native correction. The patched
+`3.4.16-obelisk.1` runtime closes/resets that event after the thread has joined and
+notification callbacks have been unregistered. The engine's platform package now
+ships this Windows x64 DLL instead of depending on `SDL3-CS.Windows`. Engine code
+does not close opaque SDL handles. The 40-cycle video-only probe now averages
+310.67 to 312.00 handles; full platform initialization/shutdown averages 414.67 to
+414.00, with zero owned GPU resources.
+
+The final 2026-10-16 Gate **passed** with this patched DLL: 30 cycles over
+1,814.68 seconds, Debug/Release each passing 256 tests, and all six original Sample
+runs passing. Stopped handle averages decreased from 435.00 to 431.67; owned GPU
+resources returned to zero after every shutdown. Private/managed memory grew by
+10.08 MiB/14.27 KiB, within the original tolerances. CPU usage decreased from
+0.0163 to 0.0145 of one core. GPU dedicated/shared/committed averages grew by
+0.13/0.17/0.31 MiB across 61 GPU measurements, within the original limits.
+The runner exited with no surviving child process. Final logs are under
+`artifacts/stability-final-30m/`; `gate.json`, `comparison.json` and
+`native-module.json` preserve the result, measurements and loaded DLL identity.
+The independent packaged CLI, relocated self-contained game and Starter local
+Gates also passed with exact patched DLL and notice hashes. This pass covers the
+tested Windows x64 machine and workload.
+
+To rebuild the checked-in runtime, install Visual Studio 2022 C++ tools with
+MSVC 14.44.35207/v143 and Windows SDK 10.0.26100.0, then run:
+
+```powershell
+pwsh -NoProfile -File scripts/Build-SdlNative.ps1
+```
+
+The script verifies the official 3.4.16 archive's SHA-256, applies the patch to a
+fresh source tree and builds upstream's Release/x64 VisualC project. It records
+source/patch/DLL hashes and toolchain details in `native/sdl3/build.json` and copies
+the alteration notice, patch and manifest into distribution licenses. Engine
+package consumers use the supplied DLL without C++ tools. Build inputs are pinned;
+bit-for-bit identity across toolchain installations is not guaranteed. See
+[ADR 0001](docs/adr/0001-sdl3-csharp-binding.md) for ownership and maintenance.
+Retain the original failed run's JSONL logs for comparison.
+
+The platform, assets and image Plugin packages carry their dependency texts under
+`licenses/` into build/publish output. Preserve that directory when distributing a
+game or tool; the packaged CLI integration Gate checks the complete notice set
+against the repository originals. See [the dependency inventory](licenses/README.md)
+for the fixed versions, native DLLs, upstream sources and font/runtime constraints.
+Selecting the engine's own release license remains part of release preparation.
 
 ## Run the current sample
 

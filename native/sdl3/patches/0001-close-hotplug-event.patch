@@ -1,0 +1,15 @@
+diff --git a/src/core/windows/SDL_hid.c b/src/core/windows/SDL_hid.c
+--- a/src/core/windows/SDL_hid.c
++++ b/src/core/windows/SDL_hid.c
+@@ -272,6 +272,11 @@ void WIN_QuitDeviceNotification(void)
+         FreeLibrary(cfgmgr32_lib_handle);
+         cfgmgr32_lib_handle = NULL;
+     }
++
++    if (s_HotplugEvent && s_HotplugEvent != INVALID_HANDLE_VALUE) {
++        CloseHandle(s_HotplugEvent);
++    }
++    s_HotplugEvent = INVALID_HANDLE_VALUE;
+ }
+ 
+ #else

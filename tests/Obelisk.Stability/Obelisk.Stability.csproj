@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <StartupObject>Obelisk.Stability.Program</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Obelisk.Vanilla/Obelisk.Vanilla.csproj" />
+    <!-- Exercise the actual Sample implementations without adding test switches to games. -->
+    <Compile Include="../../samples/MovingRectangle/Program.cs" Link="Samples/MovingRectangle.cs" />
+    <Compile Include="../../samples/CanvasShowcase/Program.cs" Link="Samples/CanvasShowcase.cs" />
+    <Compile Include="../../samples/Pong/*.cs" Link="Samples/Pong/%(Filename)%(Extension)" />
+    <Content Include="../../samples/Pong/assets/**" Link="assets/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -16,4 +16,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- NuGet contentFiles do not flow through a meta-package's dependencies. -->
+    <None Update="buildTransitive/Obelisk.Vanilla.targets" Pack="true" PackagePath="buildTransitive/Obelisk.Vanilla.targets" />
+    <Content Include="../../licenses/**" Exclude="../../licenses/README.md"
+             Link="licenses/%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+             Pack="true" PackagePath="contentFiles/any/any/licenses/"
+             PackageCopyToOutput="true" PackageFlatten="false" />
+  </ItemGroup>
+
 </Project>

@@ -104,13 +104,29 @@ public sealed partial class Sdl3ApplicationPlatformTests
     [Fact]
     public void GpuResource_ReleasesExactlyOnceAndIgnoresNullHandles()
     {
+        var baseline = GpuResource.LiveCount;
         var released = new List<nint>();
         var resource = new GpuResource(42, released.Add);
+        Assert.Equal(baseline + 1, GpuResource.LiveCount);
         resource.Dispose();
         resource.Dispose();
         new GpuResource(0, released.Add).Dispose();
         Assert.Equal(new nint[] { 42 }, released);
         Assert.Equal(0, resource.Handle);
+        Assert.Equal(baseline, GpuResource.LiveCount);
+    }
+
+    [Fact]
+    public void GpuResource_ReleaseFailureDoesNotRetainOwnershipOrDoubleRelease()
+    {
+        var baseline = GpuResource.LiveCount;
+        var releases = 0;
+        var resource = new GpuResource(42, _ => { releases++; throw new InvalidOperationException("release failed"); });
+        Assert.Throws<InvalidOperationException>(resource.Dispose);
+        resource.Dispose();
+        Assert.Equal(1, releases);
+        Assert.Equal(0, resource.Handle);
+        Assert.Equal(baseline, GpuResource.LiveCount);
     }
 
     [Fact]
