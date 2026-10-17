@@ -6,23 +6,28 @@ namespace Obelisk.Plugins.Images;
 /// <summary>Bundled, optional image importer. Decoding/downloading never accesses a GPU.</summary>
 public sealed class ImagePlugin : Obelisk.Plugin.IObeliskPlugin
 {
+    /// <summary>Registers shared and Plugin-scoped RgbaImage file decoders during Plugin registration.</summary>
     public void Register(Obelisk.Plugin.PluginRegistrationContext context)
     {
         context.RegisterDefaultAssetLoader<RgbaImage>(LoadFile);
         context.RegisterAssetLoader<RgbaImage>(LoadFile);
     }
+    /// <summary>Limits an encoded image or download to 16 MiB.</summary>
     public const int MaximumEncodedBytes = 16 * 1024 * 1024;
     private readonly HttpClient _http;
     private readonly bool _ownsHttp;
 
+    /// <summary>Creates an importer owning an HttpClient with a 30-second timeout.</summary>
     public ImagePlugin() : this(null) { }
 
+    /// <summary>Borrows a supplied HttpClient, or owns a newly created client when null.</summary>
     public ImagePlugin(HttpClient? http)
     {
         _ownsHttp = http is null;
         _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
     }
 
+    /// <summary>Decodes bounded encoded bytes into straight-alpha RGBA8 CPU pixels; invalid images throw InvalidDataException.</summary>
     public RgbaImage Decode(ReadOnlySpan<byte> encoded)
     {
         if (encoded.Length == 0 || encoded.Length > MaximumEncodedBytes)
@@ -42,6 +47,7 @@ public sealed class ImagePlugin : Obelisk.Plugin.IObeliskPlugin
         }
     }
 
+    /// <summary>Reads and decodes a bounded local image; I/O errors include the source path.</summary>
     public RgbaImage LoadFile(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -59,6 +65,7 @@ public sealed class ImagePlugin : Obelisk.Plugin.IObeliskPlugin
         }
     }
 
+    /// <summary>Loads a file and uploads it immediately on the supplied device's owning thread; the caller owns the texture.</summary>
     public Texture LoadTexture(ITextureDevice device, string path) => device.CreateTexture(LoadFile(path));
 
     /// <summary>Returns CPU pixels. Upload them via ITextureDevice on the game thread after completion.</summary>
@@ -86,6 +93,7 @@ public sealed class ImagePlugin : Obelisk.Plugin.IObeliskPlugin
         return Decode(output.ToArray());
     }
 
+    /// <summary>Disposes the internally created HttpClient; never disposes an injected client.</summary>
     public void Dispose()
     {
         if (_ownsHttp) _http.Dispose();

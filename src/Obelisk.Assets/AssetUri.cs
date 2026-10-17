@@ -10,10 +10,14 @@ public readonly record struct AssetUri
         Path = path;
     }
 
+    /// <summary>Gets project or plugin.</summary>
     public string Scheme { get; }
+    /// <summary>Gets the Plugin authority, or null for project assets.</summary>
     public string? Plugin { get; }
+    /// <summary>Gets the decoded slash-separated path confined to its asset root.</summary>
     public string Path { get; }
 
+    /// <summary>Parses project:///path or plugin://name/path; malformed or escaping input throws FormatException.</summary>
     public static AssetUri Parse(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);
@@ -44,6 +48,7 @@ public readonly record struct AssetUri
     private static bool IsSafeSegment(string value) => value.Length > 0 && value is not ("." or "..") &&
         value.IndexOfAny(['/', '\\', ':', '\0']) < 0;
 
+    /// <summary>Returns the normalized scheme, authority and stored path.</summary>
     public override string ToString() => Scheme == "project"
         ? $"project:///{Path}"
         : $"plugin://{Plugin}/{Path}";

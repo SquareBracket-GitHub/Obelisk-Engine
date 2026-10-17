@@ -9,11 +9,13 @@ public sealed class Canvas2D
 {
     private readonly List<RenderCommand2D> _commands = [];
 
+    /// <summary>Creates an empty per-frame Canvas command collector.</summary>
     public Canvas2D()
     {
         Commands = _commands.AsReadOnly();
     }
 
+    /// <summary>Gets a read-only view in submission order; resources used by these commands must remain alive through presentation.</summary>
     public IReadOnlyList<RenderCommand2D> Commands { get; }
 
     /// <summary>Captured by each draw call; Alpha uses straight-alpha source-over blending.</summary>
@@ -25,6 +27,7 @@ public sealed class Canvas2D
         _commands.Add(command with { Blend = Blend });
     }
 
+    /// <summary>Queues a finite positive rectangle in output pixels; invalid geometry throws an argument exception.</summary>
     public void FillRectangle(RectangleF bounds, ColorRgba color)
     {
         EnsureVisible(bounds, nameof(bounds));
@@ -32,6 +35,7 @@ public sealed class Canvas2D
         Add(new RectangleCommand(bounds, color));
     }
 
+    /// <summary>Queues a finite line segment with positive pixel thickness.</summary>
     public void DrawLine(Vector2 start, Vector2 end, float thickness, ColorRgba color)
     {
         EnsureFinite(start, nameof(start));
@@ -48,6 +52,7 @@ public sealed class Canvas2D
         Add(new LineCommand(start, end, thickness, color));
     }
 
+    /// <summary>Queues a finite circle with positive pixel radius.</summary>
     public void FillCircle(Vector2 center, float radius, ColorRgba color)
     {
         EnsureFinite(center, nameof(center));
@@ -63,6 +68,7 @@ public sealed class Canvas2D
         Add(new CircleCommand(center, radius, color));
     }
 
+    /// <summary>Queues a sprite in output pixels with optional pixel source rectangle, white tint, rotation in radians and local pixel origin.</summary>
     public void DrawSprite(
         TextureHandle texture,
         RectangleF destination,
@@ -100,6 +106,7 @@ public sealed class Canvas2D
             origin));
     }
 
+    /// <summary>Queues a sprite in output pixels with optional pixel source rectangle, white tint, rotation in radians and local pixel origin.</summary>
     public void DrawSprite(Texture texture, RectangleF destination, RectangleF? source = null,
         ColorRgba? tint = null, float rotation = 0, Vector2 origin = default)
     {

@@ -6,6 +6,7 @@ namespace Obelisk.Assets;
 /// <summary>Loads RIFF/WAVE PCM16 mono/stereo sounds without a native audio device.</summary>
 public static class WavLoader
 {
+    /// <summary>Reads a WAV file up to 17 MiB; errors include the source path. Returned immutable PCM data has no native lifetime.</summary>
     public static Sound LoadFile(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -19,6 +20,7 @@ public static class WavLoader
         { throw new InvalidDataException($"WAV file '{path}' is invalid: {error.Message}", error); }
     }
 
+    /// <summary>Decodes bounded RIFF/WAVE PCM16 mono/stereo bytes at 8–192 kHz; malformed data throws InvalidDataException.</summary>
     public static Sound Decode(ReadOnlySpan<byte> wav)
     {
         try { return DecodeCore(wav); }

@@ -11,6 +11,7 @@ namespace Obelisk.Vanilla;
 /// </summary>
 public static class ObeliskApp
 {
+    /// <summary>Runs one game synchronously on the main STA thread with bundled images and discovered local Plugins; returns zero on normal exit and propagates exceptions after cleanup.</summary>
     public static int Run(IGame game, AppOptions? options = null, PluginOptions? plugins = null)
     {
         ArgumentNullException.ThrowIfNull(game);

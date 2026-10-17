@@ -1,5 +1,6 @@
 namespace Obelisk.Runtime;
 
+/// <summary>Configures the lower-level synchronous application loop.</summary>
 public sealed class GameLoopOptions
 {
     /// <summary>

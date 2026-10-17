@@ -1,0 +1,474 @@
+Obelisk.Abstractions/Obelisk.Abstractions.AppOptions :: ctor ()
+Obelisk.Abstractions/Obelisk.Abstractions.AppOptions :: property System.Boolean Resizable() { get; init; } read=NotNull write=NotNull
+Obelisk.Abstractions/Obelisk.Abstractions.AppOptions :: property System.Int32 Height() { get; init; } read=NotNull write=NotNull
+Obelisk.Abstractions/Obelisk.Abstractions.AppOptions :: property System.Int32 Width() { get; init; } read=NotNull write=NotNull
+Obelisk.Abstractions/Obelisk.Abstractions.AppOptions :: property System.String Title() { get; init; } read=NotNull write=NotNull
+Obelisk.Abstractions/Obelisk.Abstractions.AppOptions :: property System.TimeSpan MaximumDeltaTime() { get; init; } read=NotNull write=NotNull
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: ctor (System.TimeSpan elapsed, System.TimeSpan deltaTime, System.UInt64 frameNumber)
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: method static System.Boolean op_Equality<>(Obelisk.Abstractions.GameTime left, Obelisk.Abstractions.GameTime right)
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: method static System.Boolean op_Inequality<>(Obelisk.Abstractions.GameTime left, Obelisk.Abstractions.GameTime right)
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: method virtual System.Boolean Equals<>(Obelisk.Abstractions.GameTime other)
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: method virtual System.Boolean Equals<>(System.Object obj)
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: method virtual System.String ToString<>()
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: property System.Single Delta() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: property System.TimeSpan DeltaTime() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: property System.TimeSpan Elapsed() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.GameTime :: property System.UInt64 FrameNumber() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.IAssetSource :: method virtual System.String ResolvePath<>(System.String uri)
+Obelisk.Abstractions/Obelisk.Abstractions.IAssetSource :: method virtual T Load<T:ReferenceTypeConstraint:>(System.String uri)
+Obelisk.Abstractions/Obelisk.Abstractions.IAudioDevice :: method virtual Obelisk.Abstractions.ISoundPlayback Play<>(Obelisk.Abstractions.Sound sound, System.Boolean loop = false, System.Single volume = 1)
+Obelisk.Abstractions/Obelisk.Abstractions.IAudioDevice :: property System.Boolean IsAvailable() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.IAudioDevice :: property System.String? UnavailableReason() { get;  } read=Nullable write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.IGame :: method virtual System.Void Initialize<>(Obelisk.Abstractions.InitializeContext context)
+Obelisk.Abstractions/Obelisk.Abstractions.IGame :: method virtual System.Void Render<>(Obelisk.Abstractions.RenderContext context)
+Obelisk.Abstractions/Obelisk.Abstractions.IGame :: method virtual System.Void Shutdown<>(Obelisk.Abstractions.ShutdownContext context)
+Obelisk.Abstractions/Obelisk.Abstractions.IGame :: method virtual System.Void Update<>(Obelisk.Abstractions.UpdateContext context)
+Obelisk.Abstractions/Obelisk.Abstractions.IObeliskModule :: method virtual System.Void Initialize<>(Obelisk.Abstractions.InitializeContext context)
+Obelisk.Abstractions/Obelisk.Abstractions.IObeliskModule :: method virtual System.Void Render<>(Obelisk.Abstractions.RenderContext context)
+Obelisk.Abstractions/Obelisk.Abstractions.IObeliskModule :: method virtual System.Void Shutdown<>(Obelisk.Abstractions.ShutdownContext context)
+Obelisk.Abstractions/Obelisk.Abstractions.IObeliskModule :: method virtual System.Void Update<>(Obelisk.Abstractions.UpdateContext context)
+Obelisk.Abstractions/Obelisk.Abstractions.ISoundPlayback :: method virtual System.Void Stop<>()
+Obelisk.Abstractions/Obelisk.Abstractions.ISoundPlayback :: property System.Boolean IsPlaying() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.ISoundPlayback :: property System.Single Volume() { get; set; } read=NotNull write=NotNull
+Obelisk.Abstractions/Obelisk.Abstractions.InitializeContext :: ctor (Obelisk.Graphics2D.ITextureDevice? textures = null, Obelisk.Abstractions.IAudioDevice? audio = null, Obelisk.Abstractions.IAssetSource? assets = null)
+Obelisk.Abstractions/Obelisk.Abstractions.InitializeContext :: method Obelisk.Abstractions.InitializeContext WithAssets<>(Obelisk.Abstractions.IAssetSource source)
+Obelisk.Abstractions/Obelisk.Abstractions.InitializeContext :: property Obelisk.Abstractions.IAssetSource Assets() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.InitializeContext :: property Obelisk.Abstractions.IAudioDevice Audio() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.InitializeContext :: property Obelisk.Graphics2D.ITextureDevice Textures() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.InputSnapshot :: ctor (Obelisk.Abstractions.KeyboardSnapshot keyboard, Obelisk.Abstractions.MouseSnapshot mouse)
+Obelisk.Abstractions/Obelisk.Abstractions.InputSnapshot :: property Obelisk.Abstractions.KeyboardSnapshot Keyboard() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.InputSnapshot :: property Obelisk.Abstractions.MouseSnapshot Mouse() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.InputSnapshot :: property static Obelisk.Abstractions.InputSnapshot Empty() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field System.Int32 value__
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key A = 0
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha0 = 26
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha1 = 27
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha2 = 28
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha3 = 29
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha4 = 30
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha5 = 31
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha6 = 32
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha7 = 33
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha8 = 34
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Alpha9 = 35
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key B = 1
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Backspace = 44
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key C = 2
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key D = 3
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Down = 39
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key E = 4
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Enter = 41
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Escape = 42
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key F = 5
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key G = 6
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key H = 7
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key I = 8
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key J = 9
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key K = 10
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key L = 11
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Left = 36
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key LeftAlt = 49
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key LeftControl = 47
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key LeftShift = 45
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key M = 12
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key N = 13
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key O = 14
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key P = 15
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Q = 16
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key R = 17
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Right = 37
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key RightAlt = 50
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key RightControl = 48
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key RightShift = 46
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key S = 18
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Space = 40
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key T = 19
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Tab = 43
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key U = 20
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Up = 38
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key V = 21
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key W = 22
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key X = 23
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Y = 24
+Obelisk.Abstractions/Obelisk.Abstractions.Key :: field static Obelisk.Abstractions.Key Z = 25
+Obelisk.Abstractions/Obelisk.Abstractions.KeyboardSnapshot :: ctor (System.Collections.Generic.IEnumerable<Obelisk.Abstractions.Key> down, System.Collections.Generic.IEnumerable<Obelisk.Abstractions.Key> pressed, System.Collections.Generic.IEnumerable<Obelisk.Abstractions.Key> released)
+Obelisk.Abstractions/Obelisk.Abstractions.KeyboardSnapshot :: method System.Boolean IsDown<>(Obelisk.Abstractions.Key key)
+Obelisk.Abstractions/Obelisk.Abstractions.KeyboardSnapshot :: method System.Boolean WasPressed<>(Obelisk.Abstractions.Key key)
+Obelisk.Abstractions/Obelisk.Abstractions.KeyboardSnapshot :: method System.Boolean WasReleased<>(Obelisk.Abstractions.Key key)
+Obelisk.Abstractions/Obelisk.Abstractions.MouseButton :: field System.Int32 value__
+Obelisk.Abstractions/Obelisk.Abstractions.MouseButton :: field static Obelisk.Abstractions.MouseButton Left = 0
+Obelisk.Abstractions/Obelisk.Abstractions.MouseButton :: field static Obelisk.Abstractions.MouseButton Middle = 1
+Obelisk.Abstractions/Obelisk.Abstractions.MouseButton :: field static Obelisk.Abstractions.MouseButton Right = 2
+Obelisk.Abstractions/Obelisk.Abstractions.MouseButton :: field static Obelisk.Abstractions.MouseButton X1 = 3
+Obelisk.Abstractions/Obelisk.Abstractions.MouseButton :: field static Obelisk.Abstractions.MouseButton X2 = 4
+Obelisk.Abstractions/Obelisk.Abstractions.MouseSnapshot :: ctor (System.Single x, System.Single y, System.Collections.Generic.IEnumerable<Obelisk.Abstractions.MouseButton> down, System.Collections.Generic.IEnumerable<Obelisk.Abstractions.MouseButton> pressed, System.Collections.Generic.IEnumerable<Obelisk.Abstractions.MouseButton> released)
+Obelisk.Abstractions/Obelisk.Abstractions.MouseSnapshot :: method System.Boolean IsDown<>(Obelisk.Abstractions.MouseButton button)
+Obelisk.Abstractions/Obelisk.Abstractions.MouseSnapshot :: method System.Boolean WasPressed<>(Obelisk.Abstractions.MouseButton button)
+Obelisk.Abstractions/Obelisk.Abstractions.MouseSnapshot :: method System.Boolean WasReleased<>(Obelisk.Abstractions.MouseButton button)
+Obelisk.Abstractions/Obelisk.Abstractions.MouseSnapshot :: property System.Single X() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.MouseSnapshot :: property System.Single Y() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: ctor (System.Int32 Width, System.Int32 Height)
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: method System.Void Deconstruct<>(out System.Int32& Width, out System.Int32& Height)
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: method static System.Boolean op_Equality<>(Obelisk.Abstractions.OutputSize left, Obelisk.Abstractions.OutputSize right)
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: method static System.Boolean op_Inequality<>(Obelisk.Abstractions.OutputSize left, Obelisk.Abstractions.OutputSize right)
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: method virtual System.Boolean Equals<>(Obelisk.Abstractions.OutputSize other)
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: method virtual System.Boolean Equals<>(System.Object obj)
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: method virtual System.String ToString<>()
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: property System.Int32 Height() { get; init; } read=NotNull write=NotNull
+Obelisk.Abstractions/Obelisk.Abstractions.OutputSize :: property System.Int32 Width() { get; init; } read=NotNull write=NotNull
+Obelisk.Abstractions/Obelisk.Abstractions.RenderContext :: ctor (Obelisk.Abstractions.GameTime time, Obelisk.Abstractions.OutputSize outputSize = null)
+Obelisk.Abstractions/Obelisk.Abstractions.RenderContext :: property Obelisk.Abstractions.GameTime Time() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.RenderContext :: property Obelisk.Abstractions.OutputSize OutputSize() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.RenderContext :: property Obelisk.Graphics2D.Canvas2D Canvas() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.ShutdownContext :: ctor ()
+Obelisk.Abstractions/Obelisk.Abstractions.SilentAudioDevice :: ctor ()
+Obelisk.Abstractions/Obelisk.Abstractions.SilentAudioDevice :: method virtual Obelisk.Abstractions.ISoundPlayback Play<>(Obelisk.Abstractions.Sound sound, System.Boolean loop = false, System.Single volume = 1)
+Obelisk.Abstractions/Obelisk.Abstractions.SilentAudioDevice :: property System.Boolean IsAvailable() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.SilentAudioDevice :: property System.String? UnavailableReason() { get;  } read=Nullable write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.SilentAudioDevice :: property static Obelisk.Abstractions.SilentAudioDevice Instance() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.Sound :: ctor (System.Int32 sampleRate, System.Int32 channels, System.ReadOnlySpan<System.Byte> pcm)
+Obelisk.Abstractions/Obelisk.Abstractions.Sound :: property System.Int32 Channels() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.Sound :: property System.Int32 SampleRate() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.Sound :: property System.ReadOnlySpan<System.Byte> Pcm() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.Sound :: property System.TimeSpan Duration() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.UpdateContext :: ctor (Obelisk.Abstractions.GameTime time, Obelisk.Abstractions.InputSnapshot? input = null, Obelisk.Abstractions.OutputSize outputSize = null)
+Obelisk.Abstractions/Obelisk.Abstractions.UpdateContext :: property Obelisk.Abstractions.GameTime Time() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.UpdateContext :: property Obelisk.Abstractions.InputSnapshot Input() { get;  } read=NotNull write=Unknown
+Obelisk.Abstractions/Obelisk.Abstractions.UpdateContext :: property Obelisk.Abstractions.OutputSize OutputSize() { get;  } read=NotNull write=Unknown
+Obelisk.Assets/Obelisk.Assets.AssetStore :: ctor (System.String projectRoot)
+Obelisk.Assets/Obelisk.Assets.AssetStore :: method System.String Resolve<>(Obelisk.Assets.AssetUri uri)
+Obelisk.Assets/Obelisk.Assets.AssetStore :: method System.Void RegisterLoader<T:ReferenceTypeConstraint:>(System.Func<System.String,T> loader)
+Obelisk.Assets/Obelisk.Assets.AssetStore :: method System.Void RegisterPlugin<>(System.String name, System.String root)
+Obelisk.Assets/Obelisk.Assets.AssetStore :: method System.Void RegisterPluginLoader<T:ReferenceTypeConstraint:>(System.String plugin, System.Func<System.String,T> loader)
+Obelisk.Assets/Obelisk.Assets.AssetStore :: method virtual System.String ResolvePath<>(System.String uri)
+Obelisk.Assets/Obelisk.Assets.AssetStore :: method virtual System.Void Dispose<>()
+Obelisk.Assets/Obelisk.Assets.AssetStore :: method virtual T Load<T:ReferenceTypeConstraint:>(System.String uri)
+Obelisk.Assets/Obelisk.Assets.AssetUri :: method static Obelisk.Assets.AssetUri Parse<>(System.String value)
+Obelisk.Assets/Obelisk.Assets.AssetUri :: method static System.Boolean op_Equality<>(Obelisk.Assets.AssetUri left, Obelisk.Assets.AssetUri right)
+Obelisk.Assets/Obelisk.Assets.AssetUri :: method static System.Boolean op_Inequality<>(Obelisk.Assets.AssetUri left, Obelisk.Assets.AssetUri right)
+Obelisk.Assets/Obelisk.Assets.AssetUri :: method virtual System.Boolean Equals<>(Obelisk.Assets.AssetUri other)
+Obelisk.Assets/Obelisk.Assets.AssetUri :: method virtual System.Boolean Equals<>(System.Object obj)
+Obelisk.Assets/Obelisk.Assets.AssetUri :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Assets/Obelisk.Assets.AssetUri :: method virtual System.String ToString<>()
+Obelisk.Assets/Obelisk.Assets.AssetUri :: property System.String Path() { get;  } read=NotNull write=Unknown
+Obelisk.Assets/Obelisk.Assets.AssetUri :: property System.String Scheme() { get;  } read=NotNull write=Unknown
+Obelisk.Assets/Obelisk.Assets.AssetUri :: property System.String? Plugin() { get;  } read=Nullable write=Unknown
+Obelisk.Assets/Obelisk.Assets.FontLoader :: ctor (Obelisk.Graphics2D.ITextureDevice device, System.Single size = 32, System.String additionalCharacters = "")
+Obelisk.Assets/Obelisk.Assets.FontLoader :: field static System.String BasicLatin = " !\u0022#$%\u0026\u0027()*\u002B,-./0123456789:;\u003C=\u003E?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_\u0060abcdefghijklmnopqrstuvwxyz{|}~"
+Obelisk.Assets/Obelisk.Assets.FontLoader :: method Obelisk.Graphics2D.Font LoadFile<>(System.String path)
+Obelisk.Assets/Obelisk.Assets.WavLoader :: method static Obelisk.Abstractions.Sound Decode<>(System.ReadOnlySpan<System.Byte> wav)
+Obelisk.Assets/Obelisk.Assets.WavLoader :: method static Obelisk.Abstractions.Sound LoadFile<>(System.String path)
+Obelisk.Graphics2D/Obelisk.Graphics2D.BlendMode :: field System.Int32 value__
+Obelisk.Graphics2D/Obelisk.Graphics2D.BlendMode :: field static Obelisk.Graphics2D.BlendMode Alpha = 0
+Obelisk.Graphics2D/Obelisk.Graphics2D.BlendMode :: field static Obelisk.Graphics2D.BlendMode Opaque = 1
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: ctor ()
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: method System.Void DrawLine<>(System.Numerics.Vector2 start, System.Numerics.Vector2 end, System.Single thickness, Obelisk.Graphics2D.ColorRgba color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: method System.Void DrawSprite<>(Obelisk.Graphics2D.Texture texture, Obelisk.Graphics2D.RectangleF destination, System.Nullable<Obelisk.Graphics2D.RectangleF> source = null, System.Nullable<Obelisk.Graphics2D.ColorRgba> tint = null, System.Single rotation = 0, System.Numerics.Vector2 origin = null)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: method System.Void DrawSprite<>(Obelisk.Graphics2D.TextureHandle texture, Obelisk.Graphics2D.RectangleF destination, System.Nullable<Obelisk.Graphics2D.RectangleF> source = null, System.Nullable<Obelisk.Graphics2D.ColorRgba> tint = null, System.Single rotation = 0, System.Numerics.Vector2 origin = null)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: method System.Void DrawText<>(Obelisk.Graphics2D.Font font, System.String text, System.Numerics.Vector2 position, System.Nullable<Obelisk.Graphics2D.ColorRgba> color = null, System.Single scale = 1)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: method System.Void FillCircle<>(System.Numerics.Vector2 center, System.Single radius, Obelisk.Graphics2D.ColorRgba color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: method System.Void FillRectangle<>(Obelisk.Graphics2D.RectangleF bounds, Obelisk.Graphics2D.ColorRgba color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: property Obelisk.Graphics2D.BlendMode Blend() { get; set; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D :: property System.Collections.Generic.IReadOnlyList<Obelisk.Graphics2D.RenderCommand2D> Commands() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: ctor (System.Numerics.Vector2 Center, System.Single Radius, Obelisk.Graphics2D.ColorRgba Color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method System.Void Deconstruct<>(out System.Numerics.Vector2& Center, out System.Single& Radius, out Obelisk.Graphics2D.ColorRgba& Color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.CircleCommand? left, Obelisk.Graphics2D.CircleCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.CircleCommand? left, Obelisk.Graphics2D.CircleCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method virtual Obelisk.Graphics2D.CircleCommand <Clone>$<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.CircleCommand? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.RenderCommand2D? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: property Obelisk.Graphics2D.ColorRgba Color() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: property System.Numerics.Vector2 Center() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand :: property System.Single Radius() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: ctor (System.Single R, System.Single G, System.Single B, System.Single A = 1)
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: method System.Void Deconstruct<>(out System.Single& R, out System.Single& G, out System.Single& B, out System.Single& A)
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.ColorRgba left, Obelisk.Graphics2D.ColorRgba right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.ColorRgba left, Obelisk.Graphics2D.ColorRgba right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.ColorRgba other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: method virtual System.Boolean Equals<>(System.Object obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: property System.Single A() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: property System.Single B() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: property System.Single G() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: property System.Single R() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: property static Obelisk.Graphics2D.ColorRgba Orange() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba :: property static Obelisk.Graphics2D.ColorRgba White() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.Font :: ctor (Obelisk.Graphics2D.Texture atlas, System.Single lineHeight, System.Collections.Generic.IReadOnlyDictionary<System.Text.Rune,Obelisk.Graphics2D.FontGlyph> glyphs)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Font :: method Obelisk.Graphics2D.FontGlyph GetGlyph<>(System.Text.Rune rune)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Font :: method System.Numerics.Vector2 Measure<>(System.String text, System.Single scale = 1)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Font :: method virtual System.Void Dispose<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.Font :: property Obelisk.Graphics2D.Texture Atlas() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.Font :: property System.Boolean IsDisposed() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.Font :: property System.Single LineHeight() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: ctor (Obelisk.Graphics2D.RectangleF Source, System.Single Advance)
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: method System.Void Deconstruct<>(out Obelisk.Graphics2D.RectangleF& Source, out System.Single& Advance)
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.FontGlyph left, Obelisk.Graphics2D.FontGlyph right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.FontGlyph left, Obelisk.Graphics2D.FontGlyph right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.FontGlyph other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: method virtual System.Boolean Equals<>(System.Object obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: property Obelisk.Graphics2D.RectangleF Source() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph :: property System.Single Advance() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.ITextureDevice :: method virtual Obelisk.Graphics2D.Texture CreateTexture<>(Obelisk.Graphics2D.RgbaImage image)
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: ctor (System.Numerics.Vector2 Start, System.Numerics.Vector2 End, System.Single Thickness, Obelisk.Graphics2D.ColorRgba Color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method System.Void Deconstruct<>(out System.Numerics.Vector2& Start, out System.Numerics.Vector2& End, out System.Single& Thickness, out Obelisk.Graphics2D.ColorRgba& Color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.LineCommand? left, Obelisk.Graphics2D.LineCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.LineCommand? left, Obelisk.Graphics2D.LineCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method virtual Obelisk.Graphics2D.LineCommand <Clone>$<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.LineCommand? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.RenderCommand2D? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: property Obelisk.Graphics2D.ColorRgba Color() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: property System.Numerics.Vector2 End() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: property System.Numerics.Vector2 Start() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand :: property System.Single Thickness() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: ctor (Obelisk.Graphics2D.RectangleF Bounds, Obelisk.Graphics2D.ColorRgba Color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method System.Void Deconstruct<>(out Obelisk.Graphics2D.RectangleF& Bounds, out Obelisk.Graphics2D.ColorRgba& Color)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.RectangleCommand? left, Obelisk.Graphics2D.RectangleCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.RectangleCommand? left, Obelisk.Graphics2D.RectangleCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method virtual Obelisk.Graphics2D.RectangleCommand <Clone>$<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.RectangleCommand? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.RenderCommand2D? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: property Obelisk.Graphics2D.ColorRgba Color() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand :: property Obelisk.Graphics2D.RectangleF Bounds() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: ctor (System.Single X, System.Single Y, System.Single Width, System.Single Height)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: method System.Void Deconstruct<>(out System.Single& X, out System.Single& Y, out System.Single& Width, out System.Single& Height)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.RectangleF left, Obelisk.Graphics2D.RectangleF right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.RectangleF left, Obelisk.Graphics2D.RectangleF right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.RectangleF other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: method virtual System.Boolean Equals<>(System.Object obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: property System.Boolean IsVisible() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: property System.Single Height() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: property System.Single Width() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: property System.Single X() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF :: property System.Single Y() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.RenderCommand2D? left, Obelisk.Graphics2D.RenderCommand2D? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.RenderCommand2D? left, Obelisk.Graphics2D.RenderCommand2D? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D :: method virtual Obelisk.Graphics2D.RenderCommand2D <Clone>$<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.RenderCommand2D? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D :: property Obelisk.Graphics2D.BlendMode Blend() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.RgbaImage :: ctor (System.Int32 width, System.Int32 height, System.ReadOnlySpan<System.Byte> pixels)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RgbaImage :: field static System.Int32 MaximumDimension = 8192
+Obelisk.Graphics2D/Obelisk.Graphics2D.RgbaImage :: field static System.Int32 MaximumPixels = 16777216
+Obelisk.Graphics2D/Obelisk.Graphics2D.RgbaImage :: method static System.Void ValidateSize<>(System.Int32 width, System.Int32 height)
+Obelisk.Graphics2D/Obelisk.Graphics2D.RgbaImage :: property System.Int32 Height() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.RgbaImage :: property System.Int32 Width() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.RgbaImage :: property System.ReadOnlyMemory<System.Byte> Pixels() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: ctor (Obelisk.Graphics2D.TextureHandle Texture, Obelisk.Graphics2D.RectangleF Destination, System.Nullable<Obelisk.Graphics2D.RectangleF> Source, Obelisk.Graphics2D.ColorRgba Tint, System.Single Rotation, System.Numerics.Vector2 Origin)
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method System.Void Deconstruct<>(out Obelisk.Graphics2D.TextureHandle& Texture, out Obelisk.Graphics2D.RectangleF& Destination, out System.Nullable<Obelisk.Graphics2D.RectangleF>& Source, out Obelisk.Graphics2D.ColorRgba& Tint, out System.Single& Rotation, out System.Numerics.Vector2& Origin)
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.SpriteCommand? left, Obelisk.Graphics2D.SpriteCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.SpriteCommand? left, Obelisk.Graphics2D.SpriteCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method virtual Obelisk.Graphics2D.SpriteCommand <Clone>$<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.RenderCommand2D? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.SpriteCommand? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: property Obelisk.Graphics2D.ColorRgba Tint() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: property Obelisk.Graphics2D.RectangleF Destination() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: property Obelisk.Graphics2D.TextureHandle Texture() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: property System.Nullable<Obelisk.Graphics2D.RectangleF> Source() { get; init; } read=Nullable write=Nullable
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: property System.Numerics.Vector2 Origin() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand :: property System.Single Rotation() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: ctor (Obelisk.Graphics2D.Font Font, System.String Text, System.Numerics.Vector2 Position, Obelisk.Graphics2D.ColorRgba Color, System.Single Scale = 1)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method System.Void Deconstruct<>(out Obelisk.Graphics2D.Font& Font, out System.String& Text, out System.Numerics.Vector2& Position, out Obelisk.Graphics2D.ColorRgba& Color, out System.Single& Scale)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.TextCommand? left, Obelisk.Graphics2D.TextCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.TextCommand? left, Obelisk.Graphics2D.TextCommand? right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method virtual Obelisk.Graphics2D.TextCommand <Clone>$<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.RenderCommand2D? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.TextCommand? other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: property Obelisk.Graphics2D.ColorRgba Color() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: property Obelisk.Graphics2D.Font Font() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: property System.Numerics.Vector2 Position() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: property System.Single Scale() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand :: property System.String Text() { get; init; } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.Texture :: ctor (Obelisk.Graphics2D.TextureHandle handle, System.Int32 width, System.Int32 height, System.Action release)
+Obelisk.Graphics2D/Obelisk.Graphics2D.Texture :: method virtual System.Void Dispose<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.Texture :: property Obelisk.Graphics2D.TextureHandle Handle() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.Texture :: property System.Boolean IsDisposed() { get;  } read=NotNull write=NotNull
+Obelisk.Graphics2D/Obelisk.Graphics2D.Texture :: property System.Int32 Height() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.Texture :: property System.Int32 Width() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: ctor (System.UInt64 Value)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: method System.Void Deconstruct<>(out System.UInt64& Value)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: method static System.Boolean op_Equality<>(Obelisk.Graphics2D.TextureHandle left, Obelisk.Graphics2D.TextureHandle right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: method static System.Boolean op_Inequality<>(Obelisk.Graphics2D.TextureHandle left, Obelisk.Graphics2D.TextureHandle right)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: method virtual System.Boolean Equals<>(Obelisk.Graphics2D.TextureHandle other)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: method virtual System.Boolean Equals<>(System.Object obj)
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: method virtual System.String ToString<>()
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: property System.Boolean IsValid() { get;  } read=NotNull write=Unknown
+Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle :: property System.UInt64 Value() { get; init; } read=NotNull write=NotNull
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: ctor (Obelisk.Abstractions.AppOptions options)
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: method virtual Obelisk.Graphics2D.Texture CreateTexture<>(Obelisk.Graphics2D.RgbaImage image)
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: method virtual System.Boolean PumpEvents<>()
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: method virtual System.Void Initialize<>()
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: method virtual System.Void Present<>(Obelisk.Abstractions.RenderContext context)
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: method virtual System.Void Shutdown<>()
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: property Obelisk.Abstractions.IAudioDevice Audio() { get;  } read=NotNull write=Unknown
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: property Obelisk.Abstractions.InputSnapshot Input() { get;  } read=NotNull write=NotNull
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: property Obelisk.Abstractions.OutputSize OutputSize() { get;  } read=NotNull write=NotNull
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform :: property Obelisk.Graphics2D.ITextureDevice Textures() { get;  } read=NotNull write=Unknown
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3Exception :: ctor (System.String operation, System.String nativeError)
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3Exception :: property System.String NativeError() { get;  } read=NotNull write=Unknown
+Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3Exception :: property System.String Operation() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.IObeliskPlugin :: method virtual System.Void Register<>(Obelisk.Plugin.PluginRegistrationContext context)
+Obelisk.Plugin/Obelisk.Plugin.PluginException :: ctor (System.String pluginName, System.String operation, System.Exception cause)
+Obelisk.Plugin/Obelisk.Plugin.PluginException :: property System.String Operation() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginException :: property System.String PluginName() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: ctor (System.String projectAssetRoot)
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method Obelisk.Abstractions.IGame Wrap<>(Obelisk.Abstractions.IGame game)
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method System.Void Add<>(Obelisk.Plugin.PluginManifest manifest, Obelisk.Plugin.IObeliskPlugin plugin, System.String root)
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method System.Void Load<>(System.String packageDirectory)
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method System.Void LoadDirectory<>(System.String directory)
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method virtual System.Void Dispose<>()
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: property Obelisk.Abstractions.IAssetSource Assets() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: property System.Collections.Generic.IReadOnlyList<Obelisk.Plugin.PluginManifest> Plugins() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: ctor ()
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: field static System.String FileName = "obelisk.plugin.json"
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method Obelisk.Plugin.PluginManifest <Clone>$<>()
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method System.Void Validate<>(System.Version engine)
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method static Obelisk.Plugin.PluginManifest Read<>(System.String path)
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method static System.Boolean op_Equality<>(Obelisk.Plugin.PluginManifest? left, Obelisk.Plugin.PluginManifest? right)
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method static System.Boolean op_Inequality<>(Obelisk.Plugin.PluginManifest? left, Obelisk.Plugin.PluginManifest? right)
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method virtual System.Boolean Equals<>(Obelisk.Plugin.PluginManifest? other)
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: method virtual System.String ToString<>()
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.Int32 SchemaVersion() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String Assembly() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String Assets() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String EngineMaximumExclusive() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String EngineMinimum() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String EntryPoint() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String Name() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String Native() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String Shaders() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property System.String Version() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugin/Obelisk.Plugin.PluginManifest :: property static System.Version CurrentEngineVersion() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: ctor (System.String root, Obelisk.Plugin.PluginManifest manifest)
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: method System.String ResolveAsset<>(System.String relative)
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: method System.String ResolveNative<>(System.String relative)
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: method System.String ResolveShader<>(System.String relative)
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: property System.String Assembly() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: property System.String Assets() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: property System.String Native() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: property System.String Root() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginPaths :: property System.String Shaders() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginRegistrationContext :: method System.Void RegisterAssetLoader<T:ReferenceTypeConstraint:>(System.Func<System.String,T> loader)
+Obelisk.Plugin/Obelisk.Plugin.PluginRegistrationContext :: method System.Void RegisterDefaultAssetLoader<T:ReferenceTypeConstraint:>(System.Func<System.String,T> loader)
+Obelisk.Plugin/Obelisk.Plugin.PluginRegistrationContext :: method System.Void RegisterModule<>(Obelisk.Abstractions.IObeliskModule module)
+Obelisk.Plugin/Obelisk.Plugin.PluginRegistrationContext :: property Obelisk.Abstractions.IAssetSource Assets() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginRegistrationContext :: property Obelisk.Plugin.PluginManifest Manifest() { get;  } read=NotNull write=Unknown
+Obelisk.Plugin/Obelisk.Plugin.PluginRegistrationContext :: property Obelisk.Plugin.PluginPaths Paths() { get;  } read=NotNull write=Unknown
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: ctor ()
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: ctor (System.Net.Http.HttpClient? http)
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: field static System.Int32 MaximumEncodedBytes = 16777216
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: method Obelisk.Graphics2D.RgbaImage Decode<>(System.ReadOnlySpan<System.Byte> encoded)
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: method Obelisk.Graphics2D.RgbaImage LoadFile<>(System.String path)
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: method Obelisk.Graphics2D.Texture LoadTexture<>(Obelisk.Graphics2D.ITextureDevice device, System.String path)
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: method System.Threading.Tasks.Task<Obelisk.Graphics2D.RgbaImage> LoadUrlAsync<>(System.Uri uri, System.Threading.CancellationToken cancellationToken = null)
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: method virtual System.Void Dispose<>()
+Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin :: method virtual System.Void Register<>(Obelisk.Plugin.PluginRegistrationContext context)
+Obelisk.Runtime/Obelisk.Runtime.ApplicationHost :: ctor (Obelisk.Runtime.IApplicationPlatform platform, Obelisk.Runtime.IMonotonicClock? clock = null, Obelisk.Runtime.GameLoopOptions? options = null)
+Obelisk.Runtime/Obelisk.Runtime.ApplicationHost :: method System.Int32 Run<>(Obelisk.Abstractions.IGame game)
+Obelisk.Runtime/Obelisk.Runtime.ApplicationHost :: property Obelisk.Runtime.ApplicationState State() { get;  } read=NotNull write=NotNull
+Obelisk.Runtime/Obelisk.Runtime.ApplicationState :: field System.Int32 value__
+Obelisk.Runtime/Obelisk.Runtime.ApplicationState :: field static Obelisk.Runtime.ApplicationState Created = 0
+Obelisk.Runtime/Obelisk.Runtime.ApplicationState :: field static Obelisk.Runtime.ApplicationState Initializing = 1
+Obelisk.Runtime/Obelisk.Runtime.ApplicationState :: field static Obelisk.Runtime.ApplicationState Running = 2
+Obelisk.Runtime/Obelisk.Runtime.ApplicationState :: field static Obelisk.Runtime.ApplicationState ShuttingDown = 3
+Obelisk.Runtime/Obelisk.Runtime.ApplicationState :: field static Obelisk.Runtime.ApplicationState Stopped = 4
+Obelisk.Runtime/Obelisk.Runtime.GameLoopOptions :: ctor ()
+Obelisk.Runtime/Obelisk.Runtime.GameLoopOptions :: property System.TimeSpan MaximumDeltaTime() { get; init; } read=NotNull write=NotNull
+Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform :: method virtual System.Boolean PumpEvents<>()
+Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform :: method virtual System.Void Initialize<>()
+Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform :: method virtual System.Void Present<>(Obelisk.Abstractions.RenderContext context)
+Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform :: method virtual System.Void Shutdown<>()
+Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform :: property Obelisk.Abstractions.IAudioDevice Audio() { get;  } read=NotNull write=Unknown
+Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform :: property Obelisk.Abstractions.InputSnapshot Input() { get;  } read=NotNull write=Unknown
+Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform :: property Obelisk.Abstractions.OutputSize OutputSize() { get;  } read=NotNull write=Unknown
+Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform :: property Obelisk.Graphics2D.ITextureDevice? Textures() { get;  } read=Nullable write=Unknown
+Obelisk.Runtime/Obelisk.Runtime.IMonotonicClock :: property System.TimeSpan Elapsed() { get;  } read=NotNull write=Unknown
+Obelisk.Runtime/Obelisk.Runtime.StopwatchClock :: ctor ()
+Obelisk.Runtime/Obelisk.Runtime.StopwatchClock :: property System.TimeSpan Elapsed() { get;  } read=NotNull write=Unknown
+Obelisk.Vanilla/Obelisk.Vanilla.ObeliskApp :: method static System.Int32 Run<>(Obelisk.Abstractions.IGame game, Obelisk.Abstractions.AppOptions? options = null, Obelisk.Vanilla.PluginOptions? plugins = null)
+Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: ctor ()
+Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.Boolean IncludeImages() { get; init; } read=NotNull write=NotNull
+Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.String Directory() { get; init; } read=NotNull write=NotNull
+Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.String ProjectAssetRoot() { get; init; } read=NotNull write=NotNull
+type Obelisk.Abstractions/Obelisk.Abstractions.AppOptions: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.GameTime: Public, SequentialLayout, Sealed, BeforeFieldInit; base System.ValueType; interfaces System.IEquatable<Obelisk.Abstractions.GameTime>
+type Obelisk.Abstractions/Obelisk.Abstractions.IAssetSource: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.IAudioDevice: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.IGame: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.IObeliskModule: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.ISoundPlayback: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces System.IDisposable
+type Obelisk.Abstractions/Obelisk.Abstractions.InitializeContext: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.InputSnapshot: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.Key: Public, Sealed; base System.Enum; interfaces System.IComparable,System.IConvertible,System.IFormattable,System.ISpanFormattable
+type Obelisk.Abstractions/Obelisk.Abstractions.KeyboardSnapshot: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.MouseButton: Public, Sealed; base System.Enum; interfaces System.IComparable,System.IConvertible,System.IFormattable,System.ISpanFormattable
+type Obelisk.Abstractions/Obelisk.Abstractions.MouseSnapshot: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.OutputSize: Public, SequentialLayout, Sealed, BeforeFieldInit; base System.ValueType; interfaces System.IEquatable<Obelisk.Abstractions.OutputSize>
+type Obelisk.Abstractions/Obelisk.Abstractions.RenderContext: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.ShutdownContext: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.SilentAudioDevice: Public, Sealed, BeforeFieldInit; base System.Object; interfaces Obelisk.Abstractions.IAudioDevice
+type Obelisk.Abstractions/Obelisk.Abstractions.Sound: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Abstractions/Obelisk.Abstractions.UpdateContext: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Assets/Obelisk.Assets.AssetStore: Public, Sealed, BeforeFieldInit; base System.Object; interfaces Obelisk.Abstractions.IAssetSource,System.IDisposable
+type Obelisk.Assets/Obelisk.Assets.AssetUri: Public, SequentialLayout, Sealed, BeforeFieldInit; base System.ValueType; interfaces System.IEquatable<Obelisk.Assets.AssetUri>
+type Obelisk.Assets/Obelisk.Assets.FontLoader: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Assets/Obelisk.Assets.WavLoader: Public, Abstract, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Graphics2D/Obelisk.Graphics2D.BlendMode: Public, Sealed; base System.Enum; interfaces System.IComparable,System.IConvertible,System.IFormattable,System.ISpanFormattable
+type Obelisk.Graphics2D/Obelisk.Graphics2D.Canvas2D: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Graphics2D/Obelisk.Graphics2D.CircleCommand: Public, Sealed, BeforeFieldInit; base Obelisk.Graphics2D.RenderCommand2D; interfaces System.IEquatable<Obelisk.Graphics2D.CircleCommand>,System.IEquatable<Obelisk.Graphics2D.RenderCommand2D>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.ColorRgba: Public, SequentialLayout, Sealed, BeforeFieldInit; base System.ValueType; interfaces System.IEquatable<Obelisk.Graphics2D.ColorRgba>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.Font: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IDisposable
+type Obelisk.Graphics2D/Obelisk.Graphics2D.FontGlyph: Public, SequentialLayout, Sealed, BeforeFieldInit; base System.ValueType; interfaces System.IEquatable<Obelisk.Graphics2D.FontGlyph>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.ITextureDevice: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces
+type Obelisk.Graphics2D/Obelisk.Graphics2D.LineCommand: Public, Sealed, BeforeFieldInit; base Obelisk.Graphics2D.RenderCommand2D; interfaces System.IEquatable<Obelisk.Graphics2D.LineCommand>,System.IEquatable<Obelisk.Graphics2D.RenderCommand2D>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleCommand: Public, Sealed, BeforeFieldInit; base Obelisk.Graphics2D.RenderCommand2D; interfaces System.IEquatable<Obelisk.Graphics2D.RectangleCommand>,System.IEquatable<Obelisk.Graphics2D.RenderCommand2D>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.RectangleF: Public, SequentialLayout, Sealed, BeforeFieldInit; base System.ValueType; interfaces System.IEquatable<Obelisk.Graphics2D.RectangleF>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.RenderCommand2D: Public, Abstract, BeforeFieldInit; base System.Object; interfaces System.IEquatable<Obelisk.Graphics2D.RenderCommand2D>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.RgbaImage: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Graphics2D/Obelisk.Graphics2D.SpriteCommand: Public, Sealed, BeforeFieldInit; base Obelisk.Graphics2D.RenderCommand2D; interfaces System.IEquatable<Obelisk.Graphics2D.RenderCommand2D>,System.IEquatable<Obelisk.Graphics2D.SpriteCommand>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.TextCommand: Public, Sealed, BeforeFieldInit; base Obelisk.Graphics2D.RenderCommand2D; interfaces System.IEquatable<Obelisk.Graphics2D.RenderCommand2D>,System.IEquatable<Obelisk.Graphics2D.TextCommand>
+type Obelisk.Graphics2D/Obelisk.Graphics2D.Texture: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IDisposable
+type Obelisk.Graphics2D/Obelisk.Graphics2D.TextureHandle: Public, SequentialLayout, Sealed, BeforeFieldInit; base System.ValueType; interfaces System.IEquatable<Obelisk.Graphics2D.TextureHandle>
+type Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3ApplicationPlatform: Public, Sealed, BeforeFieldInit; base System.Object; interfaces Obelisk.Graphics2D.ITextureDevice,Obelisk.Runtime.IApplicationPlatform
+type Obelisk.Platform.Sdl3/Obelisk.Platform.Sdl3.Sdl3Exception: Public, Sealed, BeforeFieldInit; base System.Exception; interfaces System.Runtime.Serialization.ISerializable
+type Obelisk.Plugin/Obelisk.Plugin.IObeliskPlugin: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces System.IDisposable
+type Obelisk.Plugin/Obelisk.Plugin.PluginException: Public, Sealed, BeforeFieldInit; base System.Exception; interfaces System.Runtime.Serialization.ISerializable
+type Obelisk.Plugin/Obelisk.Plugin.PluginHost: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IDisposable
+type Obelisk.Plugin/Obelisk.Plugin.PluginManifest: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IEquatable<Obelisk.Plugin.PluginManifest>
+type Obelisk.Plugin/Obelisk.Plugin.PluginPaths: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Plugin/Obelisk.Plugin.PluginRegistrationContext: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Plugins.Images/Obelisk.Plugins.Images.ImagePlugin: Public, Sealed, BeforeFieldInit; base System.Object; interfaces Obelisk.Plugin.IObeliskPlugin,System.IDisposable
+type Obelisk.Runtime/Obelisk.Runtime.ApplicationHost: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Runtime/Obelisk.Runtime.ApplicationState: Public, Sealed; base System.Enum; interfaces System.IComparable,System.IConvertible,System.IFormattable,System.ISpanFormattable
+type Obelisk.Runtime/Obelisk.Runtime.GameLoopOptions: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Runtime/Obelisk.Runtime.IApplicationPlatform: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces
+type Obelisk.Runtime/Obelisk.Runtime.IMonotonicClock: Public, ClassSemanticsMask, Abstract, BeforeFieldInit; base none; interfaces
+type Obelisk.Runtime/Obelisk.Runtime.StopwatchClock: Public, Sealed, BeforeFieldInit; base System.Object; interfaces Obelisk.Runtime.IMonotonicClock
+type Obelisk.Vanilla/Obelisk.Vanilla.ObeliskApp: Public, Abstract, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions: Public, Sealed, BeforeFieldInit; base System.Object; interfaces

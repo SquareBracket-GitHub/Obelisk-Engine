@@ -8,11 +8,13 @@ namespace Obelisk.Assets;
 /// <summary>Rasterizes a bounded character set into one immutable RGBA glyph atlas.</summary>
 public sealed class FontLoader
 {
+    /// <summary>Contains the printable ASCII characters included in every loaded atlas.</summary>
     public const string BasicLatin = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
     private readonly ITextureDevice _device;
     private readonly float _size;
     private readonly string _characters;
 
+    /// <summary>Configures an owning-thread atlas upload at 8–96 pixels with BasicLatin plus explicit extra Unicode runes, at most 1024 unique characters.</summary>
     public FontLoader(ITextureDevice device, float size = 32, string additionalCharacters = "")
     {
         ArgumentNullException.ThrowIfNull(device);
@@ -23,6 +25,7 @@ public sealed class FontLoader
         _characters = BasicLatin + additionalCharacters;
     }
 
+    /// <summary>Rasterizes a local TTF/OTF file; the caller owns the Font and its atlas. Missing files or glyphs produce descriptive exceptions.</summary>
     public Font LoadFile(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

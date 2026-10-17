@@ -4,6 +4,7 @@ using Obelisk.Assets;
 namespace Obelisk.Plugin;
 
 /// <summary>Owns local plugin registrations and their process-lifetime assembly contexts.</summary>
+/// <param name="projectAssetRoot">Project asset directory used by the shared cache.</param>
 public sealed class PluginHost(string projectAssetRoot) : IDisposable
 {
     private readonly AssetStore _assets = new(projectAssetRoot);
@@ -12,9 +13,12 @@ public sealed class PluginHost(string projectAssetRoot) : IDisposable
     private bool _wrapped;
     private bool _disposed;
 
+    /// <summary>Gets borrowed cached assets shared by the game and registered Plugins.</summary>
     public IAssetSource Assets => _assets;
+    /// <summary>Gets a snapshot of currently registered validated manifests.</summary>
     public IReadOnlyList<PluginManifest> Plugins => _registrations.Select(r => r.Manifest).ToArray();
 
+    /// <summary>Takes ownership of a Plugin instance and registers it under a unique compatible manifest and root.</summary>
     public void Add(PluginManifest manifest, IObeliskPlugin plugin, string root)
     {
         EnsureMutable();
@@ -31,6 +35,7 @@ public sealed class PluginHost(string projectAssetRoot) : IDisposable
         }
     }
 
+    /// <summary>Loads a trusted local package, preserving engine contract assembly identity; errors identify the Plugin and operation.</summary>
     public void Load(string packageDirectory)
     {
         EnsureMutable();
@@ -53,6 +58,7 @@ public sealed class PluginHost(string projectAssetRoot) : IDisposable
         { Fail("discovery", "directory discovery", error); }
     }
 
+    /// <summary>Wraps one game with ordered module callbacks, borrowed Assets and reverse-order cleanup.</summary>
     public IGame Wrap(IGame game)
     {
         EnsureMutable();
@@ -140,6 +146,7 @@ public sealed class PluginHost(string projectAssetRoot) : IDisposable
         if (_wrapped) throw new InvalidOperationException("Plugin registrations are frozen after wrapping the game.");
     }
 
+    /// <summary>Disposes cached assets then Plugin instances in reverse order, continuing cleanup and aggregating failures.</summary>
     public void Dispose()
     {
         EnsureThread();

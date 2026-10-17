@@ -3,6 +3,7 @@ namespace Obelisk.Plugin;
 /// <summary>Paths rooted in one package. Reparse points and root escape are rejected.</summary>
 public sealed class PluginPaths
 {
+    /// <summary>Resolves manifest directories under the package root, rejecting traversal and reparse points.</summary>
     public PluginPaths(string root, PluginManifest manifest)
     {
         Root = Path.GetFullPath(root);
@@ -12,13 +13,21 @@ public sealed class PluginPaths
         Shaders = Resolve(manifest.Shaders);
         Native = Resolve(manifest.Native);
     }
+    /// <summary>Gets the absolute package root.</summary>
     public string Root { get; }
+    /// <summary>Gets the confined absolute entry DLL path.</summary>
     public string Assembly { get; }
+    /// <summary>Gets the confined absolute asset directory.</summary>
     public string Assets { get; }
+    /// <summary>Gets the confined absolute shader directory.</summary>
     public string Shaders { get; }
+    /// <summary>Gets the confined absolute native library directory.</summary>
     public string Native { get; }
+    /// <summary>Resolves a relative file below the package's asset directory.</summary>
     public string ResolveAsset(string relative) => ResolveUnder(Assets, relative);
+    /// <summary>Resolves a relative file below the package's shader directory.</summary>
     public string ResolveShader(string relative) => ResolveUnder(Shaders, relative);
+    /// <summary>Resolves a relative file below the package's native directory.</summary>
     public string ResolveNative(string relative) => ResolveUnder(Native, relative);
     internal string Resolve(string relative) => ResolveUnder(Root, relative);
 

@@ -5,6 +5,7 @@ namespace Obelisk.Abstractions;
 /// </summary>
 public readonly record struct GameTime
 {
+    /// <summary>Creates nonnegative clamped simulation timings and a zero-based frame number.</summary>
     public GameTime(TimeSpan elapsed, TimeSpan deltaTime, ulong frameNumber)
     {
         if (elapsed < TimeSpan.Zero)

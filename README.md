@@ -3,8 +3,22 @@
 Obelisk is an experimental, plugin-first 2D game engine for .NET 10 and SDL3.
 The Vanilla MVP includes a moving rectangle and a complete local two-player Pong
 game, with local Plugin discovery, scoped Asset loaders and Module lifecycle hooks.
-An installable CLI generates independent package-based projects. The v0.1 public
-API is still experimental while distribution work continues.
+An installable CLI generates independent package-based projects. The v0.1 release
+candidate API surface is reviewed and frozen; advanced backend/GPU contracts remain
+experimental. Public package publication is still pending.
+
+## Documentation
+
+| Guide | Use it for |
+| --- | --- |
+| [Getting Started](docs/getting-started.md) | Local package feed, CLI/Starter, editor setup, code edits, Plugin and first distribution. |
+| [Plugin Authoring](docs/plugin-authoring.md) | Complete package-only Plugin project, manifest, lifecycle and ownership. |
+| [CLI Reference](docs/cli-reference.md) | Commands, project schema, process behavior and exit codes. |
+| [Resource lifetime and support](docs/resources-and-support.md) | Owned/borrowed resources, thread rules, platform prerequisites and known limits. |
+| [API compatibility](docs/api-compatibility.md) | v0.1 freeze boundary, error model, XML reference and compatibility tests. |
+
+For a first game, follow Getting Started in order. IDE IntelliSense documentation
+ships with all eight library packages; the CLI's supported interface is its commands.
 
 ## Prerequisites
 
@@ -12,7 +26,7 @@ API is still experimental while distribution work continues.
 - Git
 - Windows x64 with an SDL_GPU-compatible graphics driver for the native samples
 - [Microsoft Visual C++ v14 Redistributable (x64)](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist):
-  the native SDL/Shadercross binaries import the VC++ runtime, including in self-contained games
+  Shadercross dependencies import the VC++ runtime, including in self-contained games
 - Windows' Malgun Gothic (`malgun.ttf`) for Pong and CanvasShowcase
 
 ## Install the CLI and create a game
@@ -201,8 +215,8 @@ from its deployed folder and that Plugin/project assets work; a repeat build mus
 remove stale output. This simulates an unavailable SDK/shared runtime on the test
 machine, rather than uninstalling its SDK. Default cleanup removes its own temporary workspace;
 `-KeepWorkspace` retains it for inspection. Existing user global tools remain
-unchanged. Package README/license metadata and public publication remain later
-packaging work.
+unchanged. Third-party notices and XML API documentation are included; the engine's
+own license selection and public publication remain release work.
 
 `-Starter` generates the ZIP, compares its project files byte-for-byte with the
 installed CLI output, copies and moves the extracted project, then restores,
@@ -225,8 +239,8 @@ dotnet run --project samples/Pong -c Release
 The rectangle uses arrow keys; Pong uses Enter to start/restart, W/S for the left
 player and Up/Down for the right player. Escape or the window close button exits.
 An unavailable audio device makes Pong continue silently. Dependency restoration
-requires access to NuGet; the native libraries are supplied by the referenced
-packages.
+requires access to NuGet; the platform supplies its patched SDL DLL and the
+referenced native dependency packages.
 
 To start your own game directly from source, run these commands from the repository
 root. This alternative uses one source reference to the Vanilla meta-project;
@@ -394,6 +408,24 @@ game or tool; the packaged CLI integration Gate checks the complete notice set
 against the repository originals. See [the dependency inventory](licenses/README.md)
 for the fixed versions, native DLLs, upstream sources and font/runtime constraints.
 Selecting the engine's own release license remains part of release preparation.
+
+## Documentation and API Gate
+
+```powershell
+dotnet test Obelisk.sln -c Debug
+dotnet test Obelisk.sln -c Release
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -Distribution -Starter -Documentation
+```
+
+The API test compares the eight exported library surfaces to the reviewed v0.1
+snapshot and rejects SDL/native pointer types in public signatures. XML generation
+and warnings-as-errors reject undocumented public declarations. The documentation
+Gate uses an isolated local feed/cache outside the checkout: it compiles the exact
+Plugin guide code blocks, applies Getting Started's game edits, runs the installed
+CLI, verifies Plugin registration, then relocates/runs the self-contained game.
+It also verifies XML reference files restored from all eight library packages.
+This exercises the documented local-package path; public-feed certification and
+Rider's actual UI validation remain release tasks.
 
 ## Run the current sample
 

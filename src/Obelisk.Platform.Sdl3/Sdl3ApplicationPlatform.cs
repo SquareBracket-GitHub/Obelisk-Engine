@@ -21,14 +21,19 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
     private bool _minimized;
     private int? _owningThreadId;
     private SdlAudioDevice? _audio;
+    /// <summary>Gets the owning-thread audio device or silent fallback.</summary>
     public IAudioDevice Audio => (IAudioDevice?)_audio ?? SilentAudioDevice.Instance;
 
+    /// <summary>Gets the latest immutable keyboard and mouse state.</summary>
     public InputSnapshot Input { get; private set; } = InputSnapshot.Empty;
 
+    /// <summary>Gets the latest drawable dimensions in pixels.</summary>
     public OutputSize OutputSize { get; private set; }
 
+    /// <summary>Gets this backend's owning-thread texture factory.</summary>
     public ITextureDevice Textures => this;
 
+    /// <summary>Uploads bounded RGBA8 pixels to the initialized owning-thread device; the caller owns the texture.</summary>
     public Texture CreateTexture(RgbaImage image)
     {
         EnsureInitializedOnOwningThread();
@@ -37,6 +42,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
 
     internal nint WindowHandle => _window;
 
+    /// <summary>Validates window settings without acquiring native resources until Initialize is called.</summary>
     public Sdl3ApplicationPlatform(AppOptions options)
         : this(options, Sdl3NativeApi.Instance)
     {
@@ -64,6 +70,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
         OutputSize = new OutputSize(options.Width, options.Height);
     }
 
+    /// <summary>Acquires window, audio, shader and GPU resources on the calling thread; rolls back on failure.</summary>
     public void Initialize()
     {
         if (_initialized)
@@ -135,6 +142,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
         }
     }
 
+    /// <summary>Captures input and resize state; returns false for quit or Escape, including focus-loss key releases.</summary>
     public bool PumpEvents()
     {
         EnsureInitializedOnOwningThread();
@@ -165,6 +173,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
         return shouldRunFrame;
     }
 
+    /// <summary>Submits frame commands on the owning thread; minimized/zero-size output suspends presentation without stopping updates.</summary>
     public void Present(RenderContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -187,6 +196,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
         }
     }
 
+    /// <summary>Releases surviving platform resources on the owning thread; repeat calls after cleanup are safe.</summary>
     public void Shutdown()
     {
         if (!_initialized)

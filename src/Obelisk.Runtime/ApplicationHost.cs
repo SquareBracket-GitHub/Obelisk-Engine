@@ -11,6 +11,7 @@ public sealed class ApplicationHost
     private readonly IMonotonicClock _clock;
     private readonly GameLoopOptions _options;
 
+    /// <summary>Borrows a platform and optional monotonic clock, and validates a positive maximum simulation delta.</summary>
     public ApplicationHost(
         IApplicationPlatform platform,
         IMonotonicClock? clock = null,
@@ -31,8 +32,10 @@ public sealed class ApplicationHost
         }
     }
 
+    /// <summary>Gets the current lifecycle state; a host can run only once.</summary>
     public ApplicationState State { get; private set; } = ApplicationState.Created;
 
+    /// <summary>Runs synchronous main-thread callbacks until quit and returns zero; failures propagate after orderly cleanup and the state becomes Stopped.</summary>
     public int Run(IGame game)
     {
         ArgumentNullException.ThrowIfNull(game);

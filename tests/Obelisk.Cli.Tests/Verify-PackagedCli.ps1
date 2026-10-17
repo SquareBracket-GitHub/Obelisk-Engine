@@ -1,4 +1,4 @@
-param([switch]$KeepWorkspace, [switch]$DevelopmentLoop, [switch]$Distribution, [switch]$Starter)
+param([switch]$KeepWorkspace, [switch]$DevelopmentLoop, [switch]$Distribution, [switch]$Starter, [switch]$Documentation)
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
@@ -12,6 +12,7 @@ $cliHome = Join-Path $taskRoot 'cli-home'
 $savedEnvironment = @{}
 $gameProcess = $null
 $cliProcess = $null
+. (Join-Path $PSScriptRoot 'DocumentationGate.ps1')
 
 function Wait-Until([scriptblock]$Condition, [string]$Message) {
     $deadline = [DateTime]::UtcNow.AddSeconds(40)
@@ -428,6 +429,7 @@ public void Initialize(InitializeContext context)
             Verify-TemplateRun $cliTemplate (Join-Path $taskRoot 'cli-game.pid') -UseCli
             Write-Output 'DAY 12 LOCAL GATE PASSED: packaged CLI and Starter ZIP render byte-identical projects, copied/moved ZIP project and CLI project restore/build/run native SDL windows from isolated local packages; no engine checkout references.'
         }
+        if ($Documentation) { Verify-DocumentationWorkflow }
     } finally { Pop-Location }
 } finally {
     if ($null -ne $cliProcess) {

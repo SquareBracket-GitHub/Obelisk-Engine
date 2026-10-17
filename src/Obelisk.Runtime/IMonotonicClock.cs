@@ -5,5 +5,6 @@ namespace Obelisk.Runtime;
 /// </summary>
 public interface IMonotonicClock
 {
+    /// <summary>Gets elapsed real time that never decreases.</summary>
     TimeSpan Elapsed { get; }
 }

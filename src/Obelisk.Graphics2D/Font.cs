@@ -4,6 +4,8 @@ using System.Text;
 namespace Obelisk.Graphics2D;
 
 /// <summary>One glyph's location in a font atlas and its horizontal advance in pixels.</summary>
+/// <param name="Source">Glyph bounds in atlas pixels.</param>
+/// <param name="Advance">Unscaled horizontal advance in pixels.</param>
 public readonly record struct FontGlyph(RectangleF Source, float Advance);
 
 /// <summary>An immutable GPU glyph atlas. Dispose it on the texture device's owning thread.</summary>
@@ -11,6 +13,7 @@ public sealed class Font : IDisposable
 {
     private readonly IReadOnlyDictionary<Rune, FontGlyph> _glyphs;
 
+    /// <summary>Takes ownership of the atlas, copies glyph metadata and requires a finite positive line height.</summary>
     public Font(Texture atlas, float lineHeight, IReadOnlyDictionary<Rune, FontGlyph> glyphs)
     {
         ArgumentNullException.ThrowIfNull(atlas);
@@ -22,11 +25,15 @@ public sealed class Font : IDisposable
         _glyphs = new Dictionary<Rune, FontGlyph>(glyphs);
     }
 
+    /// <summary>Gets the owned glyph atlas; dispose the Font rather than independently disposing this texture.</summary>
     public Texture Atlas { get; }
+    /// <summary>Gets the unscaled line advance in pixels.</summary>
     public float LineHeight { get; }
     private bool _disposed;
+    /// <summary>Gets whether this Font or its atlas has been disposed.</summary>
     public bool IsDisposed => _disposed || Atlas.IsDisposed;
 
+    /// <summary>Gets atlas metadata for a loaded Unicode rune; missing runes throw ArgumentException.</summary>
     public FontGlyph GetGlyph(Rune rune)
     {
         ObjectDisposedException.ThrowIf(IsDisposed, this);
@@ -60,6 +67,7 @@ public sealed class Font : IDisposable
         return result;
     }
 
+    /// <summary>Disposes the owned atlas on the texture device's owning thread; repeated calls are safe.</summary>
     public void Dispose()
     {
         if (IsDisposed) return;

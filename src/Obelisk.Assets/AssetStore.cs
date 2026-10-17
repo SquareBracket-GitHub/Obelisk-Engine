@@ -10,12 +10,14 @@ public sealed class AssetStore : IDisposable, Obelisk.Abstractions.IAssetSource
     private readonly Dictionary<(AssetUri Uri, Type Type), object> _cache = [];
     private bool _disposed;
 
+    /// <summary>Creates an empty owning cache confined to the supplied project asset directory.</summary>
     public AssetStore(string projectRoot)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(projectRoot);
         _projectRoot = Path.GetFullPath(projectRoot);
     }
 
+    /// <summary>Adds a unique named asset root; duplicate registration throws InvalidOperationException.</summary>
     public void RegisterPlugin(string name, string root)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -26,6 +28,7 @@ public sealed class AssetStore : IDisposable, Obelisk.Abstractions.IAssetSource
             throw new InvalidOperationException($"Plugin asset root '{name}' is already registered.");
     }
 
+    /// <summary>Adds one shared default loader per type; results become owned by this cache.</summary>
     public void RegisterLoader<T>(Func<string, T> loader) where T : class
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -34,6 +37,7 @@ public sealed class AssetStore : IDisposable, Obelisk.Abstractions.IAssetSource
             throw new InvalidOperationException($"Asset loader for '{typeof(T).Name}' is already registered.");
     }
 
+    /// <summary>Borrows the cached value by normalized URI and type; first load invokes the registered scoped or default loader.</summary>
     public T Load<T>(string uri) where T : class
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -57,6 +61,7 @@ public sealed class AssetStore : IDisposable, Obelisk.Abstractions.IAssetSource
         }
     }
 
+    /// <summary>Resolves a parsed asset URI below its registered root, rejecting escape and existing linked child segments.</summary>
     public string Resolve(AssetUri uri)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -80,6 +85,7 @@ public sealed class AssetStore : IDisposable, Obelisk.Abstractions.IAssetSource
         return path;
     }
 
+    /// <summary>Resolves an asset URI, rejecting root escape and reparse points in existing child segments.</summary>
     public string ResolvePath(string uri) => Resolve(AssetUri.Parse(uri));
 
     /// <summary>Registers a loader only for this plugin's URI authority, leaving other roots unaffected.</summary>
@@ -93,6 +99,7 @@ public sealed class AssetStore : IDisposable, Obelisk.Abstractions.IAssetSource
             throw new InvalidOperationException($"Asset loader for '{typeof(T).Name}' in plugin '{plugin}' is already registered.");
     }
 
+    /// <summary>Disposes each distinct cached disposable once; continues cleanup and aggregates failures.</summary>
     public void Dispose()
     {
         if (_disposed) return;

@@ -8,7 +8,9 @@
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\src\Obelisk.Plugin\Obelisk.Plugin.csproj" />
     <ProjectReference Include="..\..\src\Obelisk.Runtime\Obelisk.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\Obelisk.Vanilla\Obelisk.Vanilla.csproj" />
     <ProjectReference Include="..\..\samples\SamplePlugin\SamplePlugin.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\src\Obelisk.Plugins.Images\Obelisk.Plugins.Images.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
+  <ItemGroup><None Update="PublicApi.v0.1.txt" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
 </Project>
