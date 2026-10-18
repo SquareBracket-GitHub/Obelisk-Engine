@@ -5,7 +5,7 @@ The Vanilla MVP includes a moving rectangle and a complete local two-player Pong
 game, with local Plugin discovery, scoped Asset loaders and Module lifecycle hooks.
 An installable CLI generates independent package-based projects. The v0.1 release
 candidate API surface is reviewed and frozen; advanced backend/GPU contracts remain
-experimental. Public package publication is still pending.
+experimental. Publication verification is tracked in the candidate release notes.
 
 ## Documentation
 
@@ -31,9 +31,18 @@ ships with all eight library packages; the CLI's supported interface is its comm
 
 ## Install the CLI and create a game
 
-During development the `0.1.0` packages are built locally; they have not been
-published to nuget.org. From the repository root, create the local feed and install
-the .NET global tool using standard .NET packaging:
+For a version available on nuget.org, use the public-package flow without a source
+checkout or local feed:
+
+```powershell
+dotnet tool install --global Obelisk.Cli --version 0.1.0
+obelisk new MyGame
+Set-Location MyGame
+obelisk run
+```
+
+For an unpublished development build, create a local feed from the repository root
+and install the .NET global tool using standard .NET packaging:
 
 ```powershell
 foreach ($project in Get-ChildItem src/*/*.csproj) {
@@ -215,14 +224,54 @@ from its deployed folder and that Plugin/project assets work; a repeat build mus
 remove stale output. This simulates an unavailable SDK/shared runtime on the test
 machine, rather than uninstalling its SDK. Default cleanup removes its own temporary workspace;
 `-KeepWorkspace` retains it for inspection. Existing user global tools remain
-unchanged. Third-party notices and XML API documentation are included; the engine's
-own license selection and public publication remain release work.
+unchanged. Third-party notices, the engine MIT license and XML API documentation
+are included; public publication remains release work.
 
 `-Starter` generates the ZIP, compares its project files byte-for-byte with the
 installed CLI output, copies and moves the extracted project, then restores,
 builds and runs both projects with a native SDL window. This Gate currently uses
 isolated **local** packages; its public-NuGet requirement remains open until
 `Obelisk.Vanilla` and its dependencies are published.
+
+## Release candidate preparation
+
+Build all nine NuGet packages (eight libraries plus the CLI tool), a self-contained
+Windows x64 CLI ZIP and the matching Starter ZIP in a new, preserved directory:
+
+```powershell
+pwsh -NoProfile -File scripts/Build-ReleaseCandidate.ps1 -OutputDirectory artifacts/rc-first
+pwsh -NoProfile -File scripts/Verify-ReleaseCandidate.ps1 -Directory artifacts/rc-first
+pwsh -NoProfile -File scripts/Verify-StandaloneCli.ps1 -Directory artifacts/rc-first
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -ReleaseDirectory artifacts/rc-first -Distribution -Starter -Documentation
+# Rebuild to a fresh directory, then compare every expanded archive entry:
+pwsh -NoProfile -File scripts/Build-ReleaseCandidate.ps1 -OutputDirectory artifacts/rc-second
+pwsh -NoProfile -File scripts/Verify-ReleaseCandidate.ps1 -Directory artifacts/rc-first -CompareDirectory artifacts/rc-second
+# After publishing these versions, test with only nuget.org and fresh caches:
+pwsh -NoProfile -File scripts/Publish-ReleaseCandidate.ps1 -Directory artifacts/rc-first
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-PackagedCli.ps1 -ReleaseDirectory artifacts/rc-first -PublicFeed -Distribution -Starter -Documentation
+```
+
+`-ReleaseDirectory` uses the candidate's exact package/Starter bytes and checks
+their manifest and SHA256 inventory before the external user flow. `-PublicFeed`
+omits the local package source entirely and isolates both package and HTTP caches.
+Archive payload comparison ignores ZIP timestamps and NuGet's generated relationship
+IDs; NuGet ZIP hashes may differ on a rebuild. `SHA256SUMS` always describes the
+actual files in that candidate. Source revision/dirty state and SDK are recorded;
+these unsigned checksums detect corruption but do not authenticate the publisher.
+
+The standalone CLI includes a private .NET runtime and its notices. Help, info,
+version and project creation work without a discoverable SDK; development commands
+still need the .NET SDK. The local PATH-isolated check does not certify a separate
+SDK-free Windows machine. The engine uses MIT, Copyright (c) 2026 Taegyun Eom.
+Public NuGet publication remains pending; actual Rider recognition and separate
+clean-machine certification are deferred by the owner and have not passed.
+A build does not create a final Git tag or approve publication. See the
+[candidate release notes](docs/release-notes-v0.1.0.md).
+Publication is an explicit command: it requires a candidate from a clean source
+commit, approved MIT metadata and `NUGET_API_KEY` in the process environment or
+ignored project `.env`. Never commit that key. Packages are pushed to nuget.org
+in dependency order; duplicate versions and failures stop the operation with the
+completed package IDs reported, without deleting packages or changing versions.
 
 ## Run the repository samples
 
@@ -407,7 +456,9 @@ The platform, assets and image Plugin packages carry their dependency texts unde
 game or tool; the packaged CLI integration Gate checks the complete notice set
 against the repository originals. See [the dependency inventory](licenses/README.md)
 for the fixed versions, native DLLs, upstream sources and font/runtime constraints.
-Selecting the engine's own release license remains part of release preparation.
+The engine's own code uses [MIT](LICENSE), Copyright (c) 2026 Taegyun Eom.
+NuGet metadata and release archives include the license; Vanilla also copies it
+into game output at `licenses/obelisk/LICENSE`.
 
 ## Documentation and API Gate
 

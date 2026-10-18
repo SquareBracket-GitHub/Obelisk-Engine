@@ -1,4 +1,14 @@
 <Project>
+  <PropertyGroup>
+    <_ObeliskEngineLicense Condition="Exists('$(MSBuildThisFileDirectory)../LICENSE')">$(MSBuildThisFileDirectory)../LICENSE</_ObeliskEngineLicense>
+    <_ObeliskEngineLicensePack>false</_ObeliskEngineLicensePack>
+    <_ObeliskEngineLicensePack Condition="'$(_ObeliskEngineLicense)' == ''">true</_ObeliskEngineLicensePack>
+    <_ObeliskEngineLicense Condition="'$(_ObeliskEngineLicense)' == ''">$(MSBuildThisFileDirectory)../../../LICENSE</_ObeliskEngineLicense>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="$(_ObeliskEngineLicense)" Link="licenses/obelisk/LICENSE" Pack="$(_ObeliskEngineLicensePack)" PackagePath="/"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
   <Target Name="ObeliskIncludeRuntimeNotices" AfterTargets="ComputeResolvedFilesToPublishList"
           Condition="'$(SelfContained)' == 'true'">
     <ItemGroup>

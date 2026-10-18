@@ -25,8 +25,15 @@ internal static class NativeProbe
             GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
             Thread.Sleep(200); // Observe native worker teardown, not transient shutdown work.
             using var process = Process.GetCurrentProcess();
-            Console.WriteLine(JsonSerializer.Serialize(new { mode, cycle, process.HandleCount,
-                Threads = process.Threads.Count, process.PrivateMemorySize64, GpuHandles = GpuResource.LiveCount }));
+            Console.WriteLine(JsonSerializer.Serialize(new
+            {
+                mode,
+                cycle,
+                process.HandleCount,
+                Threads = process.Threads.Count,
+                process.PrivateMemorySize64,
+                GpuHandles = GpuResource.LiveCount
+            }));
         }
         return 0;
     }

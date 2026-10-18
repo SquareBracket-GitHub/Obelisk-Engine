@@ -15,7 +15,7 @@ public sealed class PluginTests
         using var files = new PackageFiles();
         var package = files.InstallFixture("native-failure");
         PackageFiles.WriteManifest(package, PackageFiles.Manifest("native-failure") with
-            { Assembly = "fixture.dll", EntryPoint = typeof(MissingNativeEntry).FullName! });
+        { Assembly = "fixture.dll", EntryPoint = typeof(MissingNativeEntry).FullName! });
         using var host = new PluginHost(files.Root);
         host.Load(package);
         var error = Assert.Throws<PluginException>(() => new ApplicationHost(new FakePlatform()).Run(host.Wrap(new Game())));
@@ -28,7 +28,7 @@ public sealed class PluginTests
     {
         using var files = new PackageFiles();
         var paths = new PluginPaths(files.Root, PackageFiles.Manifest("test") with
-            { Assets = "data/art", Shaders = "data/gpu", Native = "runtimes/win-x64" });
+        { Assets = "data/art", Shaders = "data/gpu", Native = "runtimes/win-x64" });
         Assert.Equal(Path.Combine(files.Root, "data", "art", "accent.txt"), paths.ResolveAsset("accent.txt"));
         Assert.Equal(Path.Combine(files.Root, "data", "gpu", "sprite.spv"), paths.ResolveShader("sprite.spv"));
         Assert.Equal(Path.Combine(files.Root, "runtimes", "win-x64", "decoder.dll"), paths.ResolveNative("decoder.dll"));
@@ -163,7 +163,8 @@ public sealed class PluginTests
         var second = files.InstallFixture("second");
         var invalid = PackageFiles.Manifest(failure == "duplicate" ? "first" : "second") with
         {
-            Assembly = "fixture.dll", EntryPoint = typeof(RecordingEntry).FullName!,
+            Assembly = "fixture.dll",
+            EntryPoint = typeof(RecordingEntry).FullName!,
             EngineMinimum = failure == "incompatible" ? "0.2.0" : "0.1.0",
             EngineMaximumExclusive = "0.3.0",
         };
@@ -461,8 +462,12 @@ internal sealed class PackageFiles : IDisposable
     }
     public static PluginManifest Manifest(string name) => new()
     {
-        Name = name, Version = "0.1.0", EngineMinimum = "0.1.0", EngineMaximumExclusive = "0.2.0",
-        Assembly = "SamplePlugin.dll", EntryPoint = "SamplePlugin.PulsePlugin",
+        Name = name,
+        Version = "0.1.0",
+        EngineMinimum = "0.1.0",
+        EngineMaximumExclusive = "0.2.0",
+        Assembly = "SamplePlugin.dll",
+        EntryPoint = "SamplePlugin.PulsePlugin",
     };
     public static string Serialize(PluginManifest manifest) => JsonSerializer.Serialize(manifest, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
     public static void WriteManifest(string directory, PluginManifest manifest) => File.WriteAllText(Path.Combine(directory, PluginManifest.FileName), Serialize(manifest));

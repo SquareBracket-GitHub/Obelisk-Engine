@@ -113,6 +113,53 @@ public sealed class CliTests
     }
 
     [Fact]
+    public async Task TransientWindowsFileLockDoesNotAbortCompletedProjectGeneration()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using var files = new Workspace();
+        FileStream? held = null;
+        Task release = Task.CompletedTask;
+        var writes = 0;
+        var generator = new ProjectGenerator((path, content) =>
+        {
+            File.WriteAllText(path, content);
+            if (++writes != 8) return;
+            held = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            release = Task.Run(async () => { await Task.Delay(200); held.Dispose(); });
+        });
+        try
+        {
+            var project = generator.Create(files.Root, "MyGame");
+            Assert.Equal(8, Directory.GetFiles(project, "*", SearchOption.AllDirectories).Length);
+            Assert.Single(Directory.GetDirectories(files.Root));
+        }
+        finally { await release; held?.Dispose(); }
+    }
+
+    [Fact]
+    public void PersistentWindowsFileLockFailsWithoutPublishingOrTouchingExistingFiles()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using var files = new Workspace();
+        var sentinel = Path.Combine(files.Root, "keep.txt");
+        File.WriteAllText(sentinel, "keep me");
+        FileStream? held = null;
+        var writes = 0;
+        var generator = new ProjectGenerator((path, content) =>
+        {
+            File.WriteAllText(path, content);
+            if (++writes == 8) held = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        });
+        try
+        {
+            Assert.Throws<IOException>(() => generator.Create(files.Root, "MyGame"));
+            Assert.False(Directory.Exists(Path.Combine(files.Root, "MyGame")));
+            Assert.Equal("keep me", File.ReadAllText(sentinel));
+        }
+        finally { held?.Dispose(); }
+    }
+
+    [Fact]
     public void CollisionCreatedDuringGenerationIsPreserved()
     {
         using var files = new Workspace();

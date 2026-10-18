@@ -43,8 +43,15 @@ internal static class Program
                 };
                 using (var plugins = new PluginHost(Path.Combine(AppContext.BaseDirectory, "assets")))
                 {
-                    plugins.Add(new PluginManifest { Name = "images", Version = "0.1.0", EngineMinimum = "0.1.0",
-                        EngineMaximumExclusive = "0.2.0", Assembly = "Obelisk.Plugins.Images.dll", EntryPoint = typeof(ImagePlugin).FullName! },
+                    plugins.Add(new PluginManifest
+                    {
+                        Name = "images",
+                        Version = "0.1.0",
+                        EngineMinimum = "0.1.0",
+                        EngineMaximumExclusive = "0.2.0",
+                        Assembly = "Obelisk.Plugins.Images.dll",
+                        EntryPoint = typeof(ImagePlugin).FullName!
+                    },
                         new ImagePlugin(), AppContext.BaseDirectory);
                     var scenario = new Scenario(game, platform, seconds, sample != 2,
                         () => Write(metrics, Capture("running", cycle, sample, timer.Elapsed.TotalSeconds)));
@@ -74,9 +81,17 @@ internal static class Program
                     end.Average(x => x.Threads) - start.Average(x => x.Threads) > 8)
                     throw new InvalidOperationException("Post-shutdown resource growth exceeded the documented warm-up tolerances.");
             }
-            var summary = new { Passed = true, Quick = quick, ElapsedSeconds = timer.Elapsed.TotalSeconds,
-                Cycles = cycles.Count, FinalGpuHandles = GpuResource.LiveCount, ProcessId = Environment.ProcessId,
-                PostShutdown = cycles, TrendChecked = steady.Length >= 6 };
+            var summary = new
+            {
+                Passed = true,
+                Quick = quick,
+                ElapsedSeconds = timer.Elapsed.TotalSeconds,
+                Cycles = cycles.Count,
+                FinalGpuHandles = GpuResource.LiveCount,
+                ProcessId = Environment.ProcessId,
+                PostShutdown = cycles,
+                TrendChecked = steady.Length >= 6
+            };
             File.WriteAllText(Path.Combine(output, "summary.json"), JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine("STABILITY PASSED");
             return 0;

@@ -9,8 +9,8 @@ Install the [Microsoft Visual C++ v14 Redistributable (x64)](https://learn.micro
 for the native SDL/Shadercross dependencies; recipients of self-contained builds
 need it too.
 Package restore requires a NuGet source containing Obelisk.Vanilla {{EngineVersion}}
-and its dependencies. Public packages are not yet published during development;
-use the local feed described in the Obelisk Engine repository README.
+and its dependencies. Released versions can restore from nuget.org. For an
+unpublished development build, use the local feed described in the engine README.
 
 ## Build and run
 
@@ -35,8 +35,8 @@ develop your game. No engine source checkout or ProjectReference is needed.
 - Rider: choose **File > Open**, then select `{{Name}}.csproj` so Rider loads it
   as a .NET project rather than just opening the folder.
 
-Configure the same NuGet source in the editor as for command-line restore. Until
-the Obelisk packages are published, the local feed must remain available.
+Configure the same NuGet source in the editor as for command-line restore.
+When using unpublished development packages, keep the local feed available.
 
 ## Project layout
 

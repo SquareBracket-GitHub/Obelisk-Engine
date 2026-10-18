@@ -246,8 +246,16 @@ public sealed class DistributionTests
         public void MakePackage(string name, string? field = null, object? value = null)
         {
             Directory.CreateDirectory(Package);
-            var fields = new Dictionary<string, object?> { ["schemaVersion"] = 1, ["name"] = name, ["version"] = "0.1.0",
-                ["engineMinimum"] = "0.1.0", ["engineMaximumExclusive"] = "0.2.0", ["assembly"] = "Sample.dll", ["entryPoint"] = "Sample.Plugin" };
+            var fields = new Dictionary<string, object?>
+            {
+                ["schemaVersion"] = 1,
+                ["name"] = name,
+                ["version"] = "0.1.0",
+                ["engineMinimum"] = "0.1.0",
+                ["engineMaximumExclusive"] = "0.2.0",
+                ["assembly"] = "Sample.dll",
+                ["entryPoint"] = "Sample.Plugin"
+            };
             if (field is not null) fields[field] = value;
             File.WriteAllText(Path.Combine(Package, "obelisk.plugin.json"), JsonSerializer.Serialize(fields));
             File.WriteAllText(Path.Combine(Package, "Sample.dll"), "assembly");

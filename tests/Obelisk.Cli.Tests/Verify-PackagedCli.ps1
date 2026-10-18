@@ -1,4 +1,5 @@
-param([switch]$KeepWorkspace, [switch]$DevelopmentLoop, [switch]$Distribution, [switch]$Starter, [switch]$Documentation)
+param([switch]$KeepWorkspace, [switch]$DevelopmentLoop, [switch]$Distribution, [switch]$Starter, [switch]$Documentation,
+    [string]$ReleaseDirectory, [switch]$PublicFeed)
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
@@ -12,6 +13,12 @@ $cliHome = Join-Path $taskRoot 'cli-home'
 $savedEnvironment = @{}
 $gameProcess = $null
 $cliProcess = $null
+if ($PublicFeed -and -not $ReleaseDirectory) { throw '-PublicFeed requires -ReleaseDirectory for the exact release Starter archive.' }
+if ($ReleaseDirectory) {
+    $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
+    & pwsh -NoProfile -File (Join-Path $repository 'scripts/Verify-ReleaseCandidate.ps1') -Directory $ReleaseDirectory
+    if ($LASTEXITCODE -ne 0) { throw 'Release candidate integrity check failed.' }
+}
 . (Join-Path $PSScriptRoot 'DocumentationGate.ps1')
 
 function Wait-Until([scriptblock]$Condition, [string]$Message) {
@@ -121,7 +128,33 @@ function Invoke-Dotnet([string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "dotnet $($Arguments -join ' ') failed with exit code $LASTEXITCODE." }
 }
 
+function Verify-CandidatePayload([string]$Id, [string]$InstalledRoot, [string]$Prefix = '') {
+    $archive = [IO.Compression.ZipFile]::OpenRead((Join-Path $ReleaseDirectory "packages/$Id.0.1.0.nupkg"))
+    try {
+        foreach ($entry in $archive.Entries) {
+            if ($Prefix) {
+                if (-not $entry.FullName.StartsWith($Prefix) -or $entry.FullName.EndsWith('/')) { continue }
+                $relative = $entry.FullName.Substring($Prefix.Length)
+            } else {
+                if ($entry.FullName -notmatch '^(lib|runtimes|contentFiles|buildTransitive)/' -or $entry.FullName.EndsWith('/')) { continue }
+                $relative = $entry.FullName
+            }
+            $installed = Join-Path $InstalledRoot $relative
+            if (-not (Test-Path -LiteralPath $installed -PathType Leaf)) { throw "Candidate payload missing: '$Id/$relative'." }
+            $stream = $entry.Open()
+            try { $expected = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($stream)) }
+            finally { $stream.Dispose() }
+            if ((Get-FileHash -LiteralPath $installed).Hash -cne $expected) { throw "Installed payload differs from candidate: '$Id/$relative'." }
+        }
+    } finally { $archive.Dispose() }
+}
+
 function Verify-Notices([string]$Directory) {
+    $engineLicense = Join-Path $Directory 'licenses/obelisk/LICENSE'
+    if (-not (Test-Path -LiteralPath $engineLicense) -or
+        (Get-FileHash -LiteralPath $engineLicense).Hash -ne (Get-FileHash -LiteralPath (Join-Path $repository 'LICENSE')).Hash) {
+        throw 'The generated/published game lacks the owner-approved engine license.'
+    }
     $native = @(Get-ChildItem -LiteralPath $Directory -Filter SDL3.dll -Recurse)
     $expectedNative = (Get-FileHash -LiteralPath (Join-Path $repository 'native/sdl3/win-x64/SDL3.dll')).Hash
     if ($native.Count -eq 0 -or @($native | Where-Object { (Get-FileHash -LiteralPath $_.FullName).Hash -ne $expectedNative }).Count -ne 0) {
@@ -144,33 +177,41 @@ try {
     New-Item -ItemType Directory -Path $feed, $workspace, $cliHome | Out-Null
     Push-Location $repository
     try {
-        foreach ($package in @('Obelisk.Graphics2D', 'Obelisk.Abstractions', 'Obelisk.Assets', 'Obelisk.Runtime',
+        if ($ReleaseDirectory) {
+            if (-not $PublicFeed) {
+                Copy-Item -Path (Join-Path $ReleaseDirectory 'packages/*.nupkg') -Destination $feed
+            }
+        } else {
+          foreach ($package in @('Obelisk.Graphics2D', 'Obelisk.Abstractions', 'Obelisk.Assets', 'Obelisk.Runtime',
             'Obelisk.Plugin', 'Obelisk.Plugins.Images', 'Obelisk.Platform.Sdl3', 'Obelisk.Vanilla', 'Obelisk.Cli')) {
             Invoke-Dotnet @('pack', "src/$package/$package.csproj", '-c', 'Release', '-o', $feed,
                 '-m:1', '-p:MSBuildEnableWorkloadResolver=false')
         }
+        }
         if ($Distribution) {
             Invoke-Dotnet @('build', 'samples/SamplePlugin/SamplePlugin.csproj', '-c', 'Release', '-m:1', '-p:MSBuildEnableWorkloadResolver=false')
         }
-        if ($Starter) {
+        if ($Starter -and -not $ReleaseDirectory) {
             & pwsh -NoProfile -File (Join-Path $repository 'scripts/Build-Starter.ps1')
             if ($LASTEXITCODE -ne 0) { throw 'Starter ZIP generation failed.' }
         }
     } finally { Pop-Location }
 
-    foreach ($key in @('DOTNET_CLI_HOME', 'NUGET_PACKAGES', 'DOTNET_NOLOGO', 'DOTNET_CLI_TELEMETRY_OPTOUT', 'MSBuildEnableWorkloadResolver')) {
+    foreach ($key in @('DOTNET_CLI_HOME', 'NUGET_PACKAGES', 'NUGET_HTTP_CACHE_PATH', 'DOTNET_NOLOGO', 'DOTNET_CLI_TELEMETRY_OPTOUT', 'MSBuildEnableWorkloadResolver')) {
         $savedEnvironment[$key] = [Environment]::GetEnvironmentVariable($key, 'Process')
     }
     $env:DOTNET_CLI_HOME = $cliHome
     $env:NUGET_PACKAGES = Join-Path $taskRoot 'packages'
+    $env:NUGET_HTTP_CACHE_PATH = Join-Path $taskRoot 'http-cache'
     $env:DOTNET_NOLOGO = '1'
     $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
     $env:MSBuildEnableWorkloadResolver = 'false'
     $configuration = Join-Path $taskRoot 'NuGet.Config'
     $escapedFeed = [Security.SecurityElement]::Escape($feed)
+    $localSource = if ($PublicFeed) { '' } else { "<add key=`"local`" value=`"$escapedFeed`" />" }
     Set-Content -LiteralPath $configuration -Encoding utf8 -Value @"
 <configuration>
-  <packageSources><clear /><add key="local" value="$escapedFeed" /><add key="nuget.org" value="https://api.nuget.org/v3/index.json" /></packageSources>
+  <packageSources><clear />$localSource<add key="nuget.org" value="https://api.nuget.org/v3/index.json" /></packageSources>
 </configuration>
 "@
     Push-Location $workspace
@@ -179,6 +220,11 @@ try {
         Invoke-Dotnet @('tool', 'install', '--global', 'Obelisk.Cli', '--version', '0.1.0', '--configfile', $configuration)
         $cli = Join-Path $cliHome '.dotnet/tools/obelisk.exe'
         if (-not (Test-Path -LiteralPath $cli)) { throw "Global command was not installed at '$cli'." }
+        if ($ReleaseDirectory) {
+            $installedCli = @(Get-ChildItem -LiteralPath (Join-Path $cliHome '.dotnet/tools/.store') -Filter Obelisk.Cli.dll -Recurse)
+            if ($installedCli.Count -ne 1) { throw 'Cannot identify the installed CLI payload.' }
+            Verify-CandidatePayload 'Obelisk.Cli' $installedCli[0].DirectoryName 'tools/net10.0/any/'
+        }
         & $cli --help
         if ($LASTEXITCODE -ne 0) { throw 'Installed CLI help failed.' }
         & $cli info
@@ -387,7 +433,8 @@ public void Initialize(InitializeContext context)
             } finally { Pop-Location }
         }
         if ($Starter) {
-            $zip = Join-Path $repository 'artifacts/starter/Obelisk-Starter-v0.1.0.zip'
+            $zip = if ($ReleaseDirectory) { Join-Path $ReleaseDirectory 'Obelisk-Starter-v0.1.0.zip' }
+                else { Join-Path $repository 'artifacts/starter/Obelisk-Starter-v0.1.0.zip' }
             if (-not (Test-Path -LiteralPath $zip)) { throw 'Starter ZIP was not created.' }
             & $cli new ObeliskStarter
             if ($LASTEXITCODE -ne 0) { throw 'Packaged CLI could not generate the matching Starter project.' }
@@ -430,6 +477,14 @@ public void Initialize(InitializeContext context)
             Write-Output 'DAY 12 LOCAL GATE PASSED: packaged CLI and Starter ZIP render byte-identical projects, copied/moved ZIP project and CLI project restore/build/run native SDL windows from isolated local packages; no engine checkout references.'
         }
         if ($Documentation) { Verify-DocumentationWorkflow }
+        if ($ReleaseDirectory) {
+            foreach ($id in @('Obelisk.Abstractions', 'Obelisk.Runtime', 'Obelisk.Platform.Sdl3', 'Obelisk.Graphics2D',
+                'Obelisk.Assets', 'Obelisk.Plugin', 'Obelisk.Plugins.Images', 'Obelisk.Vanilla')) {
+                Verify-CandidatePayload $id (Join-Path $env:NUGET_PACKAGES "$($id.ToLowerInvariant())/0.1.0")
+            }
+            $sourceKind = if ($PublicFeed) { 'public nuget.org only' } else { 'exact candidate packages' }
+            Write-Output "RELEASE FLOW PASSED: $sourceKind; Distribution=$Distribution Starter=$Starter Documentation=$Documentation."
+        }
     } finally { Pop-Location }
 } finally {
     if ($null -ne $cliProcess) {

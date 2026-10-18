@@ -54,7 +54,7 @@ public sealed class ProjectGenerator(Action<string, string>? writeFile = null)
                 if (writeFile is null) File.WriteAllText(path, content, new UTF8Encoding(false));
                 else writeFile(path, content);
             }
-            Directory.Move(staging, target); // Atomic rename on the same filesystem; rejects a raced collision.
+            Publish(staging, target);
             return target;
         }
         catch (Exception error)
@@ -63,6 +63,27 @@ public sealed class ProjectGenerator(Action<string, string>? writeFile = null)
             catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
             { throw new IOException($"Project creation failed: {error.Message}. Temporary directory '{staging}' could not be removed: {cleanup.Message}", error); }
             throw;
+        }
+    }
+
+    private static void Publish(string staging, string target)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                Directory.Move(staging, target); // Atomic rename; never merge or replace a raced target.
+                return;
+            }
+            catch (Exception error) when (OperatingSystem.IsWindows() &&
+                error is IOException or UnauthorizedAccessException &&
+                (error.HResult & 0xffff) is 5 or 32 or 33 &&
+                attempt < 7 && Directory.Exists(staging) && !Path.Exists(target))
+            {
+                // A reader without FileShare.Delete can temporarily block renaming its parent.
+                // Wait at most 1.4 seconds; persistent permission/lock errors still reach cleanup.
+                Thread.Sleep(50 * (attempt + 1));
+            }
         }
     }
 

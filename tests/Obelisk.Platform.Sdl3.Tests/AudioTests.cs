@@ -26,11 +26,11 @@ public sealed partial class Sdl3ApplicationPlatformTests
         var pixels = RenderPixels(renderer, render.Canvas, width);
         var bright = 0;
         for (var y = (int)(165 * width / 960f); y < (int)(213 * width / 960f); y++)
-        for (var x = width / 4; x < width * 3 / 4; x++)
-        {
-            var offset = (y * width + x) * 4;
-            if (pixels[offset] > 180 && pixels[offset + 1] > 180 && pixels[offset + 2] > 180) bright++;
-        }
+            for (var x = width / 4; x < width * 3 / 4; x++)
+            {
+                var offset = (y * width + x) * 4;
+                if (pixels[offset] > 180 && pixels[offset + 1] > 180 && pixels[offset + 2] > 180) bright++;
+            }
         Assert.True(bright > 20, $"Title glyphs should remain visible at width {width}: {bright} pixels.");
         // Keep an ignored image beside test binaries for visual review of the actual GPU output.
         using var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Unpremul));

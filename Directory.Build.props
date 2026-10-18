@@ -6,7 +6,19 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Deterministic>true</Deterministic>
     <Version>0.1.0</Version>
+    <Authors>Taegyun Eom</Authors>
+    <Copyright>Copyright (c) 2026 Taegyun Eom</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/SquareBracket-GitHub/Obelisk-Engine</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/SquareBracket-GitHub/Obelisk-Engine</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>$(MSBuildProjectName) for Obelisk Engine, an experimental .NET 10 2D game engine targeting Windows x64.</Description>
+    <PackageTags>obelisk;game-engine;2d;dotnet;sdl3</PackageTags>
     <GenerateDocumentationFile Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').StartsWith('$(MSBuildThisFileDirectory)src')) and '$(MSBuildProjectName)' != 'Obelisk.Cli'">true</GenerateDocumentationFile>
   </PropertyGroup>
+  <ItemGroup Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').StartsWith('$(MSBuildThisFileDirectory)src'))">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="/README.md" Visible="false" />
+  </ItemGroup>
 </Project>
 

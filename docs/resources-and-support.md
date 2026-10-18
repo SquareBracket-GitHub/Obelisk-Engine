@@ -71,11 +71,15 @@ Preserve the full `licenses/` directory in game/tool distributions. The
 SkiaSharp, StbImageSharp, native prerequisites and the altered SDL build. A
 self-contained game also includes license/notices from its actual .NET runtime
 pack. Plugins, user images and fonts require their own applicable permissions.
-Third-party licenses do not grant a license for the engine's own code: the engine
-release license/copyright metadata remains an owner decision scheduled for Day 15.
+The engine's own code is licensed under [MIT](../LICENSE),
+Copyright (c) 2026 Taegyun Eom. NuGet packages include that text and metadata;
+Vanilla copies it into `licenses/obelisk/LICENSE` in game build/publish output.
+Third-party components retain their own license terms.
 
-Public NuGet publication, release archives/checksums and the public-feed-only Gate
-are pending. Local-feed guides are usable now. The Day 13 Windows x64 stability
+Release archives/checksums can be generated with the release candidate scripts.
+Public NuGet publication and the public-feed-only Gate remain pending.
+Actual Rider recognition and separate SDK-free machine verification are deferred
+by the owner; they have not passed. Local-feed guides are usable now. The Day 13 Windows x64 stability
 Gate ran 30 real minutes/30 cycles; it is evidence for that machine and workload,
 not a guarantee for every driver or an indefinite soak test.
 

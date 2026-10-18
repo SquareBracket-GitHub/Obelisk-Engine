@@ -49,15 +49,19 @@ public sealed partial class Sdl3ApplicationPlatformTests
                 // Only event injection is on the worker; all game/GPU/resource operations stay on the test thread.
                 while (!cancel.IsCancellationRequested && SDL.WasInit(SDL.InitFlags.Video) == 0) Thread.Sleep(10);
                 if (cancel.Token.WaitHandle.WaitOne(1500)) return;
-                var input = new SDL.Event { Key = new SDL.KeyboardEvent
-                    { Type = SDL.EventType.KeyDown, Key = name == "Pong" ? SDL.Keycode.Return : SDL.Keycode.Right, Down = true } };
+                var input = new SDL.Event
+                {
+                    Key = new SDL.KeyboardEvent
+                    { Type = SDL.EventType.KeyDown, Key = name == "Pong" ? SDL.Keycode.Return : SDL.Keycode.Right, Down = true }
+                };
                 if (!SDL.PushEvent(ref input)) throw new InvalidOperationException(SDL.GetError());
                 if (cancel.Token.WaitHandle.WaitOne(300)) return;
                 var quit = new SDL.Event { Type = (uint)SDL.EventType.Quit };
                 if (!SDL.PushEvent(ref quit)) throw new InvalidOperationException(SDL.GetError());
             }
             catch (Exception error) { eventError = error; }
-        }) { IsBackground = true };
+        })
+        { IsBackground = true };
         worker.Start();
         try { Assert.Equal(0, Assert.IsType<int>(sample.EntryPoint!.Invoke(null, null))); }
         finally { cancel.Cancel(); Assert.True(worker.Join(TimeSpan.FromSeconds(5))); }

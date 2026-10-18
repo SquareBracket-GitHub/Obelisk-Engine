@@ -80,8 +80,12 @@ function Verify-DocumentationWorkflow {
         Push-Location $project
         try {
             # Execute the documented per-game source setup, preserving nuget.org.
-            Invoke-Dotnet @('new', 'nugetconfig')
-            Invoke-Dotnet @('nuget', 'add', 'source', $feed, '--name', 'obelisk-local', '--configfile', 'NuGet.Config')
+            if ($PublicFeed) {
+                Copy-Item -LiteralPath $configuration -Destination 'NuGet.Config'
+            } else {
+                Invoke-Dotnet @('new', 'nugetconfig')
+                Invoke-Dotnet @('nuget', 'add', 'source', $feed, '--name', 'obelisk-local', '--configfile', 'NuGet.Config')
+            }
             Invoke-Dotnet @('restore', '--configfile', 'NuGet.Config')
             Invoke-Dotnet @('build', '--no-restore')
             $source = Join-Path $project 'Game.cs'

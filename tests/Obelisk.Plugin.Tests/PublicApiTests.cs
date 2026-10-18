@@ -20,25 +20,25 @@ public sealed class PublicApiTests
         var actual = new SortedSet<string>(StringComparer.Ordinal);
         var nullable = new NullabilityInfoContext();
         foreach (var assembly in Libraries)
-        foreach (var type in assembly.GetExportedTypes())
-        {
-            var name = $"{assembly.GetName().Name}/{type.FullName}";
-            actual.Add($"type {name}: {type.Attributes}; base {TypeName(type.BaseType)}; interfaces {string.Join(",", type.GetInterfaces().Select(t => TypeName(t)).Order(StringComparer.Ordinal))}".TrimEnd());
-            foreach (var member in type.GetMembers(Declared))
+            foreach (var type in assembly.GetExportedTypes())
             {
-                var value = member switch
+                var name = $"{assembly.GetName().Name}/{type.FullName}";
+                actual.Add($"type {name}: {type.Attributes}; base {TypeName(type.BaseType)}; interfaces {string.Join(",", type.GetInterfaces().Select(t => TypeName(t)).Order(StringComparer.Ordinal))}".TrimEnd());
+                foreach (var member in type.GetMembers(Declared))
                 {
-                    ConstructorInfo c => $"ctor ({Parameters(c)})",
-                    MethodInfo m when !m.IsSpecialName || m.Name.StartsWith("op_", StringComparison.Ordinal) =>
-                        $"method {(m.IsStatic ? "static " : "")}{(m.IsVirtual ? "virtual " : "")}{TypeName(m.ReturnType, nullable.Create(m.ReturnParameter))} {m.Name}<{string.Join(",", m.GetGenericArguments().Select(Constraint))}>({Parameters(m)})",
-                    PropertyInfo p => $"property {(p.GetMethod?.IsStatic == true || p.SetMethod?.IsStatic == true ? "static " : "")}{TypeName(p.PropertyType, nullable.Create(p))} {p.Name}({string.Join(",", p.GetIndexParameters().Select(Parameter))}) {{ {(p.GetMethod?.IsPublic == true ? "get; " : "")}{Setter(p)} }} read={nullable.Create(p).ReadState} write={nullable.Create(p).WriteState}",
-                    FieldInfo f => $"field {(f.IsStatic ? "static " : "")}{(f.IsInitOnly ? "readonly " : "")}{TypeName(f.FieldType, nullable.Create(f))} {f.Name}{(f.IsLiteral ? " = " + JsonSerializer.Serialize(f.GetRawConstantValue()) : "")}",
-                    EventInfo e => $"event {TypeName(e.EventHandlerType)} {e.Name}",
-                    _ => null,
-                };
-                if (value is not null) actual.Add($"{name} :: {value}");
+                    var value = member switch
+                    {
+                        ConstructorInfo c => $"ctor ({Parameters(c)})",
+                        MethodInfo m when !m.IsSpecialName || m.Name.StartsWith("op_", StringComparison.Ordinal) =>
+                            $"method {(m.IsStatic ? "static " : "")}{(m.IsVirtual ? "virtual " : "")}{TypeName(m.ReturnType, nullable.Create(m.ReturnParameter))} {m.Name}<{string.Join(",", m.GetGenericArguments().Select(Constraint))}>({Parameters(m)})",
+                        PropertyInfo p => $"property {(p.GetMethod?.IsStatic == true || p.SetMethod?.IsStatic == true ? "static " : "")}{TypeName(p.PropertyType, nullable.Create(p))} {p.Name}({string.Join(",", p.GetIndexParameters().Select(Parameter))}) {{ {(p.GetMethod?.IsPublic == true ? "get; " : "")}{Setter(p)} }} read={nullable.Create(p).ReadState} write={nullable.Create(p).WriteState}",
+                        FieldInfo f => $"field {(f.IsStatic ? "static " : "")}{(f.IsInitOnly ? "readonly " : "")}{TypeName(f.FieldType, nullable.Create(f))} {f.Name}{(f.IsLiteral ? " = " + JsonSerializer.Serialize(f.GetRawConstantValue()) : "")}",
+                        EventInfo e => $"event {TypeName(e.EventHandlerType)} {e.Name}",
+                        _ => null,
+                    };
+                    if (value is not null) actual.Add($"{name} :: {value}");
+                }
             }
-        }
         var lines = actual.ToArray();
         // Diagnostic output is ignored build output, never an automatic baseline update.
         File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "PublicApi.actual.txt"), lines);
@@ -52,20 +52,20 @@ public sealed class PublicApiTests
     public void ExportedSignaturesDoNotExposeSdlOrNativePointers()
     {
         foreach (var type in Libraries.SelectMany(a => a.GetExportedTypes()))
-        foreach (var member in type.GetMembers(Declared))
-        {
-            var types = member switch
+            foreach (var member in type.GetMembers(Declared))
             {
-                MethodInfo m => m.GetParameters().Select(p => p.ParameterType).Append(m.ReturnType),
-                ConstructorInfo c => c.GetParameters().Select(p => p.ParameterType),
-                PropertyInfo p => p.GetIndexParameters().Select(x => x.ParameterType).Append(p.PropertyType),
-                FieldInfo f => [f.FieldType],
-                _ => Enumerable.Empty<Type>(),
-            };
-            foreach (var signature in types.SelectMany(Flatten))
-                Assert.True(signature != typeof(nint) && signature != typeof(nuint) && !signature.IsPointer &&
-                    !(signature.Namespace?.StartsWith("SDL3", StringComparison.Ordinal) ?? false), $"Native type {signature} escaped through {type.FullName}.{member.Name}.");
-        }
+                var types = member switch
+                {
+                    MethodInfo m => m.GetParameters().Select(p => p.ParameterType).Append(m.ReturnType),
+                    ConstructorInfo c => c.GetParameters().Select(p => p.ParameterType),
+                    PropertyInfo p => p.GetIndexParameters().Select(x => x.ParameterType).Append(p.PropertyType),
+                    FieldInfo f => [f.FieldType],
+                    _ => Enumerable.Empty<Type>(),
+                };
+                foreach (var signature in types.SelectMany(Flatten))
+                    Assert.True(signature != typeof(nint) && signature != typeof(nuint) && !signature.IsPointer &&
+                        !(signature.Namespace?.StartsWith("SDL3", StringComparison.Ordinal) ?? false), $"Native type {signature} escaped through {type.FullName}.{member.Name}.");
+            }
     }
 
     private static string Setter(PropertyInfo p) => p.SetMethod?.IsPublic != true ? "" :

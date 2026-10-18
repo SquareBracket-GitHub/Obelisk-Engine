@@ -23,8 +23,11 @@ public sealed class ProcessRunner : IProcessRunner
     {
         var info = new ProcessStartInfo(command.FileName)
         {
-            WorkingDirectory = command.WorkingDirectory, UseShellExecute = false, CreateNoWindow = true,
-            RedirectStandardOutput = true, RedirectStandardError = true,
+            WorkingDirectory = command.WorkingDirectory,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
         };
         foreach (var argument in command.Arguments) info.ArgumentList.Add(argument);
         var process = new Process { StartInfo = info };

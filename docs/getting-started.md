@@ -2,8 +2,9 @@
 
 This guide creates an independent game, edits it, adds a locally built Plugin and
 publishes a Windows x64 distribution. Run the PowerShell commands in order.
-The engine packages are **not yet public on NuGet**; public publication and its
-clean-cache verification are release work. The local feed below is required today.
+For a version available on nuget.org, install `Obelisk.Cli` and restore from that
+public source. An unpublished development build needs the local feed shown below.
+The [candidate release notes](release-notes-v0.1.0.md) track publication verification.
 
 ## Requirements
 
@@ -12,6 +13,21 @@ clean-cache verification are release work. The local feed below is required toda
 - Microsoft Visual C++ v14 Redistributable **x64** for Shadercross dependencies.
   See the [runtime prerequisite](../README.md#prerequisites).
 - A C# editor is optional. Package consumers do not need a C++ compiler.
+
+## Public-package quick start
+
+For a published `0.1.0`, start in an empty workspace, without an engine checkout:
+
+```powershell
+dotnet tool install --global Obelisk.Cli --version 0.1.0
+obelisk new MyGame
+Set-Location MyGame
+obelisk run
+```
+
+The release Starter ZIP also needs only `dotnet restore`, `dotnet build` and
+`dotnet run` inside its `ObeliskStarter` folder when that version is public.
+Continue at [editor setup and game edits](#open-an-editor-and-edit-the-game) after project preparation.
 
 ## Prepare the local packages
 
@@ -139,10 +155,11 @@ a new location on a compatible Windows x64 machine, then run `MyGame.exe` (or
 the graphics driver and VC++ x64 prerequisite still apply. Rebuild can replace
 only CLI-owned output; keep personal files outside it.
 
-The engine's own release license is not selected yet; see [resource ownership,
-support and release limitations](resources-and-support.md). Standalone release
-packages, public NuGet-only verification and clean-machine certification remain
-Day 15 work. The current local distribution Gate checks a relocated game with
+The engine uses [MIT](../LICENSE), Copyright (c) 2026 Taegyun Eom; see [resource ownership,
+support and release limitations](resources-and-support.md). Release candidate
+scripts generate standalone archives and checksums. Public NuGet-only verification
+remains pending; actual Rider and separate clean-machine checks are deferred by the owner.
+The current local distribution Gate checks a relocated game with
 the SDK/shared runtime unavailable through its environment.
 
 ## If a step fails

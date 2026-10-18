@@ -39,7 +39,8 @@ public sealed partial class Sdl3ApplicationPlatformTests
                     if (!SDL.PushEvent(ref quit)) throw new InvalidOperationException(SDL.GetError());
                 }
                 catch (Exception error) { eventError = error; }
-            }) { IsBackground = true };
+            })
+            { IsBackground = true };
             var game = new PluginGame();
             worker.Start();
             try
@@ -67,14 +68,18 @@ public sealed partial class Sdl3ApplicationPlatformTests
         {
             var manifest = new PluginManifest
             {
-                Name = "future", Version = "1.0.0", EngineMinimum = "0.2.0", EngineMaximumExclusive = "0.3.0",
-                Assembly = "missing.dll", EntryPoint = "Missing.Entry",
+                Name = "future",
+                Version = "1.0.0",
+                EngineMinimum = "0.2.0",
+                EngineMaximumExclusive = "0.3.0",
+                Assembly = "missing.dll",
+                EntryPoint = "Missing.Entry",
             };
             File.WriteAllText(Path.Combine(package, PluginManifest.FileName), JsonSerializer.Serialize(manifest,
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
             var game = new PluginGame();
             var error = Assert.Throws<PluginException>(() => ObeliskApp.Run(game, plugins: new PluginOptions
-                { Directory = Path.Combine(root, "plugins"), ProjectAssetRoot = root }));
+            { Directory = Path.Combine(root, "plugins"), ProjectAssetRoot = root }));
             Assert.Contains("future", error.Message);
             Assert.Contains("incompatible", error.Message);
             Assert.Null(game.Frame);

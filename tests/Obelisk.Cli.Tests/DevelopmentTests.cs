@@ -278,8 +278,15 @@ public sealed class DevelopmentTests
         public Workspace() { Directory.CreateDirectory(Root); File.WriteAllText(Path.Combine(Root, "Game.csproj"), "<Project />"); WriteManifest(); }
         public void WriteManifest(string? field = null, object? value = null)
         {
-            var fields = new Dictionary<string, object?> { ["schemaVersion"] = 1, ["name"] = "Game", ["engineVersion"] = "0.1.0",
-                ["project"] = "Game.csproj", ["assets"] = "assets", ["plugins"] = "plugins" };
+            var fields = new Dictionary<string, object?>
+            {
+                ["schemaVersion"] = 1,
+                ["name"] = "Game",
+                ["engineVersion"] = "0.1.0",
+                ["project"] = "Game.csproj",
+                ["assets"] = "assets",
+                ["plugins"] = "plugins"
+            };
             if (field is not null) fields[field] = value;
             File.WriteAllText(ManifestPath, JsonSerializer.Serialize(fields));
         }

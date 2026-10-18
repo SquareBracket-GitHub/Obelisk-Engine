@@ -22,8 +22,12 @@ public static class ObeliskApp
         if (plugins.IncludeImages)
             pluginHost.Add(new PluginManifest
             {
-                Name = "images", Version = "0.1.0", EngineMinimum = "0.1.0", EngineMaximumExclusive = "0.2.0",
-                Assembly = "Obelisk.Plugins.Images.dll", EntryPoint = typeof(ImagePlugin).FullName!,
+                Name = "images",
+                Version = "0.1.0",
+                EngineMinimum = "0.1.0",
+                EngineMaximumExclusive = "0.2.0",
+                Assembly = "Obelisk.Plugins.Images.dll",
+                EntryPoint = typeof(ImagePlugin).FullName!,
             }, new ImagePlugin(), AppContext.BaseDirectory);
         pluginHost.LoadDirectory(plugins.Directory);
 

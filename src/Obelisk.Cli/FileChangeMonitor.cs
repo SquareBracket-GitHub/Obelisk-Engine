@@ -17,7 +17,7 @@ public sealed class FileChangeMonitor : IChangeMonitor
     private readonly string _root;
     private readonly TimeSpan _debounce;
     private readonly Channel<bool> _events = Channel.CreateBounded<bool>(new BoundedChannelOptions(1)
-        { FullMode = BoundedChannelFullMode.DropOldest, SingleReader = true });
+    { FullMode = BoundedChannelFullMode.DropOldest, SingleReader = true });
     private long _revision;
     private long _lastChange;
     private string[] _content = ["assets", "plugins"];
@@ -29,7 +29,8 @@ public sealed class FileChangeMonitor : IChangeMonitor
         _debounce = debounce ?? TimeSpan.FromMilliseconds(300);
         _watcher = new FileSystemWatcher(_root)
         {
-            IncludeSubdirectories = true, NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite | NotifyFilters.Size,
+            IncludeSubdirectories = true,
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite | NotifyFilters.Size,
         };
         _watcher.Changed += (_, e) => Changed(e.FullPath);
         _watcher.Created += (_, e) => Changed(e.FullPath);

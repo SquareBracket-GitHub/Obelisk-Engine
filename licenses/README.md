@@ -49,5 +49,6 @@ third-party notices from the actual resolved runtime pack into `licenses/dotnet/
 the SDK's normal publish does not copy these package-root files. Source builds
 import the same target through `Directory.Build.targets`. Preserve these files.
 Plugins and user-supplied assets need their own
-applicable notices. The engine's own release license remains a separate release
-decision and is not granted by these third-party licenses.
+applicable notices. The engine's own code uses [MIT](../LICENSE),
+Copyright (c) 2026 Taegyun Eom. Vanilla supplies that text at
+`licenses/obelisk/LICENSE`; third-party licenses retain their own terms.

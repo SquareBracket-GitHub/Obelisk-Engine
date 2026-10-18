@@ -56,6 +56,14 @@ try {
                 finally { $fileStream.Dispose() }
             } finally { $entryStream.Dispose() }
         }
+        $entry = $archive.CreateEntry('LICENSE', [IO.Compression.CompressionLevel]::Optimal)
+        $entry.LastWriteTime = [DateTimeOffset]::Parse('2026-01-01T00:00:00+00:00')
+        $entry.ExternalAttributes = 0
+        $entryStream = $entry.Open()
+        try {
+            $fileStream = [IO.File]::OpenRead((Join-Path $repository 'LICENSE'))
+            try { $fileStream.CopyTo($entryStream) } finally { $fileStream.Dispose() }
+        } finally { $entryStream.Dispose() }
     } finally { $archive.Dispose() }
     New-Item -ItemType Directory -Path $destination -Force | Out-Null
     Move-Item -LiteralPath $workingArchive -Destination $archivePath -Force
