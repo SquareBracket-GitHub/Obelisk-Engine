@@ -42,15 +42,33 @@ checks candidate package/license payloads and provides reproducibility, standalo
 CLI and publication tools. Existing whitespace and line endings were normalized
 to satisfy the repository's formatting check without changing their code content.
 
-The owner approved MIT / Taegyun Eom on 2026-10-18. Public NuGet publication and
-public-feed-only CLI/Starter restore/run remain pending. Actual Rider project
-recognition and a separate Windows machine without an SDK are deferred by the
-owner and have not passed. A local-runtime test with SDK removed from PATH is
-only local evidence. The final release tag remains pending these decisions/gates.
+The owner approved MIT / Taegyun Eom on 2026-10-18. All nine `0.1.0` packages were
+published to nuget.org that day. A fresh package/HTTP cache with only nuget.org
+passed CLI install, new/run/dev, local Plugin add/list/remove, self-contained
+build and relocated native execution, matching Starter restore/build/run and the
+complete documentation examples. Installed CLI and library payloads match the
+candidate. [Obelisk.Cli](https://www.nuget.org/packages/Obelisk.Cli/0.1.0) and
+[Obelisk.Vanilla](https://www.nuget.org/packages/Obelisk.Vanilla/0.1.0) are the entry points.
+
+The first publication attempt was rejected with HTTP 403. Replacing the key
+resolved authentication; all nine subsequent uploads succeeded. Exact changes
+to the key's permissions/owner were not independently inspected.
+
+Actual Rider project recognition and a separate Windows machine without an SDK
+are deferred by the owner and have not passed. A local-runtime test with SDK
+removed from PATH is only local evidence. The proposed `v0.1.0` tag targets
+`5a5d5b1d85cf86242d0a8fbd2014bffdc1d802e1`, the clean build revision. No final
+release tag has been created; the deferred certification remains explicit.
 
 ## Recreate and verify
 
 From the checkout on Windows x64 with the pinned SDK:
+
+Use build revision `5a5d5b1` in a separate checkout to recreate the published
+candidate. Its archives preserve the release notes as they were at build time;
+this updated document records post-publication verification. Package and archive
+bytes were not replaced after publication. NuGet versions are immutable; do not
+push another package with the same `0.1.0` identity.
 
 ```powershell
 pwsh -NoProfile -File scripts/Build-ReleaseCandidate.ps1

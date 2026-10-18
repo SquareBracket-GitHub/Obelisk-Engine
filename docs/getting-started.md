@@ -2,8 +2,8 @@
 
 This guide creates an independent game, edits it, adds a locally built Plugin and
 publishes a Windows x64 distribution. Run the PowerShell commands in order.
-For a version available on nuget.org, install `Obelisk.Cli` and restore from that
-public source. An unpublished development build needs the local feed shown below.
+Version `0.1.0` is available on nuget.org: install `Obelisk.Cli` and restore from
+that public source. An unpublished development build needs the local feed shown below.
 The [candidate release notes](release-notes-v0.1.0.md) track publication verification.
 
 ## Requirements
@@ -157,8 +157,9 @@ only CLI-owned output; keep personal files outside it.
 
 The engine uses [MIT](../LICENSE), Copyright (c) 2026 Taegyun Eom; see [resource ownership,
 support and release limitations](resources-and-support.md). Release candidate
-scripts generate standalone archives and checksums. Public NuGet-only verification
-remains pending; actual Rider and separate clean-machine checks are deferred by the owner.
+scripts generate standalone archives and checksums. Public NuGet-only CLI/Starter
+verification passed on 2026-10-18; actual Rider and separate clean-machine checks
+are deferred by the owner.
 The current local distribution Gate checks a relocated game with
 the SDK/shared runtime unavailable through its environment.
 

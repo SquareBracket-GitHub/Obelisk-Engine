@@ -11,7 +11,7 @@ experimental. Publication verification is tracked in the candidate release notes
 
 | Guide | Use it for |
 | --- | --- |
-| [Getting Started](docs/getting-started.md) | Local package feed, CLI/Starter, editor setup, code edits, Plugin and first distribution. |
+| [Getting Started](docs/getting-started.md) | Public/local packages, CLI/Starter, editor setup, code edits, Plugin and first distribution. |
 | [Plugin Authoring](docs/plugin-authoring.md) | Complete package-only Plugin project, manifest, lifecycle and ownership. |
 | [CLI Reference](docs/cli-reference.md) | Commands, project schema, process behavior and exit codes. |
 | [Resource lifetime and support](docs/resources-and-support.md) | Owned/borrowed resources, thread rules, platform prerequisites and known limits. |
@@ -225,13 +225,13 @@ remove stale output. This simulates an unavailable SDK/shared runtime on the tes
 machine, rather than uninstalling its SDK. Default cleanup removes its own temporary workspace;
 `-KeepWorkspace` retains it for inspection. Existing user global tools remain
 unchanged. Third-party notices, the engine MIT license and XML API documentation
-are included; public publication remains release work.
+are included. All nine `0.1.0` packages are available on nuget.org.
 
 `-Starter` generates the ZIP, compares its project files byte-for-byte with the
 installed CLI output, copies and moves the extracted project, then restores,
-builds and runs both projects with a native SDL window. This Gate currently uses
-isolated **local** packages; its public-NuGet requirement remains open until
-`Obelisk.Vanilla` and its dependencies are published.
+builds and runs both projects with a native SDL window. The default uses isolated
+local packages. The `-PublicFeed -ReleaseDirectory` flow below uses only nuget.org;
+the complete public-package flow passed for `0.1.0` on 2026-10-18.
 
 ## Release candidate preparation
 
@@ -263,7 +263,8 @@ The standalone CLI includes a private .NET runtime and its notices. Help, info,
 version and project creation work without a discoverable SDK; development commands
 still need the .NET SDK. The local PATH-isolated check does not certify a separate
 SDK-free Windows machine. The engine uses MIT, Copyright (c) 2026 Taegyun Eom.
-Public NuGet publication remains pending; actual Rider recognition and separate
+Public NuGet publication and the public-feed-only CLI/Starter flow passed on
+2026-10-18. Actual Rider recognition and separate
 clean-machine certification are deferred by the owner and have not passed.
 A build does not create a final Git tag or approve publication. See the
 [candidate release notes](docs/release-notes-v0.1.0.md).
@@ -272,6 +273,11 @@ commit, approved MIT metadata and `NUGET_API_KEY` in the process environment or
 ignored project `.env`. Never commit that key. Packages are pushed to nuget.org
 in dependency order; duplicate versions and failures stop the operation with the
 completed package IDs reported, without deleting packages or changing versions.
+Version `0.1.0` has already been published; do not republish it. The published
+packages and archived candidate were built from `5a5d5b1`; use that revision in a
+separate checkout to recreate them. Documentation updates after publication do
+not change the immutable package files. The proposed `v0.1.0` tag targets that
+build revision; no final tag has been created.
 
 ## Run the repository samples
 
