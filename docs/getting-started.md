@@ -5,11 +5,15 @@ publishes a Windows x64 distribution. Run the PowerShell commands in order.
 Version `0.1.0` is available on nuget.org: install `Obelisk.Cli` and restore from
 that public source. An unpublished development build needs the local feed shown below.
 The [candidate release notes](release-notes-v0.1.0.md) track publication verification.
+The current source prepares a [CLI-only `0.1.1` candidate](release-notes-v0.1.1.md);
+its generated games still use engine `0.1.0`.
 
 ## Requirements
 
 - Windows x64 and an SDL_GPU-compatible graphics driver.
-- .NET SDK 10.0.401 for the engine checkout, Git and PowerShell 7 (`pwsh`).
+- [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) for CLI
+  installation and game development; SDK 10.0.401 for the engine checkout.
+  Git and PowerShell 7 (`pwsh`).
 - Microsoft Visual C++ v14 Redistributable **x64** for Shadercross dependencies.
   See the [runtime prerequisite](../README.md#prerequisites).
 - A C# editor is optional. Package consumers do not need a C++ compiler.
@@ -24,6 +28,11 @@ obelisk new MyGame
 Set-Location MyGame
 obelisk run
 ```
+
+On a new computer use `install`; use `update` for an existing installation. If SDK 9
+reports a missing `DotnetToolSettings.xml`, install the .NET 10 SDK, reopen the
+terminal and check `dotnet --version` selects `10.0.xxx`. Also check any parent
+`global.json` that could pin SDK 9. The public package contains the settings file.
 
 The release Starter ZIP also needs only `dotnet restore`, `dotnet build` and
 `dotnet run` inside its `ObeliskStarter` folder when that version is public.
@@ -46,16 +55,16 @@ For the CLI flow below, install the tool (ZIP generation can skip global tool
 installation; install it later before the Plugin/build steps):
 
 ```powershell
-dotnet tool install --global Obelisk.Cli --version 0.1.0 --add-source $obeliskFeed
+dotnet tool install --global Obelisk.Cli --version 0.1.1 --add-source $obeliskFeed
 obelisk --version
 ```
 
-Expected version: `0.1.0`. Reopen the terminal if the SDK reports the tool directory
+Expected CLI version: `0.1.1` (engine `0.1.0`). Reopen the terminal if the SDK reports the tool directory
 is missing from PATH; preserve `$engineRoot` and `$obeliskFeed` as absolute paths.
-For an existing tool use `dotnet tool update --global Obelisk.Cli --version 0.1.0
+For an existing tool use `dotnet tool update --global Obelisk.Cli --version 0.1.1
 --add-source $obeliskFeed`; uninstall with `dotnet tool uninstall --global Obelisk.Cli`.
 Development packages of the same version can be cached; use a fresh NuGet cache
-when validating a rebuilt `0.1.0`. Do not overwrite another application's cache.
+when validating a rebuilt candidate. Do not overwrite another application's cache.
 
 ## Choose CLI or Starter ZIP
 

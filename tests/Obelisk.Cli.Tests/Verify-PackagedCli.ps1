@@ -5,6 +5,9 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 if (-not $IsWindows) { throw 'The native generated-game verification requires Windows.' }
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+[xml]$cliProperties = Get-Content -Raw (Join-Path $repository 'src/Obelisk.Cli/Obelisk.Cli.csproj')
+$cliVersion = [string]$cliProperties.Project.PropertyGroup.Version
+if (-not $cliVersion) { $cliVersion = '0.1.0' }
 $tempParent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $taskRoot = Join-Path $tempParent ('obelisk-day9-' + [guid]::NewGuid().ToString('N'))
 $feed = Join-Path $taskRoot 'feed'
@@ -18,6 +21,7 @@ if ($ReleaseDirectory) {
     $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
     & pwsh -NoProfile -File (Join-Path $repository 'scripts/Verify-ReleaseCandidate.ps1') -Directory $ReleaseDirectory
     if ($LASTEXITCODE -ne 0) { throw 'Release candidate integrity check failed.' }
+    $cliVersion = (Get-Content -Raw (Join-Path $ReleaseDirectory 'release-manifest.json') | ConvertFrom-Json).version
 }
 . (Join-Path $PSScriptRoot 'DocumentationGate.ps1')
 
@@ -217,7 +221,7 @@ try {
     Push-Location $workspace
     try {
         # A real global installation in an isolated CLI home leaves the user's tools untouched.
-        Invoke-Dotnet @('tool', 'install', '--global', 'Obelisk.Cli', '--version', '0.1.0', '--configfile', $configuration)
+        Invoke-Dotnet @('tool', 'install', '--global', 'Obelisk.Cli', '--version', $cliVersion, '--configfile', $configuration)
         $cli = Join-Path $cliHome '.dotnet/tools/obelisk.exe'
         if (-not (Test-Path -LiteralPath $cli)) { throw "Global command was not installed at '$cli'." }
         if ($ReleaseDirectory) {

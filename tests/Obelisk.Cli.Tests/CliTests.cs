@@ -215,12 +215,12 @@ public sealed class CliTests
         using var files = new Workspace();
         var (context, output, error) = files.Context();
         Assert.Equal(0, CliApplication.Run(["info"], context));
-        Assert.Contains("Obelisk CLI: 0.1.0", output.ToString());
+        Assert.Contains("Obelisk CLI: 0.1.1", output.ToString());
         Assert.Contains("Obelisk.Vanilla [0.1.0]", output.ToString());
         Assert.Contains("Runtime:", output.ToString());
         output.GetStringBuilder().Clear();
         Assert.Equal(0, CliApplication.Run(["--version"], context));
-        Assert.Equal($"0.1.0{Environment.NewLine}", output.ToString());
+        Assert.Equal($"0.1.1{Environment.NewLine}", output.ToString());
         Assert.Equal("", error.ToString());
     }
 

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 
 namespace Obelisk.Cli;
 
@@ -28,7 +29,10 @@ public sealed class ProcessRunner : IProcessRunner
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
         };
+        info.Environment["DOTNET_CLI_FORCE_UTF8_ENCODING"] = "1";
         foreach (var argument in command.Arguments) info.ArgumentList.Add(argument);
         var process = new Process { StartInfo = info };
         WindowsJob? job = null;

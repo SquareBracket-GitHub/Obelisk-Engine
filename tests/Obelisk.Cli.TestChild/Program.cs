@@ -1,6 +1,27 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
+using Obelisk.Cli;
+
+if (args[0] == "unicode-output")
+{
+    Console.OutputEncoding = new UTF8Encoding(false);
+    Console.WriteLine("복원 완료: 한글 경로 / 日本語 / 🎮");
+    Console.Error.WriteLine("오류: 파일을 찾을 수 없습니다");
+    return 17;
+}
+if (args[0] == "encoding-runner")
+{
+    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    Console.OutputEncoding = Encoding.GetEncoding(int.Parse(args[1]));
+    var output = new StringWriter(); var error = new StringWriter();
+    await using var child = new ProcessRunner().Start(new ProcessCommand("dotnet",
+        [Assembly.GetExecutingAssembly().Location, "unicode-output"], Directory.GetCurrentDirectory()), output, error);
+    var exit = await child.Completion;
+    Console.WriteLine(JsonSerializer.Serialize(new { output = output.ToString(), error = error.ToString(), exit }));
+    return 0;
+}
 
 if (args[0] == "echo")
 {

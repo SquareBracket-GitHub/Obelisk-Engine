@@ -14,10 +14,10 @@ public static class CliExitCodes
 
 public static class CliApplication
 {
-    public const string Version = "0.1.0";
+    public const string Version = "0.1.1";
     public const string EngineVersion = "0.1.0";
     private const string Help = """
-        Obelisk CLI 0.1.0
+        Obelisk CLI 0.1.1
         Usage: obelisk <command>
 
           new <name>    Create a .NET 10 game in a new child directory.

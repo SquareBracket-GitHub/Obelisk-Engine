@@ -12,7 +12,8 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
         using var operation = ProjectOperation.Acquire(context.WorkingDirectory);
         var output = ProjectManifest.Resolve(context.WorkingDirectory, OutputDirectory);
         var owner = $"Obelisk.Cli {CliApplication.Version}\n{manifest.Project}\n";
-        CheckOutput(output, owner);
+        var previousOwner = $"Obelisk.Cli 0.1.0\n{manifest.Project}\n";
+        CheckOutput(output, owner, previousOwner);
         var assets = ProjectFiles.ContentRoot(context.WorkingDirectory, manifest.Assets);
         var plugins = ProjectFiles.ContentRoot(context.WorkingDirectory, manifest.Plugins);
         if (Directory.Exists(assets)) ProjectFiles.ValidateTree(assets);
@@ -43,7 +44,7 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
             }
             cancellation.ThrowIfCancellationRequested();
             File.WriteAllText(Path.Combine(staging, Marker), owner);
-            CheckOutput(output, owner);
+            CheckOutput(output, owner, previousOwner);
             Directory.CreateDirectory(Path.GetDirectoryName(output)!);
             if (Directory.Exists(output)) Directory.Move(output, backup);
             try { Directory.Move(staging, output); }
@@ -65,12 +66,14 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
         }
     }
 
-    private static void CheckOutput(string output, string owner)
+    private static void CheckOutput(string output, string owner, string previousOwner)
     {
         if (!Path.Exists(output)) return;
         ProjectFiles.ValidateTree(output);
         var marker = Path.Combine(output, Marker);
-        if (!File.Exists(marker) || new FileInfo(marker).Length > 2048 || File.ReadAllText(marker) != owner)
+        var contents = File.Exists(marker) && new FileInfo(marker).Length <= 2048 ? File.ReadAllText(marker) : null;
+        // A CLI patch can replace the previous release's output for the same project.
+        if (contents != owner && contents != previousOwner)
             throw new IOException($"Output '{output}' is not owned by this CLI/project. Move the existing directory before building; its files were preserved.");
     }
 }

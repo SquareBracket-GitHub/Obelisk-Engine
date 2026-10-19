@@ -22,7 +22,8 @@ ships with all eight library packages; the CLI's supported interface is its comm
 
 ## Prerequisites
 
-- .NET SDK 10.0.401 (pinned by `global.json`)
+- .NET 10 SDK for installing the CLI and developing games; source builds use
+  SDK 10.0.401, pinned by `global.json`
 - Git
 - Windows x64 with an SDL_GPU-compatible graphics driver for the native samples
 - [Microsoft Visual C++ v14 Redistributable (x64)](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist):
@@ -50,16 +51,24 @@ foreach ($project in Get-ChildItem src/*/*.csproj) {
     if ($LASTEXITCODE -ne 0) { throw "Package build failed: $project" }
 }
 $obeliskFeed = (Resolve-Path artifacts/packages).Path
-dotnet tool install --global Obelisk.Cli --version 0.1.0 --add-source $obeliskFeed
+dotnet tool install --global Obelisk.Cli --version 0.1.1 --add-source $obeliskFeed
 obelisk --help
 obelisk info
 ```
 
 If .NET asks you to reopen the terminal, do so to make the tool directory available
 on PATH. For an existing CLI installation use `dotnet tool update --global
-Obelisk.Cli --version 0.1.0 --add-source $obeliskFeed`; remove it with `dotnet tool
+Obelisk.Cli --version 0.1.1 --add-source $obeliskFeed`; remove it with `dotnet tool
 uninstall --global Obelisk.Cli`. Installation follows the
 [.NET tool options](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install).
+
+Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
+before installing the tool. SDK 9 can report `DotnetToolSettings.xml was not found`
+when installing this `net10.0` tool even though that file exists in the package.
+Reopen the terminal and check `dotnet --version` shows `10.0.xxx` in the directory
+where you install/run it. If it still selects SDK 9, check the current/parent
+directory's `global.json` and PATH. Use `install` on a new computer and `update`
+for an existing tool installation.
 
 Create an independent game beside the engine checkout, then restore from the local
 feed and NuGet for third-party dependencies:
@@ -234,6 +243,33 @@ local packages. The `-PublicFeed -ReleaseDirectory` flow below uses only nuget.o
 the complete public-package flow passed for `0.1.0` on 2026-10-18.
 
 ## Release candidate preparation
+
+### CLI 0.1.1 patch candidate
+
+CLI `0.1.1` fixes Windows non-ASCII output during `run`, `dev` and `build`.
+It remains a local candidate; public installation above still uses `0.1.0`.
+Engine packages and generated projects remain at `0.1.0`. Existing games and
+their CLI `0.1.0` build directories can be used after the CLI update.
+
+```powershell
+pwsh -NoProfile -File scripts/Build-CliPatch.ps1 -OutputDirectory artifacts/cli-0.1.1
+pwsh -NoProfile -File scripts/Verify-CliPatch.ps1 -Directory artifacts/cli-0.1.1
+# Install the candidate in a separate tool directory:
+dotnet tool install Obelisk.Cli --version 0.1.1 --tool-path artifacts/cli-0.1.1/tool --add-source artifacts/cli-0.1.1/packages
+./artifacts/cli-0.1.1/tool/obelisk --version
+```
+
+The verifier installs the candidate with isolated caches and tests both the tool
+and extracted Windows x64 CLI ZIP against public engine packages, with Korean SDK
+output and Unicode game paths. It checks both output streams and game exit codes.
+See the [CLI patch notes](docs/release-notes-v0.1.1.md). These commands do not publish
+packages or create a release tag.
+
+### Original engine 0.1.0 candidate
+
+The following engine-set commands apply to the original `5a5d5b1` source revision.
+The builder rejects mixed CLI/engine versions; use the patch builder above on the
+current source.
 
 Build all nine NuGet packages (eight libraries plus the CLI tool), a self-contained
 Windows x64 CLI ZIP and the matching Starter ZIP in a new, preserved directory:

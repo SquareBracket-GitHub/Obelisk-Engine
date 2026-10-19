@@ -130,28 +130,37 @@ public sealed class DistributionTests
         Assert.Empty(Directory.GetDirectories(Path.Combine(files.Root, "artifacts"), ".obelisk-publish-*"));
     }
 
-    [Fact]
-    public async Task RebuildReplacesOwnedOutputWithoutStaleFiles()
+    [Theory]
+    [InlineData("0.1.0")]
+    [InlineData("0.1.1")]
+    public async Task RebuildReplacesOwnedOutputWithoutStaleFiles(string previousVersion)
     {
         using var files = new Workspace();
         Assert.Equal(0, await CliApplication.RunAsync(["build"], files.Context, build: new BuildCommand(new Publisher())));
+        File.WriteAllText(Path.Combine(files.OutputDirectory, ".obelisk-build.txt"), $"Obelisk.Cli {previousVersion}\nGame.csproj\n");
         File.WriteAllText(Path.Combine(files.OutputDirectory, "stale.dll"), "stale");
         Assert.Equal(0, await CliApplication.RunAsync(["build"], files.Context, build: new BuildCommand(new Publisher())));
         Assert.False(File.Exists(Path.Combine(files.OutputDirectory, "stale.dll")));
+        Assert.Equal($"Obelisk.Cli {CliApplication.Version}\nGame.csproj\n", File.ReadAllText(Path.Combine(files.OutputDirectory, ".obelisk-build.txt")));
         Assert.Empty(Directory.GetDirectories(Path.Combine(files.Root, "artifacts"), ".obelisk-backup-*"));
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task FailedPublishPreservesPreviousOutput(bool incomplete)
+    [InlineData(false, "0.1.0")]
+    [InlineData(true, "0.1.0")]
+    [InlineData(false, "0.1.1")]
+    [InlineData(true, "0.1.1")]
+    public async Task FailedPublishPreservesPreviousOutput(bool incomplete, string previousVersion)
     {
         using var files = new Workspace();
         Assert.Equal(0, await CliApplication.RunAsync(["build"], files.Context, build: new BuildCommand(new Publisher())));
+        var marker = $"Obelisk.Cli {previousVersion}\nGame.csproj\n";
+        File.WriteAllText(Path.Combine(files.OutputDirectory, ".obelisk-build.txt"), marker);
         File.WriteAllText(Path.Combine(files.OutputDirectory, "keep.txt"), "previous");
         var publisher = new Publisher { Exit = incomplete ? 0 : 7, Incomplete = incomplete };
         Assert.Equal(incomplete ? 1 : 7, await CliApplication.RunAsync(["build"], files.Context, build: new BuildCommand(publisher)));
         Assert.Equal("previous", File.ReadAllText(Path.Combine(files.OutputDirectory, "keep.txt")));
+        Assert.Equal(marker, File.ReadAllText(Path.Combine(files.OutputDirectory, ".obelisk-build.txt")));
         Assert.True(publisher.Disposed);
     }
 
@@ -169,11 +178,16 @@ public sealed class DistributionTests
         Assert.Empty(Directory.GetDirectories(Path.Combine(files.Root, "artifacts"), ".obelisk-publish-*"));
     }
 
-    [Fact]
-    public async Task UnownedOutputIsNeverOverwrittenAndSdkIsNotInvoked()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("Obelisk.Cli 0.1.0\nOther.csproj\n")]
+    [InlineData("Obelisk.Cli 0.1.1\nOther.csproj\n")]
+    [InlineData("Obelisk.Cli 0.2.0\nGame.csproj\n")]
+    public async Task UnownedOutputIsNeverOverwrittenAndSdkIsNotInvoked(string? marker)
     {
         using var files = new Workspace(); Directory.CreateDirectory(files.OutputDirectory);
         var sentinel = Path.Combine(files.OutputDirectory, "keep.txt"); File.WriteAllText(sentinel, "user");
+        if (marker is not null) File.WriteAllText(Path.Combine(files.OutputDirectory, ".obelisk-build.txt"), marker);
         var publisher = new Publisher();
         Assert.Equal(1, await CliApplication.RunAsync(["build"], files.Context, build: new BuildCommand(publisher)));
         Assert.Null(publisher.Command); Assert.Equal("user", File.ReadAllText(sentinel));

@@ -1,4 +1,4 @@
-# CLI Reference (v0.1.0)
+# CLI Reference (v0.1.1 candidate / engine v0.1.0)
 
 Run commands from the directory containing `obelisk.json`, except `new`, `info`
 and help/version. The CLI orchestrates standard .NET SDK commands. Arguments and
@@ -15,7 +15,7 @@ validated for Windows x64.
 | `obelisk remove <manifest-name>` | Removes an installed package for the next game startup. |
 | `obelisk list` | Lists installed Plugin versions and declared engine ranges; read-only. |
 | `obelisk info` | Prints CLI/template, runtime and platform versions without requiring a project. |
-| `obelisk --version` | Prints `0.1.0`. |
+| `obelisk --version` | Prints `0.1.1` for this candidate; the public `0.1.0` tool prints `0.1.0`. |
 | `obelisk help`, `--help`, `-h` | Prints command usage. No arguments also prints help. |
 
 `<command> --help` / `-h` is accepted for new, run, dev, build, add, remove, list
@@ -86,6 +86,9 @@ with apphost enabled and single-file/trimming/AOT disabled for dynamic Plugins.
 It stages fresh output, copies configured roots to `assets/` and `plugins/`, and
 replaces only CLI/project-owned output. Unowned destinations are rejected; publish
 failure/cancellation preserves the old distribution. Rebuild removes stale files.
+CLI `0.1.1` also accepts the same project's `0.1.0` ownership marker and writes
+the new marker after a successful publish. Other project/version markers remain
+protected.
 Copy the complete output including `licenses/`, native libraries and Plugins.
 Targets need the VC++ x64 prerequisite and a compatible graphics driver, but no
 SDK/shared .NET runtime. [Getting Started](getting-started.md) demonstrates the flow.
@@ -106,3 +109,9 @@ its source. Exceptions from a game are reported by its process/runtime; the CLI
 does not translate every game exception into its own error model. Retain stderr
 and the invoked command when diagnosing failures. Cancellation and failed builds
 do not authorize deleting arbitrary user output.
+
+Starting with CLI `0.1.1`, both redirected streams use UTF-8. SDK children receive
+`DOTNET_CLI_FORCE_UTF8_ENCODING=1`; the CLI preserves language selection and decodes
+their UTF-8 output explicitly, including on CP949/CP437 consoles. Scripts capturing
+CLI output must decode UTF-8. A game that explicitly chooses another output encoding
+must switch to UTF-8 for this path. Terminal fonts must provide the displayed glyphs.

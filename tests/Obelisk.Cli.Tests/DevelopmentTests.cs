@@ -225,6 +225,22 @@ public sealed class DevelopmentTests
     }
 
     [Theory]
+    [InlineData(949)]
+    [InlineData(437)]
+    public async Task ChildUtf8OutputSurvivesLegacyConsoleCodePages(int codePage)
+    {
+        using var files = new Workspace();
+        var output = new StringWriter(); var error = new StringWriter();
+        await using var child = new ProcessRunner().Start(ChildCommand(files.Root, ["encoding-runner", codePage.ToString()]), output, error);
+        Assert.Equal(0, await child.Completion.WaitAsync(TimeSpan.FromSeconds(15)));
+        using var result = JsonDocument.Parse(output.ToString());
+        Assert.Equal($"복원 완료: 한글 경로 / 日本語 / 🎮{Environment.NewLine}", result.RootElement.GetProperty("output").GetString());
+        Assert.Equal($"오류: 파일을 찾을 수 없습니다{Environment.NewLine}", result.RootElement.GetProperty("error").GetString());
+        Assert.Equal(17, result.RootElement.GetProperty("exit").GetInt32());
+        Assert.Equal("", error.ToString());
+    }
+
+    [Theory]
     [InlineData("tree")]
     [InlineData("parent-exit")]
     public async Task WindowsJobReleasesDescendantEvenWhenItsParentAlreadyExits(string mode)

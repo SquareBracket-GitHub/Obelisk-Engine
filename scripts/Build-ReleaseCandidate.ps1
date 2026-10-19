@@ -7,6 +7,10 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 [xml]$props = Get-Content -Raw (Join-Path $repository 'Directory.Build.props')
 $version = [string]$props.Project.PropertyGroup.Version
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Unexpected version '$version'." }
+[xml]$cliProperties = Get-Content -Raw (Join-Path $repository 'src/Obelisk.Cli/Obelisk.Cli.csproj')
+if ($cliProperties.Project.PropertyGroup.Version -and $cliProperties.Project.PropertyGroup.Version -ne $version) {
+    throw 'CLI-only patch: use Build-CliPatch.ps1; the engine-set builder requires matching engine and CLI versions.'
+}
 $destination = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) }
     else { Join-Path $repository ('artifacts/release-candidate-' + [guid]::NewGuid().ToString('N')) }
 if (Test-Path -LiteralPath $destination) { throw "Output already exists: '$destination'. Choose a new directory; existing candidates are preserved." }

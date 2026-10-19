@@ -25,7 +25,10 @@ try {
     Invoke-Dotnet @('build', $cliProject, '-c', 'Release', '-m:1', '-p:MSBuildEnableWorkloadResolver=false')
     $cli = Join-Path $repository 'src/Obelisk.Cli/bin/Release/net10.0/Obelisk.Cli.dll'
     $cliVersion = (& dotnet $cli --version).Trim()
-    if ($LASTEXITCODE -ne 0 -or $cliVersion -ne $version) { throw "CLI version '$cliVersion' does not match engine version '$version'." }
+    [xml]$cliProperties = Get-Content -Raw -LiteralPath $cliProject
+    $expectedCliVersion = [string]$cliProperties.Project.PropertyGroup.Version
+    if (-not $expectedCliVersion) { $expectedCliVersion = $version }
+    if ($LASTEXITCODE -ne 0 -or $cliVersion -ne $expectedCliVersion) { throw "CLI version '$cliVersion' does not match '$expectedCliVersion'." }
     Push-Location $taskRoot
     try { Invoke-Dotnet @($cli, 'new', $starter) }
     finally { Pop-Location }
