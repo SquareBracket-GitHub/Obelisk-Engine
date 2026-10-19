@@ -56,9 +56,24 @@ to the key's permissions/owner were not independently inspected.
 
 Actual Rider project recognition and a separate Windows machine without an SDK
 are deferred by the owner and have not passed. A local-runtime test with SDK
-removed from PATH is only local evidence. The proposed `v0.1.0` tag targets
+removed from PATH is only local evidence. The confirmed `v0.1.0` tag candidate targets
 `5a5d5b1d85cf86242d0a8fbd2014bffdc1d802e1`, the clean build revision. No final
 release tag has been created; the deferred certification remains explicit.
+
+Final regression verification passed on 2026-10-19 with 260 tests in Debug and
+260 in Release, CI formatting, the extracted standalone CLI and the complete
+public-NuGet user flow. CLI and Starter ZIP project files were byte-identical;
+both restored, built and opened native windows. Plugin install/remove, relocated
+self-contained execution and documentation examples passed. Candidate package/ZIP
+integrity passed before and after the run, and engine/package inputs matched the
+published build revision. No blocking regression was found in this tested scope.
+
+`scripts/Verify-FinalCandidate.ps1` reproduces those checks and writes per-stage
+logs and a JSON report with candidate/script hashes and a confirmed tag candidate.
+A failed run cannot confirm a candidate. Its successful status is explicitly
+`passed-with-deferred-certification`; Rider and separate SDK-free Windows checks
+remain unverified. The engine API, implementation and published artifact bytes
+were unchanged during this final verification.
 
 ## Recreate and verify
 

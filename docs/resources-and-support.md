@@ -79,6 +79,8 @@ Third-party components retain their own license terms.
 Release archives/checksums can be generated with the release candidate scripts.
 All nine `0.1.0` packages were published on 2026-10-18, and the public-feed-only
 CLI/Starter, Plugin, documentation and relocated distribution Gate passed.
+The complete final regression/public-package flow was repeated successfully on
+2026-10-19 against the same immutable build candidate.
 Actual Rider recognition and separate SDK-free machine verification are deferred
 by the owner; they have not passed. Local-feed guides are usable now. The Day 13 Windows x64 stability
 Gate ran 30 real minutes/30 cycles; it is evidence for that machine and workload,

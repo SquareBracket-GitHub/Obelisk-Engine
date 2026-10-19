@@ -276,8 +276,35 @@ completed package IDs reported, without deleting packages or changing versions.
 Version `0.1.0` has already been published; do not republish it. The published
 packages and archived candidate were built from `5a5d5b1`; use that revision in a
 separate checkout to recreate them. Documentation updates after publication do
-not change the immutable package files. The proposed `v0.1.0` tag targets that
+not change the immutable package files. The confirmed `v0.1.0` tag candidate targets that
 build revision; no final tag has been created.
+
+### Final candidate verification
+
+Use the existing archived candidate to repeat the final regression and public
+user flow. Choose a new output directory for each run:
+
+```powershell
+pwsh -NoProfile -File scripts/Verify-FinalCandidate.ps1 -Directory artifacts/day15-release-5a5d5b1 -OutputDirectory artifacts/final-verification
+```
+
+The verifier checks the archive before and after execution, requires engine and
+package inputs to match its build revision, runs all Debug/Release tests and CI
+formatting, then exercises the extracted standalone CLI and the public-NuGet-only
+CLI/Starter/Plugin/documentation/distribution flow. The Starter project files
+must match the CLI generator byte for byte. Each check has a log; the JSON report
+records exit codes, candidate/script hashes and the confirmed tag candidate only
+after every check passes. Failed candidates produce a failed report. Existing
+output directories are preserved.
+
+The current v0.1 owner-deferred Rider and separate SDK-free Windows certification
+are recorded explicitly. A passing report has status
+`passed-with-deferred-certification`; it does not claim those environments passed.
+This verification command does not create a Git tag, GitHub Release or publish
+packages. Published `0.1.0` bytes and their build revision remain fixed.
+The full final verification passed on 2026-10-19: 260 tests in each configuration,
+formatting, candidate integrity before/after, frozen source, standalone CLI and
+the complete public-package user flow. No blocking regression was found in this scope.
 
 ## Run the repository samples
 
