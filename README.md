@@ -36,7 +36,7 @@ For a version available on nuget.org, use the public-package flow without a sour
 checkout or local feed:
 
 ```powershell
-dotnet tool install --global Obelisk.Cli --version 0.1.0
+dotnet tool install --global Obelisk.Cli --version 0.1.1
 obelisk new MyGame
 Set-Location MyGame
 obelisk run
@@ -244,10 +244,10 @@ the complete public-package flow passed for `0.1.0` on 2026-10-18.
 
 ## Release candidate preparation
 
-### CLI 0.1.1 patch candidate
+### CLI 0.1.1 patch release
 
 CLI `0.1.1` fixes Windows non-ASCII output during `run`, `dev` and `build`.
-It remains a local candidate; public installation above still uses `0.1.0`.
+`Obelisk.Cli` `0.1.1` was pushed to nuget.org on 2026-10-19 from source `0379b5b`.
 Engine packages and generated projects remain at `0.1.0`. Existing games and
 their CLI `0.1.0` build directories can be used after the CLI update.
 
@@ -264,6 +264,12 @@ and extracted Windows x64 CLI ZIP against public engine packages, with Korean SD
 output and Unicode game paths. It checks both output streams and game exit codes.
 See the [CLI patch notes](docs/release-notes-v0.1.1.md). These commands do not publish
 packages or create a release tag.
+The published package is immutable; do not republish `0.1.1`. To verify the
+archived candidate against only nuget.org with fresh caches, add `-PublicFeed` to
+`Verify-CliPatch.ps1`. Update an existing installation with
+`dotnet tool update --global Obelisk.Cli --version 0.1.1`.
+The public-feed-only fresh-cache installation, candidate payload comparison and
+Unicode run/output/exit-code checks passed on 2026-10-19.
 
 ### Original engine 0.1.0 candidate
 

@@ -1,4 +1,4 @@
-# Obelisk CLI 0.1.1 candidate
+# Obelisk CLI 0.1.1
 
 This patch fixes garbled non-ASCII output during `obelisk run`, `dev` and `build`
 on Windows consoles using legacy code pages. The CLI version is `0.1.1`; engine
@@ -44,8 +44,8 @@ not found`. The public `0.1.0` package was inspected and contains that file unde
 Install the [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0),
 reopen the terminal, and verify `dotnet --version` selects `10.0.xxx` from the
 installation/game directory. A parent `global.json` or PATH can select an older SDK.
-Use `dotnet tool install --global Obelisk.Cli --version 0.1.0` for first installation
-while `0.1.1` is unpublished; use `update` for an existing installation. The remote
+Use `dotnet tool install --global Obelisk.Cli --version 0.1.1` for first installation;
+use `update` for an existing installation. The remote
 computer's retry has not been verified.
 
 ```powershell
@@ -61,7 +61,32 @@ engine packages. The original engine-set builder stops when CLI/engine versions
 differ; use the CLI patch builder for this release. No NuGet publication or Git
 tag is performed by these commands.
 
-Once the patch is published, update with
+Update with
 `dotnet tool update --global Obelisk.Cli --version 0.1.1`, or replace the complete
 standalone CLI folder with the extracted ZIP. Candidate verification does not
 certify Rider or a separate SDK-free Windows machine; prior owner deferrals remain.
+
+## Publication
+
+`Obelisk.Cli` `0.1.1` was pushed to nuget.org on 2026-10-19 from clean source
+`0379b5b90c7e28503df5bc0c5a1fbda55aa69fc1`. The submitted package SHA256 is
+`c6e29167c5b2d25990804030b59ffb9fcb799b9aaa7a5c04115d6e0bfc246b8a`.
+The original candidate archive and its notes remain unchanged. Engine packages
+remain `0.1.0`; no Git tag or GitHub Release was created.
+After NuGet finished indexing, the public-feed-only fresh-cache installation
+passed on 2026-10-19. The installed CLI assembly matched the archived candidate;
+Korean SDK output, Unicode paths, both output streams, invalid-name diagnostics
+and game exit-code propagation passed for the public tool and archived standalone
+ZIP. The earlier indexing wait is resolved; no duplicate upload was attempted.
+
+Repeat the public-feed check against that archived candidate with:
+
+```powershell
+pwsh -NoProfile -File scripts/Verify-CliPatch.ps1 -Directory artifacts/cli-0.1.1-0379b5b -PublicFeed
+```
+
+`-PublicFeed` removes the local source, isolates both package and HTTP caches,
+and compares the installed CLI assembly with the archived candidate before
+running the same Unicode/output/exit-code checks. NuGet repository signing may
+change the downloaded package file hash; the submitted hash above identifies the
+original upload, while the installed payload comparison checks the actual CLI.

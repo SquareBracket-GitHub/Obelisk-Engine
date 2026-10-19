@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$Directory)
+param([Parameter(Mandatory)][string]$Directory, [switch]$PublicFeed)
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 if (-not $IsWindows) { throw 'This encoding reproduction targets Windows.' }
@@ -49,8 +49,9 @@ try {
         [Environment]::SetEnvironmentVariable($name, (Join-Path $work $name), 'Process')
     }
     $feed = [Security.SecurityElement]::Escape((Join-Path $root 'packages'))
+    $localSource = if ($PublicFeed) { '' } else { "<add key=`"cli-patch`" value=`"$feed`"/>" }
     $config = Join-Path $work 'NuGet.Config'
-    "<configuration><packageSources><clear/><add key=`"cli-patch`" value=`"$feed`"/><add key=`"nuget.org`" value=`"https://api.nuget.org/v3/index.json`"/></packageSources></configuration>" | Set-Content $config -Encoding utf8
+    "<configuration><packageSources><clear/>$localSource<add key=`"nuget.org`" value=`"https://api.nuget.org/v3/index.json`"/></packageSources></configuration>" | Set-Content $config -Encoding utf8
     $tool = Join-Path $work 'tool'
     & dotnet tool install Obelisk.Cli --version $version --tool-path $tool --configfile $config
     if ($LASTEXITCODE -ne 0) { throw 'Isolated CLI patch installation failed.' }

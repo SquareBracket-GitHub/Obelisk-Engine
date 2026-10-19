@@ -1,4 +1,4 @@
-# CLI Reference (v0.1.1 candidate / engine v0.1.0)
+# CLI Reference (v0.1.1 / engine v0.1.0)
 
 Run commands from the directory containing `obelisk.json`, except `new`, `info`
 and help/version. The CLI orchestrates standard .NET SDK commands. Arguments and
@@ -15,7 +15,7 @@ validated for Windows x64.
 | `obelisk remove <manifest-name>` | Removes an installed package for the next game startup. |
 | `obelisk list` | Lists installed Plugin versions and declared engine ranges; read-only. |
 | `obelisk info` | Prints CLI/template, runtime and platform versions without requiring a project. |
-| `obelisk --version` | Prints `0.1.1` for this candidate; the public `0.1.0` tool prints `0.1.0`. |
+| `obelisk --version` | Prints `0.1.1`. |
 | `obelisk help`, `--help`, `-h` | Prints command usage. No arguments also prints help. |
 
 `<command> --help` / `-h` is accepted for new, run, dev, build, add, remove, list

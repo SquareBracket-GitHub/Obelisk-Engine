@@ -2,10 +2,11 @@
 
 This guide creates an independent game, edits it, adds a locally built Plugin and
 publishes a Windows x64 distribution. Run the PowerShell commands in order.
-Version `0.1.0` is available on nuget.org: install `Obelisk.Cli` and restore from
-that public source. An unpublished development build needs the local feed shown below.
+CLI `0.1.1` and engine `0.1.0` are available on nuget.org: install `Obelisk.Cli`
+and restore from that public source. An unpublished development build needs the
+local feed shown below.
 The [candidate release notes](release-notes-v0.1.0.md) track publication verification.
-The current source prepares a [CLI-only `0.1.1` candidate](release-notes-v0.1.1.md);
+The [CLI-only `0.1.1` patch](release-notes-v0.1.1.md) fixes Windows Unicode output;
 its generated games still use engine `0.1.0`.
 
 ## Requirements
@@ -20,10 +21,10 @@ its generated games still use engine `0.1.0`.
 
 ## Public-package quick start
 
-For a published `0.1.0`, start in an empty workspace, without an engine checkout:
+Start with published CLI `0.1.1` in an empty workspace, without an engine checkout:
 
 ```powershell
-dotnet tool install --global Obelisk.Cli --version 0.1.0
+dotnet tool install --global Obelisk.Cli --version 0.1.1
 obelisk new MyGame
 Set-Location MyGame
 obelisk run
