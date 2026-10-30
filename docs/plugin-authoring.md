@@ -1,5 +1,11 @@
 # Plugin Authoring Guide (v0.1)
 
+The snippets below target the published v0.1 engine. For the source-only v0.2
+candidate, use `Obelisk.Plugin [0.2.0]` from the local candidate feed and change the
+manifest engine range to `[0.2.0, 0.3.0)`. Keep the plugin's own package/manifest
+version independent. New rendering contracts and the candidate build flow are
+described in [v0.2 engine development](../README.md#v020-engine-development).
+
 A Plugin is a trusted local package with `obelisk.plugin.json`; a Module is an
 execution unit registered by its entry point. Game and Plugin code use public
 engine contracts without SDL types, native handles or engine source references.

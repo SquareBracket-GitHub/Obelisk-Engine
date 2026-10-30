@@ -18,6 +18,8 @@ public sealed class InitializeContext(ITextureDevice? textures = null, IAudioDev
     public IAssetSource Assets => assets ?? throw new NotSupportedException("This context does not provide an asset source.");
     /// <summary>Gets the owning-thread texture factory; callers own textures they create directly.</summary>
     public ITextureDevice Textures => textures ?? throw new NotSupportedException("This platform does not provide textures.");
+    /// <summary>Gets the borrowed experimental rendering factory or throws when unavailable.</summary>
+    public IRenderDevice Graphics => Textures as IRenderDevice ?? throw new NotSupportedException("This platform does not provide rendering resources.");
     /// <summary>Gets the borrowed playback device or the silent fallback.</summary>
     public IAudioDevice Audio => audio ?? SilentAudioDevice.Instance;
 }

@@ -40,6 +40,8 @@ public interface ITextureDevice
 {
     /// <summary>Uploads CPU pixels on the initialized device's owning thread; the caller owns the result.</summary>
     Texture CreateTexture(RgbaImage image);
+    /// <summary>Replaces a bounded region while preserving other texels. Backends without updates throw NotSupportedException.</summary>
+    void UpdateTexture(Texture texture, int x, int y, RgbaImage image) => throw new NotSupportedException("This device does not support texture updates.");
 }
 
 /// <summary>An owned GPU texture. Dispose on the game's owning thread; shutdown releases survivors.</summary>

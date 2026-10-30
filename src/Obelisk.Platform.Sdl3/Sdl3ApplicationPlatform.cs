@@ -7,7 +7,7 @@ namespace Obelisk.Platform.Sdl3;
 /// <summary>
 /// Provides the SDL3 window and event-pump implementation used by the runtime.
 /// </summary>
-public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevice
+public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, IRenderDevice
 {
     private readonly AppOptions _options;
     private readonly ISdl3Api _api;
@@ -32,6 +32,19 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
 
     /// <summary>Gets this backend's owning-thread texture factory.</summary>
     public ITextureDevice Textures => this;
+    /// <summary>Gets the initialized backend's actual MSAA sample count.</summary>
+    public int SampleCount { get { EnsureInitializedOnOwningThread(); return _api.GetRenderDevice(_gpuDevice).SampleCount; } }
+    /// <summary>Gets the current window display scale while initialized.</summary>
+    public float DisplayScale { get { EnsureInitializedOnOwningThread(); return _api.GetRenderDevice(_gpuDevice).DisplayScale; } }
+    /// <summary>Updates an existing texture region on the owning thread.</summary>
+    public void UpdateTexture(Texture texture, int x, int y, RgbaImage image)
+    { EnsureInitializedOnOwningThread(); _api.GetRenderDevice(_gpuDevice).UpdateTexture(texture, x, y, image); }
+    /// <summary>Creates an owned offscreen RGBA8 target on the owning thread.</summary>
+    public RenderTarget CreateRenderTarget(int width, int height)
+    { EnsureInitializedOnOwningThread(); return _api.GetRenderDevice(_gpuDevice).CreateRenderTarget(width, height); }
+    /// <summary>Compiles an owned experimental fragment material on the owning thread.</summary>
+    public Material CreateMaterial(string fragmentFunction)
+    { EnsureInitializedOnOwningThread(); return _api.GetRenderDevice(_gpuDevice).CreateMaterial(fragmentFunction); }
 
     /// <summary>Uploads bounded RGBA8 pixels to the initialized owning-thread device; the caller owns the texture.</summary>
     public Texture CreateTexture(RgbaImage image)
@@ -66,6 +79,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
         }
 
         _options = options;
+        if (options.SampleCount is not (1 or 2 or 4 or 8)) throw new ArgumentOutOfRangeException(nameof(options), "SampleCount must be 1, 2, 4 or 8.");
         _api = api;
         OutputSize = new OutputSize(options.Width, options.Height);
     }
@@ -113,6 +127,9 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
                 throw CreateException("SDL3 window creation");
             }
 
+            var pixels = _api.GetOutputSize(_window);
+            if (pixels.Width > 0 && pixels.Height > 0) OutputSize = pixels;
+
             _gpuDevice = _api.CreateGpuDevice();
 
             if (_gpuDevice == 0)
@@ -126,7 +143,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, ITextureDevi
             }
 
             _windowClaimedByGpu = true;
-            _canvasPipeline = _api.CreateCanvasPipeline(_gpuDevice, _window);
+            _canvasPipeline = _api.CreateCanvasPipeline(_gpuDevice, _window, _options.SampleCount);
 
             if (_canvasPipeline == 0)
             {

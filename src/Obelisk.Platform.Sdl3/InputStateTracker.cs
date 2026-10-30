@@ -12,9 +12,12 @@ internal sealed class InputStateTracker
     private readonly HashSet<MouseButton> _mouseButtonsReleased = [];
     private float _mouseX;
     private float _mouseY;
+    private float _wheelX;
+    private float _wheelY;
 
     public void BeginFrame()
     {
+        _wheelX = _wheelY = 0;
         _keysPressed.Clear();
         _keysReleased.Clear();
         _mouseButtonsPressed.Clear();
@@ -25,6 +28,12 @@ internal sealed class InputStateTracker
     {
         switch (platformEvent.Type)
         {
+            case Sdl3EventType.MouseWheel:
+                if (!float.IsFinite(platformEvent.WheelX) || !float.IsFinite(platformEvent.WheelY))
+                    throw new InvalidDataException("Mouse wheel deltas must be finite.");
+                _wheelX += platformEvent.WheelX;
+                _wheelY += platformEvent.WheelY;
+                break;
             case Sdl3EventType.KeyDown when platformEvent.Key is { } key:
                 if (_keysDown.Add(key)) _keysPressed.Add(key);
                 break;
@@ -48,7 +57,7 @@ internal sealed class InputStateTracker
     public InputSnapshot Capture() => new(
         new KeyboardSnapshot(_keysDown, _keysPressed, _keysReleased),
         new MouseSnapshot(_mouseX, _mouseY, _mouseButtonsDown,
-            _mouseButtonsPressed, _mouseButtonsReleased));
+            _mouseButtonsPressed, _mouseButtonsReleased, _wheelX, _wheelY));
 
     private void SetMousePosition(Sdl3PlatformEvent platformEvent)
     {

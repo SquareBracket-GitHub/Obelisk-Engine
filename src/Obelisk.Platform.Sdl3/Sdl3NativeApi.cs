@@ -23,8 +23,14 @@ internal sealed class Sdl3NativeApi : ISdl3Api
 
     public nint CreateWindow(string title, int width, int height, bool resizable)
     {
-        var flags = resizable ? SDL.WindowFlags.Resizable : 0;
+        var flags = SDL.WindowFlags.HighPixelDensity | (resizable ? SDL.WindowFlags.Resizable : 0);
         return SDL.CreateWindow(title, width, height, flags);
+    }
+
+    public OutputSize GetOutputSize(nint window)
+    {
+        if (!SDL.GetWindowSizeInPixels(window, out var width, out var height)) throw new Sdl3Exception("Window pixel size", SDL.GetError());
+        return new(width, height);
     }
 
     public bool InitializeShaderCompiler()
@@ -43,14 +49,19 @@ internal sealed class Sdl3NativeApi : ISdl3Api
     }
 
     public nint CreateCanvasPipeline(nint device, nint window)
+        => CreateCanvasPipeline(device, window, 1);
+
+    public nint CreateCanvasPipeline(nint device, nint window, int samples)
     {
-        var renderer = new CanvasRenderer(device, SDL.GetGPUSwapchainTextureFormat(device, window));
+        var renderer = new CanvasRenderer(device, SDL.GetGPUSwapchainTextureFormat(device, window), samples)
+        { DisplayScaleProvider = () => SDL.GetWindowDisplayScale(window) };
         _renderers.Add(renderer.Pipeline, renderer);
         return renderer.Pipeline;
     }
 
     public Texture CreateTexture(nint device, RgbaImage image) =>
         _renderers.Values.Single(r => r.Device == device).CreateTexture(image);
+    public IRenderDevice GetRenderDevice(nint device) => _renderers.Values.Single(r => r.Device == device);
 
     public bool RenderGpuFrame(nint device, nint window, nint pipeline, IReadOnlyList<RenderCommand2D> drawing)
     {
@@ -81,6 +92,21 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         }
 
         var eventType = (SDL.EventType)nativeEvent.Type;
+        var windowId = eventType == SDL.EventType.MouseMotion ? nativeEvent.Motion.WindowID : nativeEvent.Button.WindowID;
+        var mx = eventType == SDL.EventType.MouseMotion ? nativeEvent.Motion.X : nativeEvent.Button.X;
+        var my = eventType == SDL.EventType.MouseMotion ? nativeEvent.Motion.Y : nativeEvent.Button.Y;
+        if (eventType is SDL.EventType.MouseMotion or SDL.EventType.MouseButtonDown or SDL.EventType.MouseButtonUp)
+        {
+            var window = SDL.GetWindowFromID(windowId);
+            if (window != 0 && SDL.GetWindowSize(window, out var logicalWidth, out var logicalHeight) && logicalWidth > 0 && logicalHeight > 0)
+            {
+                var pixels = GetOutputSize(window);
+                mx *= (float)pixels.Width / logicalWidth;
+                my *= (float)pixels.Height / logicalHeight;
+            }
+        }
+        var output = eventType is SDL.EventType.WindowResized or SDL.EventType.WindowPixelSizeChanged
+            ? GetOutputSize(SDL.GetWindowFromID(nativeEvent.Window.WindowID)) : default;
         platformEvent = eventType switch
         {
             SDL.EventType.Quit => new(Sdl3EventType.QuitRequested),
@@ -88,24 +114,27 @@ internal sealed class Sdl3NativeApi : ISdl3Api
             SDL.EventType.WindowRestored or SDL.EventType.WindowMaximized => new(Sdl3EventType.WindowRestored),
             SDL.EventType.KeyDown => new(Sdl3EventType.KeyDown, MapKey(nativeEvent.Key.Key)),
             SDL.EventType.KeyUp => new(Sdl3EventType.KeyUp, MapKey(nativeEvent.Key.Key)),
+            SDL.EventType.MouseWheel => new(Sdl3EventType.MouseWheel,
+                WheelX: nativeEvent.Wheel.X * (nativeEvent.Wheel.Direction == SDL.MouseWheelDirection.Flipped ? -1 : 1),
+                WheelY: nativeEvent.Wheel.Y * (nativeEvent.Wheel.Direction == SDL.MouseWheelDirection.Flipped ? -1 : 1)),
             SDL.EventType.MouseMotion => new(
                 Sdl3EventType.MouseMoved,
-                MouseX: nativeEvent.Motion.X,
-                MouseY: nativeEvent.Motion.Y),
+                MouseX: mx,
+                MouseY: my),
             SDL.EventType.MouseButtonDown => new(
                 Sdl3EventType.MouseButtonDown,
                 MouseButton: MapMouseButton(nativeEvent.Button.Button),
-                MouseX: nativeEvent.Button.X,
-                MouseY: nativeEvent.Button.Y),
+                MouseX: mx,
+                MouseY: my),
             SDL.EventType.MouseButtonUp => new(
                 Sdl3EventType.MouseButtonUp,
                 MouseButton: MapMouseButton(nativeEvent.Button.Button),
-                MouseX: nativeEvent.Button.X,
-                MouseY: nativeEvent.Button.Y),
+                MouseX: mx,
+                MouseY: my),
             SDL.EventType.WindowResized or SDL.EventType.WindowPixelSizeChanged => new(
                 Sdl3EventType.WindowResized,
-                Width: nativeEvent.Window.Data1,
-                Height: nativeEvent.Window.Data2),
+                Width: output.Width,
+                Height: output.Height),
             _ => new(Sdl3EventType.Other),
         };
 
@@ -151,7 +180,7 @@ internal sealed class Sdl3NativeApi : ISdl3Api
     internal static nint CompileShader(
         nint device,
         string source,
-        ShaderCross.ShaderStage stage)
+        ShaderCross.ShaderStage stage, uint uniformBuffers = 0)
     {
         var bytecode = ShaderCross.CompileSPIRVFromHLSL(
             source,
@@ -170,7 +199,7 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         {
             var resources = new ShaderCross.GraphicsShaderResourceInfo
             {
-                NumUniformBuffers = 0,
+                NumUniformBuffers = uniformBuffers,
                 NumSamplers = stage == ShaderCross.ShaderStage.Fragment ? 1U : 0U,
             };
             return ShaderCross.CompileGraphicsShaderFromSPIRV(

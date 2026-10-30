@@ -1,5 +1,10 @@
 # Getting Started (v0.1)
 
+This guide describes the published v0.1 packages. The current source develops
+engine `0.2.0`; use the [v0.2 local candidate workflow](../README.md#v020-engine-development)
+for that version. To reproduce this guide's v0.1 source/local-feed steps, check out
+`44c173b` after cloning. Do not mix v0.1 manifests/plugins with a v0.2 local feed.
+
 This guide creates an independent game, edits it, adds a locally built Plugin and
 publishes a Windows x64 distribution. Run the PowerShell commands in order.
 CLI `0.1.1` and engine `0.1.0` are available on nuget.org: install `Obelisk.Cli`

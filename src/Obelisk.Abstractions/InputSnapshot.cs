@@ -56,9 +56,17 @@ public sealed class MouseSnapshot
     /// <summary>Copies button states and stores the supplied output-space mouse position.</summary>
     public MouseSnapshot(float x, float y, IEnumerable<MouseButton> down,
         IEnumerable<MouseButton> pressed, IEnumerable<MouseButton> released)
+        : this(x, y, down, pressed, released, 0, 0) { }
+
+    /// <summary>Copies mouse states and finite horizontal/vertical wheel deltas accumulated this frame.</summary>
+    public MouseSnapshot(float x, float y, IEnumerable<MouseButton> down,
+        IEnumerable<MouseButton> pressed, IEnumerable<MouseButton> released, float wheelX, float wheelY)
     {
+        if (!float.IsFinite(wheelX) || !float.IsFinite(wheelY)) throw new ArgumentOutOfRangeException(nameof(wheelX));
         X = x;
         Y = y;
+        WheelX = wheelX;
+        WheelY = wheelY;
         _down = new HashSet<MouseButton>(down);
         _pressed = new HashSet<MouseButton>(pressed);
         _released = new HashSet<MouseButton>(released);
@@ -68,6 +76,10 @@ public sealed class MouseSnapshot
     public float X { get; }
     /// <summary>Gets the mouse's vertical output-space coordinate.</summary>
     public float Y { get; }
+    /// <summary>Gets this frame's horizontal scroll amount; positive is right. Not a pixel distance.</summary>
+    public float WheelX { get; }
+    /// <summary>Gets this frame's vertical scroll amount; positive is away from the user. Not a pixel distance.</summary>
+    public float WheelY { get; }
     /// <summary>Tests whether the key or mouse button is held in this snapshot.</summary>
     public bool IsDown(MouseButton button) => _down.Contains(button);
     /// <summary>Tests whether a down edge was captured in this frame, excluding key repeat.</summary>

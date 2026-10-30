@@ -6,6 +6,7 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 [xml]$engine = Get-Content -Raw (Join-Path $repository 'Directory.Build.props')
 $version = [string]$cli.Project.PropertyGroup.Version
 $engineVersion = [string]$engine.Project.PropertyGroup.Version
+if ($engineVersion -ne '0.1.0') { throw 'This is the v0.1 CLI-only patch builder. Use Build-EngineCandidate.ps1 for v0.2 engine development.' }
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected an explicit CLI patch version.' }
 $destination = if ($OutputDirectory) { [IO.Path]::GetFullPath($OutputDirectory) }
     else { Join-Path $repository ('artifacts/cli-patch-' + [guid]::NewGuid().ToString('N')) }

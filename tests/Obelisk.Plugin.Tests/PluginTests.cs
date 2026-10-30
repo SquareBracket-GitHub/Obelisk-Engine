@@ -165,13 +165,13 @@ public sealed class PluginTests
         {
             Assembly = "fixture.dll",
             EntryPoint = typeof(RecordingEntry).FullName!,
-            EngineMinimum = failure == "incompatible" ? "0.2.0" : "0.1.0",
-            EngineMaximumExclusive = "0.3.0",
+            EngineMinimum = failure == "incompatible" ? "0.3.0" : "0.2.0",
+            EngineMaximumExclusive = failure == "incompatible" ? "0.4.0" : "0.3.0",
         };
         PackageFiles.WriteManifest(second, invalid);
         using var host = new PluginHost(files.Root);
         var error = Assert.Throws<PluginException>(() => host.LoadDirectory(files.Plugins));
-        Assert.Contains(failure == "duplicate" ? "Duplicate plugin 'first'" : "Engine 0.1.0 is incompatible", error.Message);
+        Assert.Contains(failure == "duplicate" ? "Duplicate plugin 'first'" : "Engine 0.2.0 is incompatible", error.Message);
         Assert.False(File.Exists(Path.Combine(first, "assets", "registered.txt")));
     }
 
@@ -192,8 +192,8 @@ public sealed class PluginTests
     [InlineData("version", "1.0", "three-part")]
     [InlineData("schemaVersion", "2", "schema")]
     [InlineData("name", "INVALID", "lowercase")]
-    [InlineData("engineMinimum", "0.2.0", "minimum")]
-    [InlineData("engineMaximumExclusive", "0.1.0", "minimum")]
+    [InlineData("engineMinimum", "0.3.0", "minimum")]
+    [InlineData("engineMaximumExclusive", "0.2.0", "minimum")]
     public void ManifestValidationRejectsInvalidFields(string field, string value, string reason)
     {
         using var files = new PackageFiles();
@@ -261,17 +261,18 @@ public sealed class PluginTests
     }
 
     [Fact]
-    public void LifecycleOrderThreadAndBlendArePreserved()
+    public void LifecycleOrderThreadAndCanvasStateArePreserved()
     {
         using var files = new PackageFiles();
         var events = new List<string>();
         var owner = Environment.CurrentManagedThreadId;
+        using var material = new Material(1, () => { });
         using var host = new PluginHost(files.Root);
         PluginRegistrationContext? captured = null;
         host.Add(PackageFiles.Manifest("test"), new DelegatePlugin(c =>
         {
             captured = c;
-            c.RegisterModule(new Module(events, owner));
+            c.RegisterModule(new Module(events, owner) { RenderMaterial = material });
         }, () => events.Add("plugin.dispose")), files.Root);
         Assert.Throws<InvalidOperationException>(() => captured!.RegisterModule(new Module(events, owner)));
         var wrapped = host.Wrap(new Game(events));
@@ -281,6 +282,9 @@ public sealed class PluginTests
         Assert.Equal(["platform.initialize", "module.initialize", "game.initialize", "module.update", "game.update",
             "game.render", "module.render", "platform.present", "game.shutdown", "module.shutdown", "plugin.dispose", "platform.shutdown"], events);
         Assert.Equal(BlendMode.Alpha, platform.Blend);
+        Assert.Equal(TextureFilter.Nearest, platform.Filter);
+        Assert.Null(platform.Material);
+        Assert.Equal(System.Numerics.Vector4.Zero, platform.Parameters);
     }
 
     [Theory]
@@ -365,6 +369,7 @@ public sealed class PluginTests
     }
     private sealed class Module(List<string> events, int owner, string? failure = null) : IObeliskModule
     {
+        public Material? RenderMaterial { get; init; }
         private void Step(string operation)
         {
             Assert.Equal(owner, Environment.CurrentManagedThreadId);
@@ -373,7 +378,14 @@ public sealed class PluginTests
         }
         public void Initialize(InitializeContext context) => Step("initialize");
         public void Update(UpdateContext context) => Step("update");
-        public void Render(RenderContext context) { context.Canvas.Blend = BlendMode.Opaque; Step("render"); }
+        public void Render(RenderContext context)
+        {
+            context.Canvas.Blend = BlendMode.Opaque;
+            context.Canvas.Filter = TextureFilter.Linear;
+            context.Canvas.Material = RenderMaterial;
+            context.Canvas.Parameters = System.Numerics.Vector4.One;
+            Step("render");
+        }
         public void Shutdown(ShutdownContext context) => Step("shutdown");
     }
     private sealed class Game(List<string>? events = null) : IGame
@@ -390,10 +402,18 @@ public sealed class PluginTests
         public OutputSize OutputSize => new(100, 100);
         public IReadOnlyList<RenderCommand2D> Commands { get; private set; } = [];
         public BlendMode Blend { get; private set; }
+        public TextureFilter Filter { get; private set; }
+        public Material? Material { get; private set; }
+        public System.Numerics.Vector4 Parameters { get; private set; }
         public bool Stopped { get; private set; }
         public void Initialize() => events?.Add("platform.initialize");
         public bool PumpEvents() { Thread.Sleep(1); return _frames++ == 0; }
-        public void Present(RenderContext context) { Commands = context.Canvas.Commands; Blend = context.Canvas.Blend; events?.Add("platform.present"); }
+        public void Present(RenderContext context)
+        {
+            Commands = context.Canvas.Commands; Blend = context.Canvas.Blend;
+            Filter = context.Canvas.Filter; Material = context.Canvas.Material; Parameters = context.Canvas.Parameters;
+            events?.Add("platform.present");
+        }
         public void Shutdown() { Stopped = true; events?.Add("platform.shutdown"); }
     }
 }
@@ -464,8 +484,8 @@ internal sealed class PackageFiles : IDisposable
     {
         Name = name,
         Version = "0.1.0",
-        EngineMinimum = "0.1.0",
-        EngineMaximumExclusive = "0.2.0",
+        EngineMinimum = "0.2.0",
+        EngineMaximumExclusive = "0.3.0",
         Assembly = "SamplePlugin.dll",
         EntryPoint = "SamplePlugin.PulsePlugin",
     };

@@ -16,7 +16,7 @@ public sealed class DistributionTests
         Assert.Equal("native", File.ReadAllText(Path.Combine(installed, "native", "helper.dll")));
         Assert.True(File.Exists(Path.Combine(installed, "private", "dependency.dll")));
         Assert.Equal(0, await CliApplication.RunAsync(["list"], files.Context));
-        Assert.Contains("sample 0.1.0 [0.1.0, 0.2.0)", files.Output.ToString());
+        Assert.Contains("sample 0.1.0 [0.2.0, 0.3.0)", files.Output.ToString());
         Assert.Equal(0, await CliApplication.RunAsync(["remove", "sample"], files.Context));
         Assert.False(Directory.Exists(installed)); Assert.True(Directory.Exists(files.Package));
         files.Output.GetStringBuilder().Clear();
@@ -42,7 +42,7 @@ public sealed class DistributionTests
 
     [Theory]
     [InlineData("schemaVersion", "2")]
-    [InlineData("engineMinimum", "0.2.0")]
+    [InlineData("engineMinimum", "0.3.0")]
     [InlineData("assembly", "../outside.dll")]
     [InlineData("assets", "../outside")]
     [InlineData("native", ".. /outside")]
@@ -182,7 +182,7 @@ public sealed class DistributionTests
     [InlineData(null)]
     [InlineData("Obelisk.Cli 0.1.0\nOther.csproj\n")]
     [InlineData("Obelisk.Cli 0.1.1\nOther.csproj\n")]
-    [InlineData("Obelisk.Cli 0.2.0\nGame.csproj\n")]
+    [InlineData("Obelisk.Cli 0.3.0\nGame.csproj\n")]
     public async Task UnownedOutputIsNeverOverwrittenAndSdkIsNotInvoked(string? marker)
     {
         using var files = new Workspace(); Directory.CreateDirectory(files.OutputDirectory);
@@ -256,7 +256,7 @@ public sealed class DistributionTests
             Directory.CreateDirectory(Root); File.WriteAllText(Path.Combine(Root, "Game.csproj"), "<Project />"); WriteManifest();
         }
         public void WriteManifest(string assets = "assets", string plugins = "plugins") => File.WriteAllText(Path.Combine(Root, "obelisk.json"),
-            JsonSerializer.Serialize(new { schemaVersion = 1, name = "Game", engineVersion = "0.1.0", project = "Game.csproj", assets, plugins }));
+            JsonSerializer.Serialize(new { schemaVersion = 1, name = "Game", engineVersion = "0.2.0", project = "Game.csproj", assets, plugins }));
         public void MakePackage(string name, string? field = null, object? value = null)
         {
             Directory.CreateDirectory(Package);
@@ -265,8 +265,8 @@ public sealed class DistributionTests
                 ["schemaVersion"] = 1,
                 ["name"] = name,
                 ["version"] = "0.1.0",
-                ["engineMinimum"] = "0.1.0",
-                ["engineMaximumExclusive"] = "0.2.0",
+                ["engineMinimum"] = "0.2.0",
+                ["engineMaximumExclusive"] = "0.3.0",
                 ["assembly"] = "Sample.dll",
                 ["entryPoint"] = "Sample.Plugin"
             };

@@ -22,8 +22,8 @@ public sealed record PluginManifest
 {
     /// <summary>Names the manifest file required at the root of a Plugin package.</summary>
     public const string FileName = "obelisk.plugin.json";
-    /// <summary>Gets the engine version used for manifest compatibility checks, currently 0.1.0.</summary>
-    public static System.Version CurrentEngineVersion { get; } = new(0, 1, 0);
+    /// <summary>Gets the engine version used for manifest compatibility checks, currently 0.2.0.</summary>
+    public static System.Version CurrentEngineVersion { get; } = new(0, 2, 0);
     /// <summary>Gets manifest schema 1; unknown schema versions are rejected.</summary>
     [JsonRequired] public int SchemaVersion { get; init; } = 1;
     /// <summary>Gets the unique lowercase ASCII Plugin name, 1–64 characters, starting with a letter.</summary>

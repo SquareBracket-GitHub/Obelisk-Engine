@@ -7,6 +7,7 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 [xml]$props = Get-Content -Raw (Join-Path $repository 'Directory.Build.props')
 $version = [string]$props.Project.PropertyGroup.Version
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Unexpected version '$version'." }
+if ($version -ne '0.1.0') { throw 'This is the historical v0.1 engine-set builder. Use Build-EngineCandidate.ps1 for independently versioned plugins.' }
 [xml]$cliProperties = Get-Content -Raw (Join-Path $repository 'src/Obelisk.Cli/Obelisk.Cli.csproj')
 if ($cliProperties.Project.PropertyGroup.Version -and $cliProperties.Project.PropertyGroup.Version -ne $version) {
     throw 'CLI-only patch: use Build-CliPatch.ps1; the engine-set builder requires matching engine and CLI versions.'

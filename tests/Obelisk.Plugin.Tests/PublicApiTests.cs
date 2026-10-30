@@ -15,7 +15,7 @@ public sealed class PublicApiTests
     private const BindingFlags Declared = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
     [Fact]
-    public void PublicSurfaceMatchesReviewedV01Baseline()
+    public void PublicSurfaceMatchesReviewedV02Baseline()
     {
         var actual = new SortedSet<string>(StringComparer.Ordinal);
         var nullable = new NullabilityInfoContext();
@@ -42,7 +42,7 @@ public sealed class PublicApiTests
         var lines = actual.ToArray();
         // Diagnostic output is ignored build output, never an automatic baseline update.
         File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "PublicApi.actual.txt"), lines);
-        Assert.Equal(File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "PublicApi.v0.1.txt")), lines);
+        Assert.Equal(File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "PublicApi.v0.2.txt")), lines);
 
         string Parameter(ParameterInfo p) => $"{(p.IsOut ? "out " : p.IsIn ? "in " : "")}{TypeName(p.ParameterType, nullable.Create(p))} {p.Name}{(p.IsOptional ? " = " + JsonSerializer.Serialize(p.DefaultValue) : "")}";
         string Parameters(MethodBase m) => string.Join(", ", m.GetParameters().Select(Parameter));

@@ -20,11 +20,35 @@ public sealed class Canvas2D
 
     /// <summary>Captured by each draw call; Alpha uses straight-alpha source-over blending.</summary>
     public BlendMode Blend { get; set; } = BlendMode.Alpha;
+    /// <summary>Gets or sets the sampling mode captured by subsequent draws.</summary>
+    public TextureFilter Filter { get; set; } = TextureFilter.Nearest;
+    /// <summary>Gets or sets a borrowed experimental material for subsequent draws.</summary>
+    public Material? Material { get; set; }
+    /// <summary>Gets or sets four finite constants for subsequent custom material draws.</summary>
+    public Vector4 Parameters { get; set; }
+
+    /// <summary>Captures an independent Canvas pass in submission order. Targets must not sample themselves or contain nested passes.</summary>
+    public void RenderTo(RenderTarget target, Action<Canvas2D> draw, ColorRgba? clearColor = null)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(draw);
+        ObjectDisposedException.ThrowIf(target.IsDisposed, target);
+        var clear = clearColor ?? new ColorRgba(0, 0, 0, 0);
+        EnsureFinite(clear, nameof(clearColor));
+        var child = new Canvas2D();
+        draw(child);
+        if (child.Commands.Any(c => c is RenderPassCommand)) throw new NotSupportedException("Nested render passes are not supported.");
+        _commands.Add(new RenderPassCommand(target, Array.AsReadOnly(child.Commands.ToArray()), clear));
+    }
 
     private void Add(RenderCommand2D command)
     {
         if (!Enum.IsDefined(Blend)) throw new ArgumentOutOfRangeException(nameof(Blend));
-        _commands.Add(command with { Blend = Blend });
+        if (!Enum.IsDefined(Filter)) throw new ArgumentOutOfRangeException(nameof(Filter));
+        if (!float.IsFinite(Parameters.X) || !float.IsFinite(Parameters.Y) || !float.IsFinite(Parameters.Z) || !float.IsFinite(Parameters.W))
+            throw new ArgumentOutOfRangeException(nameof(Parameters));
+        if (Material is { } material) ObjectDisposedException.ThrowIf(material.IsDisposed, material);
+        _commands.Add(command with { Blend = Blend, Filter = Filter, Material = Material, Parameters = Parameters });
     }
 
     /// <summary>Queues a finite positive rectangle in output pixels; invalid geometry throws an argument exception.</summary>

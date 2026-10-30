@@ -4,7 +4,8 @@ using Obelisk.Graphics2D;
 
 namespace Obelisk.Platform.Sdl3;
 
-internal sealed record DrawBatch(TextureHandle Texture, BlendMode Blend, uint FirstIndex, uint Count);
+internal sealed record DrawBatch(TextureHandle Texture, BlendMode Blend, uint FirstIndex, uint Count,
+    TextureFilter Filter = TextureFilter.Nearest, Material? Material = null, Vector4 Parameters = default);
 internal sealed record CanvasMesh(QuadMesh Mesh, IReadOnlyList<DrawBatch> Batches)
 {
     public static CanvasMesh Create(IReadOnlyList<RenderCommand2D> commands, uint width, uint height,
@@ -19,6 +20,10 @@ internal sealed record CanvasMesh(QuadMesh Mesh, IReadOnlyList<DrawBatch> Batche
             var first = (uint)indices.Count;
             var texture = default(TextureHandle);
             if (!Enum.IsDefined(command.Blend)) throw new ArgumentOutOfRangeException(nameof(commands));
+            if (!Enum.IsDefined(command.Filter)) throw new ArgumentOutOfRangeException(nameof(commands));
+            if (command.Material is { } material) ObjectDisposedException.ThrowIf(material.IsDisposed, material);
+            if (!float.IsFinite(command.Parameters.X) || !float.IsFinite(command.Parameters.Y) ||
+                !float.IsFinite(command.Parameters.Z) || !float.IsFinite(command.Parameters.W)) throw new ArgumentOutOfRangeException(nameof(commands));
             switch (command)
             {
                 case RectangleCommand rectangle:
@@ -32,7 +37,8 @@ internal sealed record CanvasMesh(QuadMesh Mesh, IReadOnlyList<DrawBatch> Batche
                         line.Color, new RectangleF(0, 0, 1, 1));
                     break;
                 case CircleCommand circle:
-                    var segments = (int)Math.Clamp(MathF.Ceiling(circle.Radius * 0.75f), 12, 128);
+                    // Keep chord error below a quarter of an output pixel for ordinary Canvas sizes.
+                    var segments = (int)Math.Clamp(Math.Ceiling(Math.PI / Math.Acos(Math.Clamp(1 - 0.25 / circle.Radius, -1, 1))), 12, 4096);
                     var center = AddVertex(circle.Center, circle.Color, Vector2.Zero);
                     for (var i = 0; i < segments; i++)
                     {
@@ -85,9 +91,10 @@ internal sealed record CanvasMesh(QuadMesh Mesh, IReadOnlyList<DrawBatch> Batche
             }
             var count = (uint)indices.Count - first;
             if (count == 0) continue;
-            if (batches.Count > 0 && batches[^1].Texture == texture && batches[^1].Blend == command.Blend)
+            if (batches.Count > 0 && batches[^1].Texture == texture && batches[^1].Blend == command.Blend &&
+                batches[^1].Filter == command.Filter && batches[^1].Material == command.Material && batches[^1].Parameters == command.Parameters)
                 batches[^1] = batches[^1] with { Count = batches[^1].Count + count };
-            else batches.Add(new(texture, command.Blend, first, count));
+            else batches.Add(new(texture, command.Blend, first, count, command.Filter, command.Material, command.Parameters));
         }
         return new(new(vertices.ToArray(), indices.ToArray()), batches);
 

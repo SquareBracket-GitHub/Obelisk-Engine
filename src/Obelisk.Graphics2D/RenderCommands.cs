@@ -7,6 +7,12 @@ public abstract record RenderCommand2D
 {
     /// <summary>Gets the blend mode captured when the command was submitted.</summary>
     public BlendMode Blend { get; init; } = BlendMode.Alpha;
+    /// <summary>Gets the texture sampling mode captured at submission.</summary>
+    public TextureFilter Filter { get; init; } = TextureFilter.Nearest;
+    /// <summary>Gets an optional borrowed custom fragment material.</summary>
+    public Material? Material { get; init; }
+    /// <summary>Gets four finite material constants captured at submission.</summary>
+    public Vector4 Parameters { get; init; }
 }
 
 /// <summary>Fills a rectangle with a solid color.</summary>

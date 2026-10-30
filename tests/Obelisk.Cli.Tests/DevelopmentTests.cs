@@ -23,7 +23,7 @@ public sealed class DevelopmentTests
 
     [Theory]
     [InlineData("schemaVersion", "2", "schemaVersion")]
-    [InlineData("engineVersion", "0.2.0", "incompatible")]
+    [InlineData("engineVersion", "0.3.0", "incompatible")]
     [InlineData("name", "../bad", "name")]
     [InlineData("project", "../Game.csproj", "confined")]
     [InlineData("project", "Game.txt", ".csproj")]
@@ -298,7 +298,7 @@ public sealed class DevelopmentTests
             {
                 ["schemaVersion"] = 1,
                 ["name"] = "Game",
-                ["engineVersion"] = "0.1.0",
+                ["engineVersion"] = "0.2.0",
                 ["project"] = "Game.csproj",
                 ["assets"] = "assets",
                 ["plugins"] = "plugins"

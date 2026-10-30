@@ -7,6 +7,105 @@ An installable CLI generates independent package-based projects. The v0.1 releas
 candidate API surface is reviewed and frozen; advanced backend/GPU contracts remain
 experimental. Publication verification is tracked in the candidate release notes.
 
+## v0.2.0 engine development
+
+The current source targets engine/CLI `0.2.0`; these versions are not published.
+The public quick start below remains CLI `0.1.1` with engine `0.1.0`.
+This update adds engine mechanisms for future plugins, without implementing
+blur effects, MSDF, dynamic glyph caching or a UI toolkit.
+
+- Mouse snapshots expose fractional `WheelX`/`WheelY` accumulated per frame and
+  reset on the next frame. Positive X is right; positive Y is away from the user.
+  The backend normalizes SDL's flipped direction. Scroll amounts are not pixels.
+- `Canvas.Filter` selects `Nearest` (default, preserving pixel art) or `Linear`.
+  Filter, material and constants are captured per draw and included in batching.
+- `InitializeContext.Textures.UpdateTexture(texture, x, y, image)` updates a
+  bounded RGBA8 region without replacing other texels. Render targets reject CPU
+  updates. Texture creation/update/disposal requires the owning thread. Queued
+  draws observe updates issued before presentation; avoid overwriting regions
+  still needed by other queued draws.
+- `InitializeContext.Graphics` exposes experimental `IRenderDevice` factories
+  for owned render targets and fragment materials. A platform without these
+  capabilities throws `NotSupportedException`.
+- `AppOptions.SampleCount` requests 1, 2, 4 (default) or 8 MSAA samples. The backend
+  chooses a supported count no greater than requested, available through
+  `Graphics.SampleCount`. MSAA improves geometry coverage, not bitmap resolution.
+- High-density windows expose drawable pixel dimensions through `OutputSize` and
+  convert mouse positions to that same space. `Graphics.DisplayScale` reports the
+  current display's scale for UI/font implementations. Windows x64 is validated;
+  actual movement between monitors with different DPI has not been certified.
+
+For example, create resources during `Initialize`, queue ordered passes during
+`Render`, and release them during `Shutdown`:
+
+```csharp
+target = context.Graphics.CreateRenderTarget(256, 256);
+material = context.Graphics.CreateMaterial("""
+    float4 Shade(float4 color, float2 uv) {
+        return SampleImage(uv) * color * Parameters;
+    }
+    """);
+```
+
+```csharp
+context.Canvas.RenderTo(target, layer => {
+    layer.Filter = TextureFilter.Linear;
+    layer.DrawSprite(texture, new RectangleF(0, 0, 256, 256));
+});
+context.Canvas.Material = material;
+context.Canvas.Parameters = System.Numerics.Vector4.One;
+context.Canvas.DrawSprite(target.Texture, new RectangleF(0, 0, 256, 256));
+context.Canvas.Material = null;
+```
+
+The experimental material contract accepts an HLSL `float4 Shade(float4 color,
+float2 uv)` function. `SampleImage(uv)` reads the one source texture as straight
+RGBA; `Parameters` provides one `float4` uniform. The engine supplies the entry
+point, vertex shader, sampler and binding layout. Do not declare conflicting
+entry points/resources or rely on reserved `TextureInfo` constants. Native SDL
+handles are never exposed. Materials and targets must stay alive until presentation
+finishes. Render targets own their texture; do not dispose it independently.
+
+`RenderTo` captures an independent child Canvas in submission order, clears the
+target (transparent by default), then allows later passes/draws to sample it.
+Nested passes and sampling a pass's own destination are rejected. Transparent
+targets use premultiplied internal storage; `SampleImage` converts it correctly for
+straight-alpha drawing, including when targets are composed over each other.
+This first contract supports RGBA8 targets, one input texture and four material
+constants, rather than a general render graph. MSDF/blur algorithms remain plugin work.
+
+Plugin versions are independent of the engine. `Obelisk.Plugins.Images` is a
+`0.1.1` compatibility patch targeting engine `[0.2.0, 0.3.0)`; its decoding code is
+unchanged. Its package version and `obelisk.plugin.json` both declare `0.1.1`, and
+Vanilla uses the plugin assembly's version instead of assigning the engine version.
+The original public Images `0.1.0` package remains unchanged. New official plugins
+must declare their own package version and engine compatibility range.
+
+Build an isolated local candidate and exercise its packages outside the checkout:
+
+```powershell
+pwsh -NoProfile -File scripts/Build-EngineCandidate.ps1 -OutputDirectory artifacts/engine-0.2.0
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-EngineCandidate.ps1 -Directory artifacts/engine-0.2.0
+```
+
+The manifest records each package's own version/hash, source revision/dirty state
+and the Starter hash. The verifier installs CLI `0.2.0` with fresh package/HTTP
+caches, generates a package-only game, exercises render targets, materials, partial
+updates and normal SDL shutdown, and verifies Images `0.1.1` resolution and Starter
+`0.2.0`. It also publishes the generated game self-contained, relocates it and
+runs it with no SDK on PATH and an invalid shared-runtime root. This simulates an
+unavailable SDK; it does not certify a separate clean machine. These commands do
+not publish NuGet packages or create a Git tag.
+
+Existing games must explicitly upgrade `Obelisk.Vanilla` to `[0.2.0]`, set
+`obelisk.json`'s `engineVersion` to `0.2.0`, and use CLI `0.2.0` from the local feed.
+Rebuild plugins against the new contracts and declare their supported engine range;
+v0.1-only plugins are rejected rather than silently assumed compatible.
+The v0.1 API snapshot is preserved; v0.2's snapshot adds rendering/input contracts.
+See [the engine/plugin boundary decision](docs/adr/0010-v02-rendering-extension-boundary.md).
+Debug and Release each passed 281 tests, including actual GPU pixel checks; CI
+format verification passed. The v0.2 API snapshot contains 61 types/525 entries.
+
 ## Documentation
 
 | Guide | Use it for |
@@ -51,14 +150,14 @@ foreach ($project in Get-ChildItem src/*/*.csproj) {
     if ($LASTEXITCODE -ne 0) { throw "Package build failed: $project" }
 }
 $obeliskFeed = (Resolve-Path artifacts/packages).Path
-dotnet tool install --global Obelisk.Cli --version 0.1.1 --add-source $obeliskFeed
+dotnet tool install --global Obelisk.Cli --version 0.2.0 --add-source $obeliskFeed
 obelisk --help
 obelisk info
 ```
 
 If .NET asks you to reopen the terminal, do so to make the tool directory available
 on PATH. For an existing CLI installation use `dotnet tool update --global
-Obelisk.Cli --version 0.1.1 --add-source $obeliskFeed`; remove it with `dotnet tool
+Obelisk.Cli --version 0.2.0 --add-source $obeliskFeed`; remove it with `dotnet tool
 uninstall --global Obelisk.Cli`. Installation follows the
 [.NET tool options](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install).
 
@@ -83,7 +182,8 @@ dotnet build --no-restore
 dotnet run --no-build
 ```
 
-The generated project references only `Obelisk.Vanilla` at exact version `[0.1.0]`,
+The source CLI generates a project referencing only `Obelisk.Vanilla` at exact
+version `[0.2.0]`; the published CLI `0.1.1` still generates `[0.1.0]`,
 with no engine source path. Arrow keys move the rectangle; close the window to exit.
 It includes Program.cs, Game.cs, the standard .csproj, obelisk.json, assets/,
 plugins/, .gitignore and README.md. Assets and Plugin files are copied to build and
@@ -99,7 +199,7 @@ The Starter archive is generated from the same CLI template and version as
 
 ```powershell
 pwsh -NoProfile -File scripts/Build-Starter.ps1
-Expand-Archive artifacts/starter/Obelisk-Starter-v0.1.0.zip -DestinationPath ../Obelisk-Games
+Expand-Archive artifacts/starter/Obelisk-Starter-v0.2.0.zip -DestinationPath ../Obelisk-Games
 Set-Location ../Obelisk-Games/ObeliskStarter
 dotnet restore --source $obeliskFeed --source https://api.nuget.org/v3/index.json
 dotnet build --no-restore
@@ -147,7 +247,7 @@ Inside a generated game directory, use `obelisk run` for one execution or
 Configure a NuGet source for the local feed before using these commands. Arguments
 after `--` are passed unchanged to the game, for example `obelisk run -- "two words"`.
 
-The manifest requires exactly schemaVersion (1), name, engineVersion (0.1.0),
+The manifest requires exactly schemaVersion (1), name, engineVersion (matching the CLI template: 0.2.0 on current source),
 project, assets and plugins. Unknown, duplicate or missing fields are errors.
 Paths must be relative, without traversal or reparse points; project must name an
 existing .csproj. Asset/Plugin directories may be absent. Those fields determine
@@ -721,15 +821,15 @@ running are outside v0.1. Plugin code executes with the game's permissions;
 path checks do not provide a security sandbox.
 
 The schema uses stable three-part versions and an inclusive/exclusive engine
-range. The current engine version is `0.1.0`:
+range. The current source engine version is `0.2.0`; the plugin version remains independent:
 
 ```json
 {
   "schemaVersion": 1,
   "name": "sample",
   "version": "0.1.0",
-  "engineMinimum": "0.1.0",
-  "engineMaximumExclusive": "0.2.0",
+  "engineMinimum": "0.2.0",
+  "engineMaximumExclusive": "0.3.0",
   "assembly": "SamplePlugin.dll",
   "entryPoint": "SamplePlugin.PulsePlugin",
   "assets": "assets",
@@ -743,7 +843,7 @@ Path fields are relative to the package; absolute paths, traversal and reparse
 points are rejected. Unknown or duplicate JSON fields are rejected. The entire
 discovered set is checked for compatibility and duplicate names before external
 entry points run. Set the sample's range to `[0.2.0, 0.3.0)` to reproduce an
-incompatible startup: the error identifies `sample`, engine `0.1.0` and the range.
+incompatible startup: the error identifies `sample`, engine `0.2.0` and the range.
 Restore the manifest before running again.
 
 Entry points must be public concrete types with a public parameterless constructor:

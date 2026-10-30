@@ -9,6 +9,7 @@ internal interface ISdl3Api
     bool InitializeVideo();
 
     nint CreateWindow(string title, int width, int height, bool resizable);
+    OutputSize GetOutputSize(nint window) => default;
 
     bool InitializeShaderCompiler();
 
@@ -17,6 +18,8 @@ internal interface ISdl3Api
     bool ClaimWindowForGpuDevice(nint device, nint window);
 
     nint CreateCanvasPipeline(nint device, nint window);
+    nint CreateCanvasPipeline(nint device, nint window, int samples) => CreateCanvasPipeline(device, window);
+    IRenderDevice GetRenderDevice(nint device) => throw new NotSupportedException();
 
     bool RenderGpuFrame(
         nint device,
@@ -50,7 +53,9 @@ internal readonly record struct Sdl3PlatformEvent(
     float MouseX = 0,
     float MouseY = 0,
     int Width = 0,
-    int Height = 0);
+    int Height = 0,
+    float WheelX = 0,
+    float WheelY = 0);
 
 internal enum Sdl3EventType
 {
@@ -59,6 +64,7 @@ internal enum Sdl3EventType
     KeyDown,
     KeyUp,
     MouseMoved,
+    MouseWheel,
     MouseButtonDown,
     MouseButtonUp,
     WindowResized,

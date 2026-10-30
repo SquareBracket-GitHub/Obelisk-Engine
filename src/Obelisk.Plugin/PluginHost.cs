@@ -210,8 +210,17 @@ public sealed class PluginHost(string projectAssetRoot) : IDisposable
             foreach (var (name, module) in _initialized)
             {
                 var blend = context.Canvas.Blend;
+                var filter = context.Canvas.Filter;
+                var material = context.Canvas.Material;
+                var parameters = context.Canvas.Parameters;
                 try { Invoke(name, "module render", () => module.Render(context)); }
-                finally { context.Canvas.Blend = blend; }
+                finally
+                {
+                    context.Canvas.Blend = blend;
+                    context.Canvas.Filter = filter;
+                    context.Canvas.Material = material;
+                    context.Canvas.Parameters = parameters;
+                }
             }
         }
 

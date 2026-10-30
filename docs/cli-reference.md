@@ -1,5 +1,9 @@
 # CLI Reference (v0.1.1 / engine v0.1.0)
 
+This reference describes the published CLI. The current source develops CLI and
+engine `0.2.0`; it uses the same commands with a `0.2.0` project/template version.
+See [the local v0.2 workflow](../README.md#v020-engine-development).
+
 Run commands from the directory containing `obelisk.json`, except `new`, `info`
 and help/version. The CLI orchestrates standard .NET SDK commands. Arguments and
 paths containing spaces must be quoted. Native execution and distribution are
