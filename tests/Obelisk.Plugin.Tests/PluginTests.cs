@@ -10,6 +10,38 @@ namespace Obelisk.Plugin.Tests;
 public sealed class PluginTests
 {
     [Fact]
+    public void ExplicitSdkSharingPreservesDynamicTextAssetTypeIdentityAndLifetime()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using var files = new PackageFiles();
+        var directory = files.InstallText();
+        var asset = Path.Combine(directory, "assets", "font.ttf");
+        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf"), asset);
+        using var host = new PluginHost(files.Root);
+        host.ShareContract(typeof(Obelisk.Plugins.Text.TextPlugin).Assembly);
+        host.Load(directory);
+        var face = host.Assets.Load<Obelisk.Plugins.Text.FontFace>("plugin://text/font.ttf");
+        Assert.True(face.HasGlyph(new System.Text.Rune('한')));
+        Assert.Throws<InvalidOperationException>(() => host.ShareContract(typeof(Obelisk.Plugins.Text.TextPlugin).Assembly));
+        host.Dispose(); Assert.True(face.IsDisposed);
+    }
+
+    [Fact]
+    public void SdkSharingRejectsFrameworkAssembliesAndConflictingIdentities()
+    {
+        using var files = new PackageFiles(); using var host = new PluginHost(files.Root);
+        Assert.Throws<ArgumentException>(() => host.ShareContract(typeof(object).Assembly));
+        var sdk = typeof(Obelisk.Plugins.Text.TextPlugin).Assembly;
+        host.ShareContract(sdk); host.ShareContract(sdk);
+        var context = new System.Runtime.Loader.AssemblyLoadContext("conflicting-sdk", isCollectible: true);
+        try
+        {
+            var other = context.LoadFromAssemblyPath(sdk.Location);
+            Assert.Throws<InvalidOperationException>(() => host.ShareContract(other));
+        }
+        finally { context.Unload(); }
+    }
+    [Fact]
     public void MissingNativeLibraryReportsPluginAndNativeDependency()
     {
         using var files = new PackageFiles();
@@ -462,6 +494,13 @@ internal sealed class PackageFiles : IDisposable
         var directory = InstallBuild("src", "Obelisk.Plugins.Images", "images");
         Directory.CreateDirectory(Path.Combine(directory, "assets"));
         WriteManifest(directory, Manifest("images") with { Assembly = "Obelisk.Plugins.Images.dll", EntryPoint = "Obelisk.Plugins.Images.ImagePlugin" });
+        return directory;
+    }
+    public string InstallText()
+    {
+        var directory = InstallBuild("src", "Obelisk.Plugins.Text", "text");
+        Directory.CreateDirectory(Path.Combine(directory, "assets"));
+        WriteManifest(directory, Manifest("text") with { Assembly = "Obelisk.Plugins.Text.dll", EntryPoint = "Obelisk.Plugins.Text.TextPlugin" });
         return directory;
     }
     private string InstallBuild(string category, string project, string name)

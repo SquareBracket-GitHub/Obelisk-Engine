@@ -14,12 +14,21 @@ public sealed class PublicApiTests
     ];
     private const BindingFlags Declared = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly;
 
-    [Fact]
-    public void PublicSurfaceMatchesReviewedV02Baseline()
+    [Theory]
+    [InlineData("engine")]
+    [InlineData("text")]
+    [InlineData("effects")]
+    public void PublicSurfaceMatchesReviewedBaseline(string scope)
     {
+        var libraries = scope switch
+        {
+            "text" => [typeof(Plugins.Text.TextPlugin).Assembly],
+            "effects" => [typeof(Plugins.Effects.EffectsPlugin).Assembly],
+            _ => Libraries,
+        };
         var actual = new SortedSet<string>(StringComparer.Ordinal);
         var nullable = new NullabilityInfoContext();
-        foreach (var assembly in Libraries)
+        foreach (var assembly in libraries)
             foreach (var type in assembly.GetExportedTypes())
             {
                 var name = $"{assembly.GetName().Name}/{type.FullName}";
@@ -41,8 +50,9 @@ public sealed class PublicApiTests
             }
         var lines = actual.ToArray();
         // Diagnostic output is ignored build output, never an automatic baseline update.
-        File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, "PublicApi.actual.txt"), lines);
-        Assert.Equal(File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "PublicApi.v0.2.txt")), lines);
+        File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, $"PublicApi.{scope}.actual.txt"), lines);
+        var baseline = scope == "engine" ? "PublicApi.v0.2.txt" : $"PublicApi.{scope}.v0.1.txt";
+        Assert.Equal(File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, baseline)), lines);
 
         string Parameter(ParameterInfo p) => $"{(p.IsOut ? "out " : p.IsIn ? "in " : "")}{TypeName(p.ParameterType, nullable.Create(p))} {p.Name}{(p.IsOptional ? " = " + JsonSerializer.Serialize(p.DefaultValue) : "")}";
         string Parameters(MethodBase m) => string.Join(", ", m.GetParameters().Select(Parameter));
@@ -51,7 +61,7 @@ public sealed class PublicApiTests
     [Fact]
     public void ExportedSignaturesDoNotExposeSdlOrNativePointers()
     {
-        foreach (var type in Libraries.SelectMany(a => a.GetExportedTypes()))
+        foreach (var type in Libraries.Concat([typeof(Plugins.Text.TextPlugin).Assembly, typeof(Plugins.Effects.EffectsPlugin).Assembly]).SelectMany(a => a.GetExportedTypes()))
             foreach (var member in type.GetMembers(Declared))
             {
                 var types = member switch
@@ -64,7 +74,8 @@ public sealed class PublicApiTests
                 };
                 foreach (var signature in types.SelectMany(Flatten))
                     Assert.True(signature != typeof(nint) && signature != typeof(nuint) && !signature.IsPointer &&
-                        !(signature.Namespace?.StartsWith("SDL3", StringComparison.Ordinal) ?? false), $"Native type {signature} escaped through {type.FullName}.{member.Name}.");
+                        !(signature.Namespace?.StartsWith("SDL3", StringComparison.Ordinal) ?? false) &&
+                        !(signature.Namespace?.StartsWith("SkiaSharp", StringComparison.Ordinal) ?? false), $"Native type {signature} escaped through {type.FullName}.{member.Name}.");
             }
     }
 

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Description>Official Obelisk dynamic raster text and MSDF atlas rendering plugin.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Obelisk.Plugin/Obelisk.Plugin.csproj" />
+    <PackageReference Include="SkiaSharp" Version="4.148.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="4.148.0" />
+    <None Update="obelisk.plugin.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Pack="true" PackagePath="/" />
+    <Content Include="../../licenses/skiasharp/**" Link="licenses/skiasharp/%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+             Pack="true" PackagePath="contentFiles/any/any/licenses/skiasharp/" PackageCopyToOutput="true" PackageFlatten="false" />
+  </ItemGroup>
+</Project>

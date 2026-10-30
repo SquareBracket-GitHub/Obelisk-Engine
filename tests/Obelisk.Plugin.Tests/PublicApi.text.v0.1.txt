@@ -1,0 +1,45 @@
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: ctor (Obelisk.Graphics2D.ITextureDevice device, Obelisk.Plugins.Text.FontFace primary, System.Collections.Generic.IEnumerable<Obelisk.Plugins.Text.FontFace>? fallbacks = null, Obelisk.Plugins.Text.TextCacheOptions? options = null)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: method System.Numerics.Vector2 Measure<>(System.String text, System.Single size = 32, System.Single scale = 1, System.Single dpiScale = 1)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: method System.Void Draw<>(Obelisk.Abstractions.RenderContext context, System.String text, System.Numerics.Vector2 position, System.Single size = 32, System.Nullable<Obelisk.Graphics2D.ColorRgba> color = null, System.Single scale = 1, System.Single dpiScale = 1)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: method System.Void Draw<>(Obelisk.Graphics2D.Canvas2D canvas, System.UInt64 frameNumber, System.String text, System.Numerics.Vector2 position, System.Single size = 32, System.Nullable<Obelisk.Graphics2D.ColorRgba> color = null, System.Single scale = 1, System.Single dpiScale = 1)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: method virtual System.Void Dispose<>()
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: property System.Boolean IsDisposed() { get;  } read=NotNull write=NotNull
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: property System.Int32 AtlasPageCount() { get;  } read=NotNull write=Unknown
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: property System.Int32 CachedGlyphCount() { get;  } read=NotNull write=Unknown
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont :: property System.Int64 AtlasBytes() { get;  } read=NotNull write=Unknown
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.FontFace :: method System.Boolean HasGlyph<>(System.Text.Rune rune)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.FontFace :: method static Obelisk.Plugins.Text.FontFace LoadFile<>(System.String path)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.FontFace :: method virtual System.Void Dispose<>()
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.FontFace :: property System.Boolean IsDisposed() { get;  } read=NotNull write=NotNull
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.FontFace :: property System.String FamilyName() { get;  } read=NotNull write=Unknown
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfAtlas :: ctor (Obelisk.Graphics2D.RgbaImage image, System.String metadata)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfAtlas :: method static Obelisk.Plugins.Text.MsdfAtlas LoadFile<>(System.String path)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfAtlas :: property Obelisk.Graphics2D.RgbaImage Image() { get;  } read=NotNull write=Unknown
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfAtlas :: property System.Int32 GlyphCount() { get;  } read=NotNull write=Unknown
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfFont :: ctor (Obelisk.Graphics2D.IRenderDevice device, Obelisk.Plugins.Text.MsdfAtlas atlas, System.Boolean strictMissingGlyphs = false)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfFont :: method System.Numerics.Vector2 Measure<>(System.String text, System.Single size = 32, System.Single scale = 1, System.Single dpiScale = 1)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfFont :: method System.Void Draw<>(Obelisk.Abstractions.RenderContext context, System.String text, System.Numerics.Vector2 position, System.Single size = 32, System.Nullable<Obelisk.Graphics2D.ColorRgba> color = null, System.Single scale = 1, System.Single dpiScale = 1)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfFont :: method System.Void Draw<>(Obelisk.Graphics2D.Canvas2D canvas, System.String text, System.Numerics.Vector2 position, System.Single size = 32, System.Nullable<Obelisk.Graphics2D.ColorRgba> color = null, System.Single scale = 1, System.Single dpiScale = 1)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfFont :: method virtual System.Void Dispose<>()
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfFont :: property System.Boolean IsDisposed() { get;  } read=NotNull write=NotNull
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: ctor ()
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: method Obelisk.Plugins.Text.TextCacheOptions <Clone>$<>()
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: method static System.Boolean op_Equality<>(Obelisk.Plugins.Text.TextCacheOptions? left, Obelisk.Plugins.Text.TextCacheOptions? right)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: method static System.Boolean op_Inequality<>(Obelisk.Plugins.Text.TextCacheOptions? left, Obelisk.Plugins.Text.TextCacheOptions? right)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: method virtual System.Boolean Equals<>(Obelisk.Plugins.Text.TextCacheOptions? other)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: method virtual System.String ToString<>()
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: property System.Boolean StrictMissingGlyphs() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: property System.Int32 MaximumGlyphs() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: property System.Int32 MaximumPages() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: property System.Int32 MaximumTextLength() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions :: property System.Int32 PageSize() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextPlugin :: ctor ()
+Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextPlugin :: method virtual System.Void Register<>(Obelisk.Plugin.PluginRegistrationContext context)
+type Obelisk.Plugins.Text/Obelisk.Plugins.Text.DynamicFont: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IDisposable
+type Obelisk.Plugins.Text/Obelisk.Plugins.Text.FontFace: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IDisposable
+type Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfAtlas: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
+type Obelisk.Plugins.Text/Obelisk.Plugins.Text.MsdfFont: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IDisposable
+type Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextCacheOptions: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IEquatable<Obelisk.Plugins.Text.TextCacheOptions>
+type Obelisk.Plugins.Text/Obelisk.Plugins.Text.TextPlugin: Public, Sealed, BeforeFieldInit; base System.Object; interfaces Obelisk.Plugin.IObeliskPlugin,System.IDisposable

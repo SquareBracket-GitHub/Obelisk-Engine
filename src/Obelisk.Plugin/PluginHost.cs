@@ -1,5 +1,6 @@
 using Obelisk.Abstractions;
 using Obelisk.Assets;
+using System.Reflection;
 
 namespace Obelisk.Plugin;
 
@@ -12,6 +13,20 @@ public sealed class PluginHost(string projectAssetRoot) : IDisposable
     private readonly int _thread = Environment.CurrentManagedThreadId;
     private bool _wrapped;
     private bool _disposed;
+    private readonly Dictionary<string, Assembly> _sharedContracts = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Explicitly shares a referenced SDK assembly's type identity before any plugin is registered. Matching package versions use the supplied SDK code; other private dependencies stay isolated.</summary>
+    public void ShareContract(Assembly assembly)
+    {
+        EnsureMutable(); ArgumentNullException.ThrowIfNull(assembly);
+        if (_registrations.Count != 0) throw new InvalidOperationException("Share SDK contracts before registering or loading plugins.");
+        if (assembly.IsDynamic || string.IsNullOrWhiteSpace(assembly.GetName().Name)) throw new ArgumentException("Expected a named SDK assembly.", nameof(assembly));
+        var name = assembly.GetName().Name!;
+        if (_sharedContracts.TryGetValue(name, out var previous) && !ReferenceEquals(previous, assembly))
+            throw new InvalidOperationException($"SDK contract '{name}' was already shared with a different identity.");
+        PluginLoadContext.ValidateContract(assembly);
+        _sharedContracts[name] = assembly;
+    }
 
     /// <summary>Gets borrowed cached assets shared by the game and registered Plugins.</summary>
     public IAssetSource Assets => _assets;
@@ -88,7 +103,7 @@ public sealed class PluginHost(string projectAssetRoot) : IDisposable
             foreach (var (manifest, paths) in packages)
             {
                 name = manifest.Name;
-                var context = new PluginLoadContext(paths);
+                var context = new PluginLoadContext(paths, _sharedContracts);
                 var assembly = context.LoadPackageAssembly(paths.Assembly);
                 var type = assembly.GetType(manifest.EntryPoint, throwOnError: true)!;
                 if (!type.IsPublic || type.IsAbstract || !typeof(IObeliskPlugin).IsAssignableFrom(type) || type.ContainsGenericParameters)

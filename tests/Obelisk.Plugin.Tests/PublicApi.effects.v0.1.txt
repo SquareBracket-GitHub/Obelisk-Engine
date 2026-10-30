@@ -1,0 +1,21 @@
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurEffect :: ctor (Obelisk.Graphics2D.IRenderDevice device)
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurEffect :: method Obelisk.Graphics2D.Texture Apply<>(Obelisk.Abstractions.RenderContext context, Obelisk.Graphics2D.Texture source, Obelisk.Plugins.Effects.BlurSettings? settings = null)
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurEffect :: method System.Void Draw<>(Obelisk.Abstractions.RenderContext context, Obelisk.Graphics2D.Texture source, Obelisk.Graphics2D.RectangleF destination, Obelisk.Plugins.Effects.BlurSettings? settings = null, System.Nullable<Obelisk.Graphics2D.ColorRgba> tint = null)
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurEffect :: method virtual System.Void Dispose<>()
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurEffect :: property System.Boolean IsDisposed() { get;  } read=NotNull write=NotNull
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: ctor ()
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: method Obelisk.Plugins.Effects.BlurSettings <Clone>$<>()
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: method static System.Boolean op_Equality<>(Obelisk.Plugins.Effects.BlurSettings? left, Obelisk.Plugins.Effects.BlurSettings? right)
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: method static System.Boolean op_Inequality<>(Obelisk.Plugins.Effects.BlurSettings? left, Obelisk.Plugins.Effects.BlurSettings? right)
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: method virtual System.Boolean Equals<>(Obelisk.Plugins.Effects.BlurSettings? other)
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: method virtual System.Boolean Equals<>(System.Object? obj)
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: method virtual System.Int32 GetHashCode<>()
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: method virtual System.String ToString<>()
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: property System.Int32 Downsample() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: property System.Int32 Radius() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings :: property System.Single Sigma() { get; init; } read=NotNull write=NotNull
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.EffectsPlugin :: ctor ()
+Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.EffectsPlugin :: method virtual System.Void Register<>(Obelisk.Plugin.PluginRegistrationContext context)
+type Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurEffect: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IDisposable
+type Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.BlurSettings: Public, Sealed, BeforeFieldInit; base System.Object; interfaces System.IEquatable<Obelisk.Plugins.Effects.BlurSettings>
+type Obelisk.Plugins.Effects/Obelisk.Plugins.Effects.EffectsPlugin: Public, Sealed, BeforeFieldInit; base System.Object; interfaces Obelisk.Plugin.IObeliskPlugin,System.IDisposable

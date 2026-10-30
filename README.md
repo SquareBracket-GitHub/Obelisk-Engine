@@ -11,8 +11,9 @@ experimental. Publication verification is tracked in the candidate release notes
 
 The current source targets engine/CLI `0.2.0`; these versions are not published.
 The public quick start below remains CLI `0.1.1` with engine `0.1.0`.
-This update adds engine mechanisms for future plugins, without implementing
-blur effects, MSDF, dynamic glyph caching or a UI toolkit.
+The engine supplies rendering/input mechanisms. Separately versioned official
+Text and Effects plugins now implement dynamic glyph caching, MSDF rendering and
+Gaussian blur; no UI toolkit is imposed.
 
 - Mouse snapshots expose fractional `WheelX`/`WheelY` accumulated per frame and
   reset on the next frame. Positive X is right; positive Y is away from the user.
@@ -72,7 +73,7 @@ Nested passes and sampling a pass's own destination are rejected. Transparent
 targets use premultiplied internal storage; `SampleImage` converts it correctly for
 straight-alpha drawing, including when targets are composed over each other.
 This first contract supports RGBA8 targets, one input texture and four material
-constants, rather than a general render graph. MSDF/blur algorithms remain plugin work.
+constants, rather than a general render graph. MSDF/blur algorithms live in plugins.
 
 Plugin versions are independent of the engine. `Obelisk.Plugins.Images` is a
 `0.1.1` compatibility patch targeting engine `[0.2.0, 0.3.0)`; its decoding code is
@@ -80,6 +81,95 @@ unchanged. Its package version and `obelisk.plugin.json` both declare `0.1.1`, a
 Vanilla uses the plugin assembly's version instead of assigning the engine version.
 The original public Images `0.1.0` package remains unchanged. New official plugins
 must declare their own package version and engine compatibility range.
+The next Images **feature addition or functional update** will be `1.0.0` by owner
+decision. This change leaves Images functionality and its `0.1.1` version intact.
+
+### Official Text 0.1.0 and Effects 0.1.0
+
+Both new packages/manifests declare `0.1.0`, targeting engine `[0.2.0, 0.3.0)`.
+They are local development candidates, not yet published to NuGet. Vanilla
+references both SDKs, registers Text by default (`IncludeText=true`), and makes
+Effects registration opt-in (`IncludeEffects=false`). Registration provides asset
+loaders; allocate fonts/effects explicitly in your game. Existing `FontLoader`,
+`Font` and `Canvas.DrawText` keep their bitmap behavior.
+
+```csharp
+// Initialize: own the GPU resources; the asset store owns the loaded face.
+face = context.Assets.Load<Obelisk.Plugins.Text.FontFace>("project:///MyFont.ttf");
+font = new Obelisk.Plugins.Text.DynamicFont(context.Textures, face);
+blur = new Obelisk.Plugins.Effects.BlurEffect(context.Graphics);
+layer = context.Graphics.CreateRenderTarget(320, 240);
+```
+
+AssetStore owns asset-loaded faces: dispose `font`, `blur` and `layer` during
+Shutdown, and let the host dispose `face`. A face loaded directly with
+`FontFace.LoadFile` instead belongs to the caller. Font files are not bundled;
+choose fonts whose licenses permit your distribution.
+
+```csharp
+// Render: rasterize at the requested output pixel size, including explicit DPI.
+context.Canvas.RenderTo(layer, child =>
+    font.Draw(child, context.Time.FrameNumber, "한글 Aa", new(8, 8), size: 32,
+        dpiScale: graphics.DisplayScale));
+blur.Draw(context, layer.Texture, new(0, 0, 320, 240),
+    new Obelisk.Plugins.Effects.BlurSettings { Radius = 8, Sigma = 3, Downsample = 2 });
+```
+
+`size * scale * dpiScale` is the effective raster size (1–512 px). Increasing
+that size rasterizes new glyphs instead of enlarging a fixed bitmap; enlarging an
+already rendered layer still enlarges pixels. Coordinates and measured sizes are
+output pixels. DPI is explicit to avoid multiplying sizes that the game already
+scaled. `Measure` performs layout without uploading textures. Ordered fallback
+faces cover missing characters; the default uses U+FFFD/`?`, or choose
+`StrictMissingGlyphs=true` to throw. This release handles per-rune glyph layout,
+line breaks and tabs; advanced shaping, bidi, ligatures and color emoji are deferred.
+
+DynamicFont owns bounded RGBA8 atlas pages and updates only new glyph rectangles.
+Defaults: 1024² pages, eight pages (32 MiB), 8192 cached glyph/size entries.
+`TextCacheOptions` sets limits, with a 256 MiB atlas ceiling. It evicts least
+recently used pages from earlier frames, preserving all pages referenced by the
+current frame. If the frame cannot fit, it throws explicitly. Pass the same
+monotonic **physical frame number** to every draw using that cache, including
+RenderTo children. GPU caches/effects belong to their creation thread and must
+remain alive until presentation finishes. Font faces outlive their caches.
+
+For continuously scalable text, `MsdfAtlas.LoadFile("assets/font.json")` loads a
+same-basename PNG and standard single-font Unicode
+[msdf-atlas-gen metadata](https://github.com/Chlumsky/msdf-atlas-gen). Construct
+`MsdfFont(context.Graphics, atlas)` and use its `Draw`/`Measure` methods.
+The asset loader also supports `Assets.Load<MsdfAtlas>`. The median RGB derivative
+shader preserves roughly one-pixel coverage transitions as size changes. Supported:
+msdf/mtsdf, symmetric distance ranges, emSize=1, top/bottom Y origins, declared
+kerning. Distances stay linear data. **Generation is offline**; this plugin does
+not generate new MSDF glyphs at runtime. Unlisted characters need a replacement
+glyph or strict-mode failure. GPU atlas/material ownership belongs to MsdfFont.
+
+BlurEffect queues horizontal/vertical Gaussian passes with reusable targets and
+premultiplied alpha accumulation. Radius is 0–32, Sigma 0.1–64, Downsample 1/2/4.
+Radius zero bypasses all effect passes. `Apply` returns a borrowed output texture;
+`Draw` composites immediately in command order. Use another instance for a
+differently sized layer in the same frame. Do not retain Apply's result across
+later applications, resizing or disposal. Blur clamps to source edges, stays
+inside source bounds and uses RGBA8; provide transparent source padding for a
+halo. Downsampling trades detail for speed. Text/effects preserve caller Canvas
+blend/filter/material/constants. No automatic full-screen effect is installed.
+
+Dynamic SDK asset types must have one managed identity. Before loading packages,
+`PluginHost.ShareContract(typeof(MyPluginAsset).Assembly)` explicitly shares that
+SDK assembly, including its implementation; package and SDK full assembly identity
+must match. Vanilla does this for Text/Effects through `SharedPluginContracts`.
+Other plugin dependencies remain private. Configure sharing before any registration;
+restart after changing SDK/package versions. See
+[the official plugin decision](docs/adr/0011-official-text-effects.md).
+
+Run the interactive sample (wheel = actual font size, arrows = blur radius):
+
+```powershell
+dotnet run --project samples/PluginShowcase
+```
+
+The Windows sample uses the locally installed Malgun Gothic font, never packages
+that font, and supports `-- --probe` for automated normal-window shutdown.
 
 Build an isolated local candidate and exercise its packages outside the checkout:
 
@@ -91,7 +181,8 @@ pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-EngineCandidate.ps1 -Direct
 The manifest records each package's own version/hash, source revision/dirty state
 and the Starter hash. The verifier installs CLI `0.2.0` with fresh package/HTTP
 caches, generates a package-only game, exercises render targets, materials, partial
-updates and normal SDL shutdown, and verifies Images `0.1.1` resolution and Starter
+updates, dynamic Korean text, blur and normal SDL shutdown, and verifies Images
+`0.1.1`, Text/Effects `0.1.0` resolution and Starter
 `0.2.0`. It also publishes the generated game self-contained, relocates it and
 runs it with no SDK on PATH and an invalid shared-runtime root. This simulates an
 unavailable SDK; it does not certify a separate clean machine. These commands do
@@ -103,8 +194,13 @@ Rebuild plugins against the new contracts and declare their supported engine ran
 v0.1-only plugins are rejected rather than silently assumed compatible.
 The v0.1 API snapshot is preserved; v0.2's snapshot adds rendering/input contracts.
 See [the engine/plugin boundary decision](docs/adr/0010-v02-rendering-extension-boundary.md).
-Debug and Release each passed 281 tests, including actual GPU pixel checks; CI
-format verification passed. The v0.2 API snapshot contains 61 types/525 entries.
+The official plugin addition passed 301 tests in each of Debug and Release,
+including GPU pixel checks for Korean text, size changes, MSDF edges and transparent
+blur. The final top-origin import correction also passed both plugin unit suites.
+The interactive sample's automated shutdown probe, isolated package gate and
+relocated self-contained execution without SDK PATH passed. API snapshots track
+the engine (61 types/529 entries), Text (6 types/45 entries) and Effects
+(3 types/21 entries) independently; the original v0.1 snapshot remains unchanged.
 
 ## Documentation
 

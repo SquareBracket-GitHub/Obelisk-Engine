@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <Description>Official Obelisk separable Gaussian blur effects plugin.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Obelisk.Plugin/Obelisk.Plugin.csproj" />
+    <None Update="obelisk.plugin.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

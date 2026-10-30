@@ -386,6 +386,7 @@ Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method Obelisk.Abstractions.IGame Wr
 Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method System.Void Add<>(Obelisk.Plugin.PluginManifest manifest, Obelisk.Plugin.IObeliskPlugin plugin, System.String root)
 Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method System.Void Load<>(System.String packageDirectory)
 Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method System.Void LoadDirectory<>(System.String directory)
+Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method System.Void ShareContract<>(System.Reflection.Assembly assembly)
 Obelisk.Plugin/Obelisk.Plugin.PluginHost :: method virtual System.Void Dispose<>()
 Obelisk.Plugin/Obelisk.Plugin.PluginHost :: property Obelisk.Abstractions.IAssetSource Assets() { get;  } read=NotNull write=Unknown
 Obelisk.Plugin/Obelisk.Plugin.PluginHost :: property System.Collections.Generic.IReadOnlyList<Obelisk.Plugin.PluginManifest> Plugins() { get;  } read=NotNull write=Unknown
@@ -459,7 +460,10 @@ Obelisk.Runtime/Obelisk.Runtime.StopwatchClock :: ctor ()
 Obelisk.Runtime/Obelisk.Runtime.StopwatchClock :: property System.TimeSpan Elapsed() { get;  } read=NotNull write=Unknown
 Obelisk.Vanilla/Obelisk.Vanilla.ObeliskApp :: method static System.Int32 Run<>(Obelisk.Abstractions.IGame game, Obelisk.Abstractions.AppOptions? options = null, Obelisk.Vanilla.PluginOptions? plugins = null)
 Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: ctor ()
+Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.Boolean IncludeEffects() { get; init; } read=NotNull write=NotNull
 Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.Boolean IncludeImages() { get; init; } read=NotNull write=NotNull
+Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.Boolean IncludeText() { get; init; } read=NotNull write=NotNull
+Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.Collections.Generic.IReadOnlyCollection<System.Reflection.Assembly> SharedPluginContracts() { get; init; } read=NotNull write=NotNull
 Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.String Directory() { get; init; } read=NotNull write=NotNull
 Obelisk.Vanilla/Obelisk.Vanilla.PluginOptions :: property System.String ProjectAssetRoot() { get; init; } read=NotNull write=NotNull
 type Obelisk.Abstractions/Obelisk.Abstractions.AppOptions: Public, Sealed, BeforeFieldInit; base System.Object; interfaces
