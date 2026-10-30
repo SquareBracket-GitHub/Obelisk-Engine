@@ -9,8 +9,14 @@ experimental. Publication verification is tracked in the candidate release notes
 
 ## v0.2.0 engine development
 
-The current source targets engine/CLI `0.2.0`; these versions are not published.
-The public quick start below remains CLI `0.1.1` with engine `0.1.0`.
+Engine/CLI `0.2.0` and independently versioned Images `0.1.1`, Text `0.1.0` and
+Effects `0.1.0` were pushed to NuGet on 2026-10-30 from source `f12c5d0`.
+Use the public quick start below with the .NET 10 SDK.
+On 2026-10-31 the public-only gate passed with fresh caches: CLI install, generated
+game restore/build, Korean text and blur, normal shutdown, and relocated
+self-contained execution without SDK PATH. An initial post-upload CLI lookup
+failed during metadata propagation; retrying after registration became visible
+passed without republishing any package.
 The engine supplies rendering/input mechanisms. Separately versioned official
 Text and Effects plugins now implement dynamic glyph caching, MSDF rendering and
 Gaussian blur; no UI toolkit is imposed.
@@ -87,7 +93,7 @@ decision. This change leaves Images functionality and its `0.1.1` version intact
 ### Official Text 0.1.0 and Effects 0.1.0
 
 Both new packages/manifests declare `0.1.0`, targeting engine `[0.2.0, 0.3.0)`.
-They are local development candidates, not yet published to NuGet. Vanilla
+They are independently published NuGet packages. Vanilla
 references both SDKs, registers Text by default (`IncludeText=true`), and makes
 Effects registration opt-in (`IncludeEffects=false`). Registration provides asset
 loaders; allocate fonts/effects explicitly in your game. Existing `FontLoader`,
@@ -189,7 +195,7 @@ unavailable SDK; it does not certify a separate clean machine. These commands do
 not publish NuGet packages or create a Git tag.
 
 Existing games must explicitly upgrade `Obelisk.Vanilla` to `[0.2.0]`, set
-`obelisk.json`'s `engineVersion` to `0.2.0`, and use CLI `0.2.0` from the local feed.
+`obelisk.json`'s `engineVersion` to `0.2.0`, and update CLI to `0.2.0`.
 Rebuild plugins against the new contracts and declare their supported engine range;
 v0.1-only plugins are rejected rather than silently assumed compatible.
 The v0.1 API snapshot is preserved; v0.2's snapshot adds rendering/input contracts.
@@ -201,6 +207,18 @@ The interactive sample's automated shutdown probe, isolated package gate and
 relocated self-contained execution without SDK PATH passed. API snapshots track
 the engine (61 types/529 entries), Text (6 types/45 entries) and Effects
 (3 types/21 entries) independently; the original v0.1 snapshot remains unchanged.
+
+The immutable published packages are the verified candidate
+`artifacts/official-plugins-f12c5d0`, not rebuilt from later documentation changes.
+Publication tooling validates individual versions, hashes, license/author metadata
+and unchanged package source inputs before pushing in dependency order. It reads
+the API key from the local environment without printing it and stops on any failed
+or duplicate push. Do not republish an existing version. To verify this archived
+candidate using fresh caches and **only public nuget.org**:
+
+```powershell
+pwsh -NoProfile -File tests/Obelisk.Cli.Tests/Verify-EngineCandidate.ps1 -Directory artifacts/official-plugins-f12c5d0 -PublicFeed
+```
 
 ## Documentation
 
@@ -231,10 +249,17 @@ For a version available on nuget.org, use the public-package flow without a sour
 checkout or local feed:
 
 ```powershell
-dotnet tool install --global Obelisk.Cli --version 0.1.1
+dotnet tool install --global Obelisk.Cli --version 0.2.0
 obelisk new MyGame
 Set-Location MyGame
 obelisk run
+```
+
+For an existing global installation:
+
+```powershell
+dotnet tool update --global Obelisk.Cli --version 0.2.0
+obelisk --version
 ```
 
 For an unpublished development build, create a local feed from the repository root
@@ -278,14 +303,14 @@ dotnet build --no-restore
 dotnet run --no-build
 ```
 
-The source CLI generates a project referencing only `Obelisk.Vanilla` at exact
-version `[0.2.0]`; the published CLI `0.1.1` still generates `[0.1.0]`,
+CLI `0.2.0` generates a project referencing only `Obelisk.Vanilla` at exact
+version `[0.2.0]`; the older CLI `0.1.1` generates `[0.1.0]`,
 with no engine source path. Arrow keys move the rectangle; close the window to exit.
 It includes Program.cs, Game.cs, the standard .csproj, obelisk.json, assets/,
 plugins/, .gitignore and README.md. Assets and Plugin files are copied to build and
 publish output. Open the .csproj in Visual Studio or Rider, or the folder in VS Code
-with C# support. Later restore operations must still have access to the local feed
-until public packages are published; configure a NuGet source or keep passing
+with C# support. For unpublished development packages, later restore operations
+must still have access to their local feed; configure a NuGet source or keep passing
 `--source` as above.
 
 ## Starter ZIP and editor setup

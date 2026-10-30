@@ -1,8 +1,7 @@
-# CLI Reference (v0.1.1 / engine v0.1.0)
+# CLI Reference (v0.2.0 / engine v0.2.0)
 
-This reference describes the published CLI. The current source develops CLI and
-engine `0.2.0`; it uses the same commands with a `0.2.0` project/template version.
-See [the local v0.2 workflow](../README.md#v020-engine-development).
+This reference describes CLI and engine `0.2.0`. See
+[the release and upgrade workflow](../README.md#v020-engine-development).
 
 Run commands from the directory containing `obelisk.json`, except `new`, `info`
 and help/version. The CLI orchestrates standard .NET SDK commands. Arguments and
@@ -19,7 +18,7 @@ validated for Windows x64.
 | `obelisk remove <manifest-name>` | Removes an installed package for the next game startup. |
 | `obelisk list` | Lists installed Plugin versions and declared engine ranges; read-only. |
 | `obelisk info` | Prints CLI/template, runtime and platform versions without requiring a project. |
-| `obelisk --version` | Prints `0.1.1`. |
+| `obelisk --version` | Prints `0.2.0`. |
 | `obelisk help`, `--help`, `-h` | Prints command usage. No arguments also prints help. |
 
 `<command> --help` / `-h` is accepted for new, run, dev, build, add, remove, list
@@ -38,7 +37,7 @@ A generated `MyGame/obelisk.json` contains:
 {
   "schemaVersion": 1,
   "name": "MyGame",
-  "engineVersion": "0.1.0",
+  "engineVersion": "0.2.0",
   "project": "MyGame.csproj",
   "assets": "assets",
   "plugins": "plugins"
@@ -55,8 +54,8 @@ and copied roots; changing them does not rewrite `.csproj` content rules or
 ## Run and development loop
 
 `run/dev` call `dotnet restore`, `dotnet build --no-restore`, then
-`dotnet run --no-build --no-restore`. Configure the game's local NuGet source
-beforehand while public engine packages remain unpublished.
+`dotnet run --no-build --no-restore`. Released packages restore from nuget.org;
+configure a local source only for an unpublished development build.
 
 ```powershell
 obelisk run -- "two words" --level 2
@@ -90,7 +89,7 @@ with apphost enabled and single-file/trimming/AOT disabled for dynamic Plugins.
 It stages fresh output, copies configured roots to `assets/` and `plugins/`, and
 replaces only CLI/project-owned output. Unowned destinations are rejected; publish
 failure/cancellation preserves the old distribution. Rebuild removes stale files.
-CLI `0.1.1` also accepts the same project's `0.1.0` ownership marker and writes
+CLI `0.2.0` also accepts the same project's `0.1.0`/`0.1.1` ownership markers and writes
 the new marker after a successful publish. Other project/version markers remain
 protected.
 Copy the complete output including `licenses/`, native libraries and Plugins.

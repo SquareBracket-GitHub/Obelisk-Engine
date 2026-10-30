@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$Directory)
+param([Parameter(Mandatory)][string]$Directory, [switch]$PublicFeed)
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $root = [IO.Path]::GetFullPath($Directory)
@@ -38,7 +38,8 @@ try {
     }
     $feed = [Security.SecurityElement]::Escape((Join-Path $root 'packages'))
     $config = Join-Path $work 'NuGet.Config'
-    "<configuration><packageSources><clear/><add key=`"candidate`" value=`"$feed`"/><add key=`"nuget.org`" value=`"https://api.nuget.org/v3/index.json`"/></packageSources></configuration>" | Set-Content $config -Encoding utf8
+    $localSource = if ($PublicFeed) { '' } else { "<add key=`"candidate`" value=`"$feed`"/>" }
+    "<configuration><packageSources><clear/>$localSource<add key=`"nuget.org`" value=`"https://api.nuget.org/v3/index.json`"/></packageSources></configuration>" | Set-Content $config -Encoding utf8
     $tool = Join-Path $work 'tool'
     Invoke-Dotnet @('tool','install','Obelisk.Cli','--version','0.2.0','--tool-path',$tool,'--configfile',$config)
     $cli = Join-Path $tool 'obelisk.exe'
@@ -117,7 +118,8 @@ sealed class Probe : IGame {
         $reader = [IO.StreamReader]::new($entry.Open())
         try { if ($reader.ReadToEnd() -notmatch '\[0\.2\.0\]') { throw 'Starter version mismatch.' } } finally { $reader.Dispose() }
     } finally { $zip.Dispose() }
-    Write-Output 'ENGINE 0.2 GATE PASSED: isolated packages -> CLI 0.2 -> native rendering + dynamic Korean text + blur -> normal shutdown -> relocated self-contained game without SDK PATH -> Images 0.1.1, Text/Effects 0.1.0 -> Starter 0.2.'
+    $sourceKind = if ($PublicFeed) { 'public nuget.org only' } else { 'isolated candidate packages' }
+    Write-Output "ENGINE 0.2 GATE PASSED: $sourceKind -> CLI 0.2 -> native rendering + dynamic Korean text + blur -> normal shutdown -> relocated self-contained game without SDK PATH -> Images 0.1.1, Text/Effects 0.1.0 -> Starter 0.2."
 } finally {
     foreach ($name in $saved.Keys) { [Environment]::SetEnvironmentVariable($name, $saved[$name], 'Process') }
     $resolved = [IO.Path]::GetFullPath($work)

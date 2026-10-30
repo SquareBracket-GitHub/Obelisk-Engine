@@ -1,8 +1,26 @@
 # Getting Started (v0.1)
 
-This guide describes the published v0.1 packages. The current source develops
-engine `0.2.0`; use the [v0.2 local candidate workflow](../README.md#v020-engine-development)
-for that version. To reproduce this guide's v0.1 source/local-feed steps, check out
+## Current 0.2.0 quick start
+
+Use the .NET 10 SDK on Windows x64. Install on a new computer, or update an
+existing global tool:
+
+```powershell
+dotnet tool install --global Obelisk.Cli --version 0.2.0
+# Existing installation: dotnet tool update --global Obelisk.Cli --version 0.2.0
+obelisk new MyGame
+Set-Location MyGame
+obelisk run
+```
+
+The CLI generates `Obelisk.Vanilla [0.2.0]` and `engineVersion: 0.2.0`.
+Existing games must update both values; rebuild local plugins for engine
+`[0.2.0, 0.3.0)`. Vanilla resolves Images 0.1.1 and Text/Effects 0.1.0 with
+independent plugin versions. See [the current release and plugin usage](../README.md#v020-engine-development).
+
+## Historical v0.1 walkthrough
+
+The remaining guide describes the published v0.1 packages. For its source/local-feed steps, check out
 `44c173b` after cloning. Do not mix v0.1 manifests/plugins with a v0.2 local feed.
 
 This guide creates an independent game, edits it, adds a locally built Plugin and
