@@ -29,6 +29,9 @@ internal interface ISdl3Api
 
     Texture CreateTexture(nint device, RgbaImage image) => throw new NotSupportedException();
 
+    void EnableDebugCapture(nint pipeline) => throw new NotSupportedException("Debug capture is unavailable.");
+    byte[] CaptureScreenshot(nint pipeline) => throw new NotSupportedException("Debug capture is unavailable.");
+
     bool TryPollEvent(out Sdl3PlatformEvent platformEvent);
 
     void DestroyWindow(nint window);

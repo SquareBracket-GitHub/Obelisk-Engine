@@ -1,5 +1,41 @@
 # Obelisk Engine
 
+## v0.3.0: macOS and terminal debugging
+
+Version 0.3.0 adds macOS native assets, explicit `win-x64`, `osx-arm64` and
+`osx-x64` distribution targets, and opt-in terminal debugging. Windows x64 remains
+the default for `obelisk build`. Apple Silicon execution is tested; Intel Mac
+execution and signed/notarized .app distribution are not certified.
+
+```sh
+dotnet tool install --global Obelisk.Cli --version 0.3.0
+# Existing installation: dotnet tool update --global Obelisk.Cli --version 0.3.0
+obelisk new MyGame
+cd MyGame
+obelisk run --debug-control --session mygame
+# A second terminal:
+obelisk debug --session mygame click 320 180
+obelisk debug --session mygame screenshot ./frame.png
+# Build an Apple Silicon distribution:
+obelisk build --runtime osx-arm64
+```
+
+Read the dedicated [terminal debugging guide](docs/terminal-debugging.md) for all
+commands, coordinate units, pause/step behavior, frame acknowledgments and dev
+restart handling. [Release notes](docs/release-notes-v0.3.0.md) describe changes,
+compatibility and verification limits. Older release notes below are historical.
+
+Existing v0.2 public signatures and assembly contract identities are retained.
+The CLI accepts existing 0.2.0 project manifests; new projects use 0.3.0. Plugins
+are checked against the actual engine version 0.3.0: packages declaring an
+exclusive maximum of 0.3.0 must be validated and their range updated. Official
+Images 0.1.2, Text 0.1.1 and Effects 0.1.1 declare `[0.2.0, 0.4.0)` compatibility.
+
+The plugin-removal stale empty output directory defect is fixed. The window
+stability harness now waits for asynchronous minimize/restore completion and
+checks logical sizes separately from Retina drawable pixels. Use the official
+.NET SDK; Homebrew runtime packs without license notices fail the distribution gate.
+
 Obelisk is an experimental, plugin-first 2D game engine for .NET 10 and SDL3.
 The Vanilla MVP includes a moving rectangle and a complete local two-player Pong
 game, with local Plugin discovery, scoped Asset loaders and Module lifecycle hooks.

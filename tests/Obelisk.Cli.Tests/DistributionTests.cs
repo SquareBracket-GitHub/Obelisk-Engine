@@ -16,7 +16,7 @@ public sealed class DistributionTests
         Assert.Equal("native", File.ReadAllText(Path.Combine(installed, "native", "helper.dll")));
         Assert.True(File.Exists(Path.Combine(installed, "private", "dependency.dll")));
         Assert.Equal(0, await CliApplication.RunAsync(["list"], files.Context));
-        Assert.Contains("sample 0.1.0 [0.2.0, 0.3.0)", files.Output.ToString());
+        Assert.Contains("sample 0.1.0 [0.2.0, 0.4.0)", files.Output.ToString());
         Assert.Equal(0, await CliApplication.RunAsync(["remove", "sample"], files.Context));
         Assert.False(Directory.Exists(installed)); Assert.True(Directory.Exists(files.Package));
         files.Output.GetStringBuilder().Clear();
@@ -42,7 +42,7 @@ public sealed class DistributionTests
 
     [Theory]
     [InlineData("schemaVersion", "2")]
-    [InlineData("engineMinimum", "0.3.0")]
+    [InlineData("engineMinimum", "0.4.0")]
     [InlineData("assembly", "../outside.dll")]
     [InlineData("assets", "../outside")]
     [InlineData("native", ".. /outside")]
@@ -112,6 +112,32 @@ public sealed class DistributionTests
         Assert.True(Directory.Exists(Path.Combine(files.Root, "plugins", "sample")));
     }
 
+    [Theory]
+    [InlineData("osx-arm64")]
+    [InlineData("osx-x64")]
+    public async Task BuildPublishesMacRuntimeWithExecutableApphost(string runtime)
+    {
+        using var files = new Workspace();
+        var publisher = new Publisher();
+        Assert.Equal(0, await CliApplication.RunAsync(["build", "--runtime", runtime], files.Context, build: new BuildCommand(publisher)));
+        Assert.Contains(runtime, publisher.Command!.Arguments);
+        var output = Path.Combine(files.Root, "artifacts", "build", runtime);
+        Assert.True(File.Exists(Path.Combine(output, "Game")));
+        Assert.True(File.Exists(Path.Combine(output, "libcoreclr.dylib")));
+        Assert.False(Directory.Exists(files.OutputDirectory));
+        Assert.Equal(0, await CliApplication.RunAsync(["build", "--runtime", runtime], files.Context, build: new BuildCommand(new Publisher())));
+    }
+
+    [Theory]
+    [InlineData("linux-x64")]
+    [InlineData("../../outside")]
+    public async Task UnsupportedRuntimeDoesNotInvokePublisher(string runtime)
+    {
+        using var files = new Workspace(); var publisher = new Publisher();
+        Assert.Equal(2, await CliApplication.RunAsync(["build", "--runtime", runtime], files.Context, build: new BuildCommand(publisher)));
+        Assert.Null(publisher.Command);
+    }
+
     [Fact]
     public async Task BuildPublishesReleaseWindowsX64AndIncludesCustomContentRoots()
     {
@@ -133,6 +159,8 @@ public sealed class DistributionTests
     [Theory]
     [InlineData("0.1.0")]
     [InlineData("0.1.1")]
+    [InlineData("0.2.0")]
+    [InlineData("0.3.0-alpha261112")]
     public async Task RebuildReplacesOwnedOutputWithoutStaleFiles(string previousVersion)
     {
         using var files = new Workspace();
@@ -182,7 +210,7 @@ public sealed class DistributionTests
     [InlineData(null)]
     [InlineData("Obelisk.Cli 0.1.0\nOther.csproj\n")]
     [InlineData("Obelisk.Cli 0.1.1\nOther.csproj\n")]
-    [InlineData("Obelisk.Cli 0.3.0\nGame.csproj\n")]
+    [InlineData("Obelisk.Cli 0.4.0\nGame.csproj\n")]
     public async Task UnownedOutputIsNeverOverwrittenAndSdkIsNotInvoked(string? marker)
     {
         using var files = new Workspace(); Directory.CreateDirectory(files.OutputDirectory);
@@ -266,7 +294,7 @@ public sealed class DistributionTests
                 ["name"] = name,
                 ["version"] = "0.1.0",
                 ["engineMinimum"] = "0.2.0",
-                ["engineMaximumExclusive"] = "0.3.0",
+                ["engineMaximumExclusive"] = "0.4.0",
                 ["assembly"] = "Sample.dll",
                 ["entryPoint"] = "Sample.Plugin"
             };
@@ -295,8 +323,15 @@ public sealed class DistributionTests
         {
             Command = command;
             var args = command.Arguments.ToList(); var destination = args[args.IndexOf("--output") + 1];
-            foreach (var file in Incomplete ? new[] { "Game.exe" } : new[] { "Game.exe", "coreclr.dll", "hostfxr.dll", "hostpolicy.dll", "System.Private.CoreLib.dll" })
+            foreach (var file in Incomplete ? new[] { "Game.exe" } : new[] { "Game.exe", "Game.runtimeconfig.json", "coreclr.dll", "hostfxr.dll", "hostpolicy.dll", "System.Private.CoreLib.dll" })
                 File.WriteAllText(Path.Combine(destination, file), "published");
+            if (args[args.IndexOf("-r") + 1].StartsWith("osx-", StringComparison.Ordinal) && !Incomplete)
+            {
+                foreach (var file in new[] { "Game", "libcoreclr.dylib", "libhostfxr.dylib", "libhostpolicy.dylib" })
+                    File.WriteAllText(Path.Combine(destination, file), "published");
+                if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(Path.Combine(destination, "Game"), UnixFileMode.UserRead | UnixFileMode.UserExecute);
+                File.Delete(Path.Combine(destination, "Game.exe"));
+            }
             Started.TrySetResult(); if (!Block) _done.TrySetResult(Exit); return this;
         }
         public Task StopAsync() { _done.TrySetResult(-1); return Task.CompletedTask; }

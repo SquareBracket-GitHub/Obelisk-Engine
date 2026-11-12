@@ -7,7 +7,7 @@ namespace Obelisk.Platform.Sdl3;
 /// <summary>
 /// Provides the SDL3 window and event-pump implementation used by the runtime.
 /// </summary>
-public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, IRenderDevice
+public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, IRenderDevice, IFrameControl
 {
     private readonly AppOptions _options;
     private readonly ISdl3Api _api;
@@ -21,6 +21,13 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, IRenderDevic
     private bool _minimized;
     private int? _owningThreadId;
     private SdlAudioDevice? _audio;
+    private SdlDebugControl? _debug;
+    /// <inheritdoc />
+    bool IFrameControl.ShouldRunFrame => _debug?.ShouldRunFrame ?? true;
+    /// <inheritdoc />
+    TimeSpan? IFrameControl.FrameDelta => _debug is { Paused: true } ? TimeSpan.FromSeconds(1.0 / 60) : null;
+    /// <inheritdoc />
+    void IFrameControl.FrameCompleted(GameTime time) => _debug?.FrameCompleted(time, this);
     /// <summary>Gets the owning-thread audio device or silent fallback.</summary>
     public IAudioDevice Audio => (IAudioDevice?)_audio ?? SilentAudioDevice.Instance;
 
@@ -150,6 +157,13 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, IRenderDevic
                 throw CreateException("SDL_GPU Canvas pipeline creation");
             }
 
+            if (Environment.GetEnvironmentVariable("OBELISK_DEBUG_PIPE") is { Length: > 0 } pipe)
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(pipe, "\\Aobd-[A-F0-9]{24}\\z"))
+                    throw new ArgumentException("Invalid OBELISK_DEBUG_PIPE session name.");
+                _api.EnableDebugCapture(_canvasPipeline);
+                _debug = new SdlDebugControl(pipe);
+            }
             Present(new RenderContext(default, OutputSize));
         }
         catch
@@ -163,6 +177,8 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, IRenderDevic
     public bool PumpEvents()
     {
         EnsureInitializedOnOwningThread();
+        _debug?.Pump(this, () => _api.CaptureScreenshot(_canvasPipeline));
+        if (_debug?.QuitRequested == true) return false;
         _inputState.BeginFrame();
         var shouldRunFrame = true;
 
@@ -186,6 +202,7 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, IRenderDevic
             }
         }
 
+        _debug?.ApplyInput(_inputState);
         Input = _inputState.Capture();
         return shouldRunFrame;
     }
@@ -225,6 +242,8 @@ public sealed class Sdl3ApplicationPlatform : IApplicationPlatform, IRenderDevic
 
         try
         {
+            _debug?.Dispose();
+            _debug = null;
             _audio?.Dispose();
             _audio = null;
             if (_canvasPipeline != 0)

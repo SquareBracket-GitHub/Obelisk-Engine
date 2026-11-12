@@ -74,6 +74,12 @@ public sealed class ApplicationHost
                     throw new InvalidOperationException("The monotonic clock moved backwards.");
                 }
 
+                if (_platform is IFrameControl { ShouldRunFrame: false })
+                {
+                    Thread.Sleep(5);
+                    continue;
+                }
+                if (_platform is IFrameControl { FrameDelta: { } fixedDelta }) measuredDelta = fixedDelta;
                 var deltaTime = measuredDelta > _options.MaximumDeltaTime
                     ? _options.MaximumDeltaTime
                     : measuredDelta;
@@ -86,6 +92,7 @@ public sealed class ApplicationHost
                 game.Render(renderContext);
                 _platform.Present(renderContext);
 
+                (_platform as IFrameControl)?.FrameCompleted(time);
                 frameNumber++;
             }
 

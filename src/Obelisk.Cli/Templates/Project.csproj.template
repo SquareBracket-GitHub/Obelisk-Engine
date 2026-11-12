@@ -8,7 +8,7 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);artifacts/**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Obelisk.Vanilla" Version="[{{EngineVersion}}]" />
+    <PackageReference Include="Obelisk.Vanilla" Version="[{{PackageVersion}}]" />
     <Content Include="assets\**\*;plugins\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

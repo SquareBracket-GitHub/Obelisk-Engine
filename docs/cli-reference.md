@@ -1,12 +1,12 @@
-# CLI Reference (v0.2.0 / engine v0.2.0)
+# CLI Reference (v0.3.0 / engine v0.3.0)
 
-This reference describes CLI and engine `0.2.0`. See
+This reference describes CLI and engine `0.3.0`. See
 [the release and upgrade workflow](../README.md#v020-engine-development).
 
 Run commands from the directory containing `obelisk.json`, except `new`, `info`
 and help/version. The CLI orchestrates standard .NET SDK commands. Arguments and
 paths containing spaces must be quoted. Native execution and distribution are
-validated for Windows x64.
+available for Windows x64 and macOS (Apple Silicon execution tested, Intel unverified).
 
 | Command | Result |
 | --- | --- |
@@ -18,7 +18,7 @@ validated for Windows x64.
 | `obelisk remove <manifest-name>` | Removes an installed package for the next game startup. |
 | `obelisk list` | Lists installed Plugin versions and declared engine ranges; read-only. |
 | `obelisk info` | Prints CLI/template, runtime and platform versions without requiring a project. |
-| `obelisk --version` | Prints `0.2.0`. |
+| `obelisk --version` | Prints `0.3.0`. |
 | `obelisk help`, `--help`, `-h` | Prints command usage. No arguments also prints help. |
 
 `<command> --help` / `-h` is accepted for new, run, dev, build, add, remove, list
@@ -37,7 +37,7 @@ A generated `MyGame/obelisk.json` contains:
 {
   "schemaVersion": 1,
   "name": "MyGame",
-  "engineVersion": "0.2.0",
+  "engineVersion": "0.3.0",
   "project": "MyGame.csproj",
   "assets": "assets",
   "plugins": "plugins"
@@ -77,6 +77,17 @@ forced CLI termination. Forced-termination cleanup is not certified on other OSe
 operation first; `list` can still run. Games launched directly through dotnet or
 their executable must be stopped by their owner before package changes.
 
+## Terminal debug control
+
+`run --debug-control [--session name]` and `dev --debug-control [--session name]`
+enable local control. Read the dedicated [terminal debugging guide](terminal-debugging.md)
+for status, input, pause/step/resume, PNG capture and quit commands. Normal launches
+have no debug endpoint. Successful input/step responses acknowledge completed frames.
+
+`build --runtime win-x64|osx-arm64|osx-x64` chooses an explicit distribution target.
+Bare `build` retains the Windows default. macOS uses an extensionless apphost and
+`artifacts/build/<runtime>`; .app bundles and signing/notarization are not included.
+
 ## Plugin operations and build
 
 `add` requires a directory containing a manifest and entry DLL, copies the whole
@@ -89,7 +100,7 @@ with apphost enabled and single-file/trimming/AOT disabled for dynamic Plugins.
 It stages fresh output, copies configured roots to `assets/` and `plugins/`, and
 replaces only CLI/project-owned output. Unowned destinations are rejected; publish
 failure/cancellation preserves the old distribution. Rebuild removes stale files.
-CLI `0.2.0` also accepts the same project's `0.1.0`/`0.1.1` ownership markers and writes
+CLI `0.3.0` also accepts the same project's `0.1.0`/`0.1.1` ownership markers and writes
 the new marker after a successful publish. Other project/version markers remain
 protected.
 Copy the complete output including `licenses/`, native libraries and Plugins.

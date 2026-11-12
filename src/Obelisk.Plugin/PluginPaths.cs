@@ -33,7 +33,7 @@ public sealed class PluginPaths
 
     internal string ValidateDependency(string path)
     {
-        var relative = Path.GetRelativePath(Root, path);
+        var relative = Path.GetRelativePath(NormalizeSystemAliases(Root), NormalizeSystemAliases(Path.GetFullPath(path)));
         return Resolve(relative);
     }
 
@@ -54,7 +54,17 @@ public sealed class PluginPaths
     internal static void RejectLinks(string path)
     {
         for (var cursor = path; !string.IsNullOrEmpty(cursor); cursor = Path.GetDirectoryName(cursor))
-            if ((File.Exists(cursor) || Directory.Exists(cursor)) && File.GetAttributes(cursor).HasFlag(FileAttributes.ReparsePoint))
+            if ((File.Exists(cursor) || Directory.Exists(cursor)) && File.GetAttributes(cursor).HasFlag(FileAttributes.ReparsePoint) && !IsMacSystemAlias(cursor))
                 throw new InvalidDataException($"Plugin path traverses a symbolic link at '{cursor}'.");
     }
+    private static string NormalizeSystemAliases(string path)
+    {
+        foreach (var alias in new[] { "/var", "/tmp" })
+            if (path.StartsWith(alias + "/", StringComparison.Ordinal) && IsMacSystemAlias(alias)) return "/private" + path;
+        return path;
+    }
+
+    // macOS exposes system-owned /var and /tmp aliases. Package-created links remain rejected.
+    private static bool IsMacSystemAlias(string path) => OperatingSystem.IsMacOS() &&
+        path is "/var" or "/tmp" && new DirectoryInfo(path).ResolveLinkTarget(false)?.FullName == "/private" + path;
 }

@@ -4,6 +4,7 @@
     <ProjectReference Include="..\Obelisk.Abstractions\Obelisk.Abstractions.csproj" />
     <PackageReference Include="SkiaSharp" Version="4.148.0" />
     <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="4.148.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="4.148.0" />
   </ItemGroup>
 
   <PropertyGroup>

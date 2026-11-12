@@ -23,7 +23,7 @@ public sealed class DevelopmentTests
 
     [Theory]
     [InlineData("schemaVersion", "2", "schemaVersion")]
-    [InlineData("engineVersion", "0.3.0", "incompatible")]
+    [InlineData("engineVersion", "0.4.0", "incompatible")]
     [InlineData("name", "../bad", "name")]
     [InlineData("project", "../Game.csproj", "confined")]
     [InlineData("project", "Game.txt", ".csproj")]
@@ -78,6 +78,21 @@ public sealed class DevelopmentTests
         Assert.Equal(arguments, run.Arguments.Skip(6));
         Assert.All(runner.Commands, c => Assert.Equal(files.Root, c.WorkingDirectory));
         Assert.All(runner.Children, c => Assert.True(c.Disposed));
+    }
+
+    [Fact]
+    public async Task DebugOptInOnlyReachesGameAndPreservesArguments()
+    {
+        using var files = new Workspace();
+        var runner = new FakeRunner { GameExit = 0 };
+        Assert.Equal(0, await CliApplication.RunAsync(["run", "--debug-control", "--session", "test_session", "--", "hello"],
+            files.Context, development: new DevelopmentCommands(runner)));
+        Assert.Null(runner.Commands.ElementAt(0).Environment);
+        Assert.Null(runner.Commands.ElementAt(1).Environment);
+        Assert.StartsWith("obd-", runner.Commands.ElementAt(2).Environment!["OBELISK_DEBUG_PIPE"]);
+        Assert.Equal("hello", runner.Commands.ElementAt(2).Arguments.Last());
+        Assert.Equal(1, await CliApplication.RunAsync(["run", "--debug-control", "--session", "../bad"], files.Context));
+        Assert.Equal(2, await CliApplication.RunAsync(["run", "--debug-control", "unexpected"], files.Context));
     }
 
     [Theory]

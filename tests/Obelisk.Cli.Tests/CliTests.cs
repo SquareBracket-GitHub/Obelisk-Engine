@@ -28,7 +28,7 @@ public sealed class CliTests
         var xml = XDocument.Load(Path.Combine(project, $"{name}.csproj"));
         var reference = Assert.Single(xml.Descendants("PackageReference"));
         Assert.Equal("Obelisk.Vanilla", (string?)reference.Attribute("Include"));
-        Assert.Equal("[0.2.0]", (string?)reference.Attribute("Version"));
+        Assert.Equal("[0.3.0]", (string?)reference.Attribute("Version"));
         Assert.Equal("net10.0", Assert.Single(xml.Descendants("TargetFramework")).Value);
         using var manifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(project, "obelisk.json")));
         Assert.Equal(name, manifest.RootElement.GetProperty("name").GetString());
@@ -215,12 +215,12 @@ public sealed class CliTests
         using var files = new Workspace();
         var (context, output, error) = files.Context();
         Assert.Equal(0, CliApplication.Run(["info"], context));
-        Assert.Contains("Obelisk CLI: 0.2.0", output.ToString());
-        Assert.Contains("Obelisk.Vanilla [0.2.0]", output.ToString());
+        Assert.Contains("Obelisk CLI: 0.3.0", output.ToString());
+        Assert.Contains("Obelisk.Vanilla [0.3.0]", output.ToString());
         Assert.Contains("Runtime:", output.ToString());
         output.GetStringBuilder().Clear();
         Assert.Equal(0, CliApplication.Run(["--version"], context));
-        Assert.Equal($"0.2.0{Environment.NewLine}", output.ToString());
+        Assert.Equal($"0.3.0{Environment.NewLine}", output.ToString());
         Assert.Equal("", error.ToString());
     }
 

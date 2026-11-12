@@ -14,16 +14,19 @@ public static class CliExitCodes
 
 public static class CliApplication
 {
-    public const string Version = "0.2.0";
-    public const string EngineVersion = "0.2.0";
+    public const string Version = "0.3.0";
+    // Current schema-1 project version; the reader also accepts existing 0.2.0 projects.
+    public const string EngineVersion = "0.3.0";
     private const string Help = """
-        Obelisk CLI 0.2.0
+        Obelisk CLI 0.3.0
         Usage: obelisk <command>
 
           new <name>    Create a .NET 10 game in a new child directory.
           run [-- args] Restore, build and run the current project.
           dev [-- args] Rebuild/restart after debounced file changes.
-          build         Publish Release self-contained Windows x64 to artifacts/build/win-x64.
+          build [--runtime <rid>] Publish self-contained win-x64, osx-arm64 or osx-x64.
+          debug [--session name] <command> Control an opted-in local game; debug help lists commands.
+          run/dev --debug-control [--session name] [-- args] Enable local debug control.
           add <path>    Install a local Plugin package directory (game must be stopped).
           remove <name> Remove an installed Plugin (game must be stopped).
           list          List installed local Plugins and versions.
@@ -59,7 +62,7 @@ public static class CliApplication
             if (args is ["info"])
             {
                 context.Output.WriteLine($"Obelisk CLI: {Version}");
-                context.Output.WriteLine($"Template: .NET 10 / Obelisk.Vanilla [{EngineVersion}]");
+                context.Output.WriteLine($"Template: .NET 10 / Obelisk.Vanilla [{Version}] (project contract {EngineVersion})");
                 context.Output.WriteLine($"Runtime: {RuntimeInformation.FrameworkDescription}");
                 context.Output.WriteLine($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.ProcessArchitecture})");
                 return CliExitCodes.Success;
@@ -72,13 +75,30 @@ public static class CliApplication
                 context.Output.WriteLine($"Next: cd {name}, then dotnet restore, dotnet build, dotnet run.");
                 return CliExitCodes.Success;
             }
+            if (args[0] == "debug") return await DebugCommand.RunAsync(args[1..], context, cancellation).ConfigureAwait(false);
             if (args[0] is "run" or "dev")
             {
+                if (args.Length > 1 && args[1] == "--debug-control")
+                {
+                    var offset = 2;
+                    string? session = null;
+                    if (args.Length > 3 && args[2] == "--session") { session = args[3]; offset = 4; }
+                    if (args.Length > offset && args[offset] != "--") return Usage(context, "Use run/dev --debug-control [--session name] [-- game arguments].");
+                    var pipe = DebugCommand.PipeName(context.WorkingDirectory, session);
+                    context.Output.WriteLine($"Debug control enabled. Session: {session ?? "project"}. Use obelisk debug from this project directory.");
+                    return await (development ?? new DevelopmentCommands()).RunAsync(context,
+                        args.Length > offset ? args[(offset + 1)..] : [], args[0] == "dev", cancellation, pipe).ConfigureAwait(false);
+                }
                 if (args.Length > 1 && args[1] != "--") return Usage(context, "Use 'obelisk run/dev -- <game arguments>'. Run 'obelisk --help'.");
                 return await (development ?? new DevelopmentCommands()).RunAsync(context,
                     args.Length > 1 ? args[2..] : [], args[0] == "dev", cancellation).ConfigureAwait(false);
             }
             if (args is ["build"]) return await (build ?? new BuildCommand()).RunAsync(context, cancellation).ConfigureAwait(false);
+            if (args is ["build", "--runtime", var runtime])
+            {
+                if (!BuildCommand.IsSupportedRuntime(runtime)) return Usage(context, "Supported runtimes: win-x64, osx-arm64, osx-x64.");
+                return await (build ?? new BuildCommand()).RunAsync(context, cancellation, runtime).ConfigureAwait(false);
+            }
             if (args is ["list"]) return new PluginCommands().Run(context, "list");
             if (args is ["add" or "remove", var value])
             {

@@ -70,8 +70,8 @@ public sealed partial class Sdl3ApplicationPlatformTests
             {
                 Name = "future",
                 Version = "1.0.0",
-                EngineMinimum = "0.3.0",
-                EngineMaximumExclusive = "0.4.0",
+                EngineMinimum = "0.4.0",
+                EngineMaximumExclusive = "0.5.0",
                 Assembly = "missing.dll",
                 EntryPoint = "Missing.Entry",
             };

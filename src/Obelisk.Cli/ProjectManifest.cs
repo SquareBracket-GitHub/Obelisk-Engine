@@ -31,7 +31,7 @@ public sealed record ProjectManifest
             }) ?? throw new InvalidDataException("Manifest is empty.");
             if (result.SchemaVersion != 1) throw new InvalidDataException($"Unsupported schemaVersion {result.SchemaVersion}; expected 1.");
             if (!ProjectGenerator.IsValidName(result.Name)) throw new InvalidDataException("Invalid project name.");
-            if (result.EngineVersion != CliApplication.EngineVersion)
+            if (result.EngineVersion != CliApplication.EngineVersion && result.EngineVersion != "0.2.0")
                 throw new InvalidDataException($"Engine version '{result.EngineVersion}' is incompatible with CLI template {CliApplication.EngineVersion}.");
             var project = Resolve(directory, result.Project);
             if (!project.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("project must identify a .csproj file.");
@@ -57,8 +57,11 @@ public sealed record ProjectManifest
         if (!path.StartsWith(prefix, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
             throw new InvalidDataException($"Path '{relative}' must be confined to the project directory.");
         for (var cursor = path; !string.IsNullOrEmpty(cursor); cursor = Path.GetDirectoryName(cursor))
-            if (Path.Exists(cursor) && File.GetAttributes(cursor).HasFlag(FileAttributes.ReparsePoint))
+            if (Path.Exists(cursor) && File.GetAttributes(cursor).HasFlag(FileAttributes.ReparsePoint) && !IsMacSystemAlias(cursor))
                 throw new InvalidDataException($"Project path traverses a symbolic link at '{cursor}'.");
         return path;
     }
+    // macOS exposes system-owned /var and /tmp aliases. Package-created links remain rejected.
+    private static bool IsMacSystemAlias(string path) => OperatingSystem.IsMacOS() &&
+        path is "/var" or "/tmp" && new DirectoryInfo(path).ResolveLinkTarget(false)?.FullName == "/private" + path;
 }

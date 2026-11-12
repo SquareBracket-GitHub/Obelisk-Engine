@@ -197,13 +197,13 @@ public sealed class PluginTests
         {
             Assembly = "fixture.dll",
             EntryPoint = typeof(RecordingEntry).FullName!,
-            EngineMinimum = failure == "incompatible" ? "0.3.0" : "0.2.0",
-            EngineMaximumExclusive = failure == "incompatible" ? "0.4.0" : "0.3.0",
+            EngineMinimum = failure == "incompatible" ? "0.4.0" : "0.2.0",
+            EngineMaximumExclusive = failure == "incompatible" ? "0.5.0" : "0.4.0",
         };
         PackageFiles.WriteManifest(second, invalid);
         using var host = new PluginHost(files.Root);
         var error = Assert.Throws<PluginException>(() => host.LoadDirectory(files.Plugins));
-        Assert.Contains(failure == "duplicate" ? "Duplicate plugin 'first'" : "Engine 0.2.0 is incompatible", error.Message);
+        Assert.Contains(failure == "duplicate" ? "Duplicate plugin 'first'" : "Engine 0.3.0 is incompatible", error.Message);
         Assert.False(File.Exists(Path.Combine(first, "assets", "registered.txt")));
     }
 
@@ -224,7 +224,7 @@ public sealed class PluginTests
     [InlineData("version", "1.0", "three-part")]
     [InlineData("schemaVersion", "2", "schema")]
     [InlineData("name", "INVALID", "lowercase")]
-    [InlineData("engineMinimum", "0.3.0", "minimum")]
+    [InlineData("engineMinimum", "0.4.0", "minimum")]
     [InlineData("engineMaximumExclusive", "0.2.0", "minimum")]
     public void ManifestValidationRejectsInvalidFields(string field, string value, string reason)
     {
@@ -524,7 +524,7 @@ internal sealed class PackageFiles : IDisposable
         Name = name,
         Version = "0.1.0",
         EngineMinimum = "0.2.0",
-        EngineMaximumExclusive = "0.3.0",
+        EngineMaximumExclusive = "0.4.0",
         Assembly = "SamplePlugin.dll",
         EntryPoint = "SamplePlugin.PulsePlugin",
     };

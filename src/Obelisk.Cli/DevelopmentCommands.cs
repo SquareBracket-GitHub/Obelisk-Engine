@@ -4,7 +4,10 @@ public sealed class DevelopmentCommands(IProcessRunner? runner = null, Func<CliC
 {
     private readonly IProcessRunner _runner = runner ?? new ProcessRunner();
 
-    public async Task<int> RunAsync(CliContext context, string[] arguments, bool watch, CancellationToken cancellation)
+    public Task<int> RunAsync(CliContext context, string[] arguments, bool watch, CancellationToken cancellation)
+        => RunAsync(context, arguments, watch, cancellation, null);
+
+    public async Task<int> RunAsync(CliContext context, string[] arguments, bool watch, CancellationToken cancellation, string? debugSession)
     {
         context = context with { Output = TextWriter.Synchronized(context.Output), Error = TextWriter.Synchronized(context.Error) };
         var manifest = ProjectManifest.Read(context.WorkingDirectory);
@@ -13,7 +16,7 @@ public sealed class DevelopmentCommands(IProcessRunner? runner = null, Func<CliC
         {
             var code = await Prepare(context, manifest, cancellation).ConfigureAwait(false);
             if (code != 0) return code;
-            await using var game = StartGame(context, manifest, arguments);
+            await using var game = StartGame(context, manifest, arguments, debugSession);
             return await game.Completion.WaitAsync(cancellation).ConfigureAwait(false);
         }
 
@@ -35,7 +38,7 @@ public sealed class DevelopmentCommands(IProcessRunner? runner = null, Func<CliC
                     var code = await Prepare(context, manifest, cancellation).ConfigureAwait(false);
                     if (code == 0 && changes.Revision == revision)
                     {
-                        game = StartGame(context, manifest, arguments);
+                        game = StartGame(context, manifest, arguments, debugSession);
                         var completed = await Task.WhenAny(changed, game.Completion).ConfigureAwait(false);
                         if (completed == game.Completion)
                         {
@@ -69,11 +72,14 @@ public sealed class DevelopmentCommands(IProcessRunner? runner = null, Func<CliC
         return 0;
     }
 
-    private IChildProcess StartGame(CliContext context, ProjectManifest manifest, string[] arguments)
+    private IChildProcess StartGame(CliContext context, ProjectManifest manifest, string[] arguments, string? debugSession)
     {
         var args = new List<string> { "run", "--project", ProjectManifest.Resolve(context.WorkingDirectory, manifest.Project), "--no-build", "--no-restore", "--" };
         args.AddRange(arguments);
-        var game = _runner.Start(new ProcessCommand("dotnet", args, context.WorkingDirectory), context.Output, context.Error);
+        var command = new ProcessCommand("dotnet", args, context.WorkingDirectory);
+        if (debugSession is not null)
+            command = command with { Environment = new Dictionary<string, string> { ["OBELISK_DEBUG_PIPE"] = debugSession } };
+        var game = _runner.Start(command, context.Output, context.Error);
         context.Output.WriteLine($"Game started (process {game.Id}).");
         return game;
     }

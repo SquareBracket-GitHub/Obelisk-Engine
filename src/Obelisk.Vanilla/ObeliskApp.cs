@@ -1,3 +1,4 @@
+using System.Reflection;
 using Obelisk.Abstractions;
 using Obelisk.Platform.Sdl3;
 using Obelisk.Runtime;
@@ -27,9 +28,9 @@ public static class ObeliskApp
             pluginHost.Add(new PluginManifest
             {
                 Name = "images",
-                Version = typeof(ImagePlugin).Assembly.GetName().Version!.ToString(3),
+                Version = BundledVersion(typeof(ImagePlugin)),
                 EngineMinimum = "0.2.0",
-                EngineMaximumExclusive = "0.3.0",
+                EngineMaximumExclusive = "0.4.0",
                 Assembly = "Obelisk.Plugins.Images.dll",
                 EntryPoint = typeof(ImagePlugin).FullName!,
             }, new ImagePlugin(), AppContext.BaseDirectory);
@@ -52,12 +53,15 @@ public static class ObeliskApp
             pluginHost.Add(new PluginManifest
             {
                 Name = name,
-                Version = type.Assembly.GetName().Version!.ToString(3),
+                Version = BundledVersion(type),
                 EngineMinimum = "0.2.0",
-                EngineMaximumExclusive = "0.3.0",
+                EngineMaximumExclusive = "0.4.0",
                 Assembly = type.Assembly.GetName().Name + ".dll",
                 EntryPoint = type.FullName!
             }, plugin, AppContext.BaseDirectory);
         }
     }
+    private static string BundledVersion(Type type) =>
+        type.Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion.Split('+')[0];
+
 }

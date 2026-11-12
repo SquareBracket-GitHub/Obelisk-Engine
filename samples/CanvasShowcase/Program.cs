@@ -50,7 +50,7 @@ internal sealed class ShowcaseGame(string? file, Uri? url) : IGame, IDisposable
             _assets.RegisterLoader<RgbaImage>(path => _images.Decode(Convert.FromBase64String(File.ReadAllText(path))));
             _texture = file is not null ? _images.LoadTexture(_device, file) :
                 _device.CreateTexture(_assets.Load<RgbaImage>("project:///checker.png.base64"));
-            var fontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf");
+            var fontPath = (OperatingSystem.IsMacOS() ? "/System/Library/Fonts/AppleSDGothicNeo.ttc" : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf"));
             _font = new FontLoader(_device, 28, "안녕하세요 오벨리스크 엔진").LoadFile(fontPath);
             if (url is not null)
             {

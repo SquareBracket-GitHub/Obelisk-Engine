@@ -3,7 +3,7 @@
   "name": "sample",
   "version": "0.1.0",
   "engineMinimum": "0.2.0",
-  "engineMaximumExclusive": "0.3.0",
+  "engineMaximumExclusive": "0.4.0",
   "assembly": "SamplePlugin.dll",
   "entryPoint": "SamplePlugin.PulsePlugin",
   "assets": "assets",

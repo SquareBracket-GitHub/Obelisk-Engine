@@ -20,7 +20,7 @@ public sealed class ShowcaseGame(bool probe = false) : IGame
         try
         {
             _graphics = context.Graphics;
-            _face = FontFace.LoadFile(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf"));
+            _face = FontFace.LoadFile((OperatingSystem.IsMacOS() ? "/System/Library/Fonts/AppleSDGothicNeo.ttc" : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf")));
             _font = new DynamicFont(context.Textures, _face);
             _blur = new BlurEffect(context.Graphics);
             _layer = context.Graphics.CreateRenderTarget(320, 240);

@@ -12,7 +12,11 @@ permissions:
 jobs:
   build-and-test:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      # Hosted runners have no playback device. Exercise the real SDL stream API
+      # with its clocked dummy device; audible hardware quality is a separate gate.
+      SDL_AUDIODRIVER: dummy
 
     steps:
       - name: Check out repository
@@ -36,3 +40,6 @@ jobs:
 
       - name: Test Release
         run: dotnet test Obelisk.sln -c Release --no-build --no-restore
+
+      - name: Verify native terminal debug control
+        run: python tests/Obelisk.Cli.Tests/Verify-DebugControl.py --configuration Release
