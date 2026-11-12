@@ -67,7 +67,7 @@ the installer checks metadata and paths without executing them.
 `obelisk build --runtime osx-arm64` publishes an experimental Apple Silicon distribution
 to artifacts/build/osx-arm64. Use osx-x64 for Intel Macs (not yet certified).
 Run the extensionless {{Name}} apphost on the matching Mac. Signing, notarization
-and .app bundling are not included in this alpha.
+and .app bundling are not included in this release.
 
 `obelisk build` retains the Windows default and publishes Release self-contained Windows x64 output to
 artifacts/build/win-x64. Copy that whole folder and run {{Name}}.exe on a compatible
@@ -78,7 +78,7 @@ when distributing the game. The VC++ runtime remains a target-machine prerequisi
 Rebuild replaces only output marked as owned by this CLI/project and removes stale files.
 Failures preserve the previous build; save custom files outside generated output.
 
-## Terminal debug control (alpha)
+## Terminal debug control
 
 Run `obelisk run --debug-control --session mygame`, then use another terminal:
 
@@ -96,4 +96,4 @@ obelisk debug --session mygame quit
 Coordinates are output pixels from the top-left. Click/press advances two frames,
 even while paused. `step` requires pause. PNG captures the last engine frame and
 refuses to overwrite a file. The local endpoint is restricted to the same OS user;
-normal execution does not enable it. Use matching alpha CLI and engine packages.
+normal execution does not enable it. Use matching 0.3.0 CLI and engine packages.
