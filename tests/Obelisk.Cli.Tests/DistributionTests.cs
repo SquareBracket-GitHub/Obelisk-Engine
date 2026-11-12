@@ -16,7 +16,7 @@ public sealed class DistributionTests
         Assert.Equal("native", File.ReadAllText(Path.Combine(installed, "native", "helper.dll")));
         Assert.True(File.Exists(Path.Combine(installed, "private", "dependency.dll")));
         Assert.Equal(0, await CliApplication.RunAsync(["list"], files.Context));
-        Assert.Contains("sample 0.1.0 [0.2.0, 0.3.0)", files.Output.ToString());
+        Assert.Contains("sample 0.1.0 [0.2.0, 0.4.0)", files.Output.ToString());
         Assert.Equal(0, await CliApplication.RunAsync(["remove", "sample"], files.Context));
         Assert.False(Directory.Exists(installed)); Assert.True(Directory.Exists(files.Package));
         files.Output.GetStringBuilder().Clear();
@@ -42,7 +42,7 @@ public sealed class DistributionTests
 
     [Theory]
     [InlineData("schemaVersion", "2")]
-    [InlineData("engineMinimum", "0.3.0")]
+    [InlineData("engineMinimum", "0.4.0")]
     [InlineData("assembly", "../outside.dll")]
     [InlineData("assets", "../outside")]
     [InlineData("native", ".. /outside")]
@@ -160,6 +160,7 @@ public sealed class DistributionTests
     [InlineData("0.1.0")]
     [InlineData("0.1.1")]
     [InlineData("0.2.0")]
+    [InlineData("0.3.0-alpha261112")]
     public async Task RebuildReplacesOwnedOutputWithoutStaleFiles(string previousVersion)
     {
         using var files = new Workspace();
@@ -209,7 +210,7 @@ public sealed class DistributionTests
     [InlineData(null)]
     [InlineData("Obelisk.Cli 0.1.0\nOther.csproj\n")]
     [InlineData("Obelisk.Cli 0.1.1\nOther.csproj\n")]
-    [InlineData("Obelisk.Cli 0.3.0\nGame.csproj\n")]
+    [InlineData("Obelisk.Cli 0.4.0\nGame.csproj\n")]
     public async Task UnownedOutputIsNeverOverwrittenAndSdkIsNotInvoked(string? marker)
     {
         using var files = new Workspace(); Directory.CreateDirectory(files.OutputDirectory);
@@ -293,7 +294,7 @@ public sealed class DistributionTests
                 ["name"] = name,
                 ["version"] = "0.1.0",
                 ["engineMinimum"] = "0.2.0",
-                ["engineMaximumExclusive"] = "0.3.0",
+                ["engineMaximumExclusive"] = "0.4.0",
                 ["assembly"] = "Sample.dll",
                 ["entryPoint"] = "Sample.Plugin"
             };

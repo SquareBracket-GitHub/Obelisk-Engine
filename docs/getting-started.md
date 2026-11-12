@@ -1,22 +1,26 @@
 # Getting Started (v0.1)
 
-## Current 0.2.0 quick start
+## Current 0.3.0 quick start
 
-Use the .NET 10 SDK on Windows x64. Install on a new computer, or update an
-existing global tool:
+Use the official .NET 10 SDK on Windows x64 or macOS with a Metal-capable GPU.
+Apple Silicon execution is tested; Intel Mac execution is not certified.
 
-```powershell
-dotnet tool install --global Obelisk.Cli --version 0.2.0
-# Existing installation: dotnet tool update --global Obelisk.Cli --version 0.2.0
+```sh
+dotnet tool install --global Obelisk.Cli --version 0.3.0
+# Existing installation: dotnet tool update --global Obelisk.Cli --version 0.3.0
 obelisk new MyGame
-Set-Location MyGame
+cd MyGame
 obelisk run
+obelisk build --runtime osx-arm64
 ```
 
-The CLI generates `Obelisk.Vanilla [0.2.0]` and `engineVersion: 0.2.0`.
-Existing games must update both values; rebuild local plugins for engine
-`[0.2.0, 0.3.0)`. Vanilla resolves Images 0.1.1 and Text/Effects 0.1.0 with
-independent plugin versions. See [the current release and plugin usage](../README.md#v020-engine-development).
+New projects reference `Obelisk.Vanilla [0.3.0]` and declare engineVersion 0.3.0.
+Existing 0.2.0 project manifests remain accepted. Official Images 0.1.2 and
+Text/Effects 0.1.1 declare `[0.2.0, 0.4.0)`. A third-party plugin with exclusive
+maximum 0.3.0 needs validation and a range update for the actual 0.3.0 engine.
+
+See [terminal debugging](terminal-debugging.md) and [0.3.0 release notes](release-notes-v0.3.0.md).
+The older Windows walkthrough below is retained as historical release guidance.
 
 ## Historical v0.1 walkthrough
 

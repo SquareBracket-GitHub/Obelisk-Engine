@@ -31,7 +31,7 @@ public sealed record ProjectManifest
             }) ?? throw new InvalidDataException("Manifest is empty.");
             if (result.SchemaVersion != 1) throw new InvalidDataException($"Unsupported schemaVersion {result.SchemaVersion}; expected 1.");
             if (!ProjectGenerator.IsValidName(result.Name)) throw new InvalidDataException("Invalid project name.");
-            if (result.EngineVersion != CliApplication.EngineVersion)
+            if (result.EngineVersion != CliApplication.EngineVersion && result.EngineVersion != "0.2.0")
                 throw new InvalidDataException($"Engine version '{result.EngineVersion}' is incompatible with CLI template {CliApplication.EngineVersion}.");
             var project = Resolve(directory, result.Project);
             if (!project.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("project must identify a .csproj file.");

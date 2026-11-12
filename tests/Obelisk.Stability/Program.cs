@@ -49,7 +49,7 @@ internal static class Program
                         Name = "images",
                         Version = "0.1.0",
                         EngineMinimum = "0.2.0",
-                        EngineMaximumExclusive = "0.3.0",
+                        EngineMaximumExclusive = "0.4.0",
                         Assembly = "Obelisk.Plugins.Images.dll",
                         EntryPoint = typeof(ImagePlugin).FullName!
                     },
@@ -115,8 +115,12 @@ internal static class Program
             using var plugins = new PluginHost(Path.Combine(AppContext.BaseDirectory, "assets"));
             plugins.Add(new PluginManifest
             {
-                Name = "images", Version = "0.1.1", EngineMinimum = "0.2.0", EngineMaximumExclusive = "0.3.0",
-                Assembly = "Obelisk.Plugins.Images.dll", EntryPoint = typeof(ImagePlugin).FullName!
+                Name = "images",
+                Version = "0.1.1",
+                EngineMinimum = "0.2.0",
+                EngineMaximumExclusive = "0.4.0",
+                Assembly = "Obelisk.Plugins.Images.dll",
+                EntryPoint = typeof(ImagePlugin).FullName!
             }, new ImagePlugin(), AppContext.BaseDirectory);
             var smoke = new SmokeGame(game);
             var result = new ApplicationHost(platform).Run(plugins.Wrap(smoke));
@@ -168,6 +172,8 @@ internal static class Program
         private readonly Stopwatch _timer = new();
         private int _stage;
         private int _nextSample;
+        private bool? _waitingMinimized;
+        private double _transitionDeadline;
         private long? _gpuBaseline;
         private ITextureDevice? _textures;
         public int Frames { get; private set; }
@@ -184,7 +190,14 @@ internal static class Program
             var window = platform.WindowHandle;
             // Native SDL requests target only this test-owned window, on its owning thread.
             double[] times = [0.15, 0.22, 0.35, 0.44, 0.60, 0.68, 0.80, 0.90];
-            if (_stage < times.Length && fraction >= times[_stage])
+            if (_waitingMinimized is { } expectedMinimized)
+            {
+                if (((SDL.GetWindowFlags(window) & SDL.WindowFlags.Minimized) != 0) == expectedMinimized)
+                { _waitingMinimized = null; Transitions++; }
+                else if (_timer.Elapsed.TotalSeconds > _transitionDeadline)
+                    throw new InvalidOperationException($"Window minimize/restore did not reach {expectedMinimized} within five seconds.");
+            }
+            if (_waitingMinimized is null && _stage < times.Length && fraction >= times[_stage])
             {
                 var stage = _stage++;
                 if (stage is 0 or 4) Check(SDL.MinimizeWindow(window));
@@ -192,9 +205,8 @@ internal static class Program
                 if (stage is 0 or 1 or 4 or 5)
                 {
                     Check(SDL.SyncWindow(window));
-                    var minimized = (SDL.GetWindowFlags(window) & SDL.WindowFlags.Minimized) != 0;
-                    if (minimized != (stage is 0 or 4)) throw new InvalidOperationException("Window minimize/restore state mismatch.");
-                    Transitions++;
+                    _waitingMinimized = stage is 0 or 4;
+                    _transitionDeadline = _timer.Elapsed.TotalSeconds + 5;
                 }
                 if (resize && stage is 2 or 6)
                 {
@@ -204,7 +216,10 @@ internal static class Program
                 }
                 if (resize && stage is 3 or 7)
                 {
-                    var expected = stage == 3 ? new OutputSize(800, 450) : new OutputSize(1024, 576);
+                    if (!SDL.GetWindowSize(window, out var logicalWidth, out var logicalHeight) ||
+                        logicalWidth != (stage == 3 ? 800 : 1024) || logicalHeight != (stage == 3 ? 450 : 576))
+                        throw new InvalidOperationException("Requested logical window size was not applied.");
+                    var expected = Sdl3NativeApi.Instance.GetOutputSize(window);
                     if (context.OutputSize != expected) throw new InvalidOperationException($"Resize event mismatch: {context.OutputSize} != {expected}.");
                     Transitions++;
                 }
@@ -222,7 +237,7 @@ internal static class Program
                 }
                 sample();
             }
-            if (fraction >= 1 && _stage == times.Length)
+            if (fraction >= 1 && _stage == times.Length && _waitingMinimized is null)
             {
                 var quit = new SDL.Event { Type = (uint)SDL.EventType.Quit };
                 Check(SDL.PushEvent(ref quit));

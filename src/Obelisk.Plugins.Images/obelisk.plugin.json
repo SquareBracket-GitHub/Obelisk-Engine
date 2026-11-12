@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "name": "images",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "engineMinimum": "0.2.0",
-  "engineMaximumExclusive": "0.3.0",
+  "engineMaximumExclusive": "0.4.0",
   "assembly": "Obelisk.Plugins.Images.dll",
   "entryPoint": "Obelisk.Plugins.Images.ImagePlugin"
 }

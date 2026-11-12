@@ -16,12 +16,14 @@ import zlib
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dotnet', default='dotnet')
+parser.add_argument('--configuration', default='Debug', choices=['Debug','Release'])
 parser.add_argument('--cli', help='Installed obelisk executable; default uses the source Debug CLI')
+parser.add_argument('--plugin-removal', action='store_true', help='Regress installed plugin removal before the main debug gate')
 parser.add_argument('--dev', action='store_true', help='Also verify development restart and fresh session state')
 parser.add_argument('--feed', help='Local package feed; default uses source ProjectReference')
 options = parser.parse_args()
 repo = Path(__file__).resolve().parents[2]
-cli = repo / 'src/Obelisk.Cli/bin/Debug/net10.0/Obelisk.Cli.dll'
+cli = repo / ('src/Obelisk.Cli/bin/' + options.configuration + '/net10.0/Obelisk.Cli.dll')
 root = Path(tempfile.mkdtemp(prefix='obelisk-debug-gate-')).resolve()
 session = 'gate_' + uuid.uuid4().hex
 print('Debug integration artifacts:', root, flush=True)
@@ -43,7 +45,7 @@ invoke(['new', 'DebugGame'])
 game = root / 'DebugGame'
 if not options.feed: (game / 'DebugGame.csproj').write_text('''<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup>
 <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings>
-</PropertyGroup><ItemGroup><ProjectReference Include="''' + str(repo / 'src/Obelisk.Vanilla/Obelisk.Vanilla.csproj') + '''" /></ItemGroup></Project>''')
+</PropertyGroup><ItemGroup><Content Include="assets/**/*;plugins/**/*" CopyToOutputDirectory="PreserveNewest" /> <ProjectReference Include="''' + str(repo / 'src/Obelisk.Vanilla/Obelisk.Vanilla.csproj') + '''" /></ItemGroup><Import Project="''' + str(repo / 'src/Obelisk.Vanilla/buildTransitive/Obelisk.Vanilla.targets') + '''" /></Project>''')
 if options.feed:
     (game / 'NuGet.Config').write_text('<configuration><packageSources><clear/><add key="candidate" value="' + str(Path(options.feed).resolve()) + '"/><add key="public" value="https://api.nuget.org/v3/index.json"/></packageSources></configuration>')
 (game / 'Game.cs').write_text('''using Obelisk.Abstractions;
@@ -67,6 +69,28 @@ public sealed class Game : IGame {
 }''')
 program = game / 'Program.cs'
 program.write_text(program.read_text().replace('Height = 540', 'Height = 540, SampleCount = 4'))
+if options.plugin_removal:
+    package = repo / ('samples/SamplePlugin/bin/' + options.configuration + '/net10.0')
+    invoke(['add', str(package)], game)
+    warm_log = root / 'plugin-installed.log'
+    with warm_log.open('w') as out:
+        warm = subprocess.Popen(command + ['run','--debug-control','--session',session], cwd=game,
+                                env=env, stdout=out, stderr=subprocess.STDOUT, start_new_session=True)
+        try:
+            deadline = time.monotonic() + 90
+            while 'Game started' not in warm_log.read_text():
+                assert warm.poll() is None and time.monotonic() < deadline, warm_log.read_text()
+                time.sleep(.1)
+            invoke(['debug','--session',session,'status'],game)
+            invoke(['debug','--session',session,'quit'],game)
+            assert warm.wait(timeout=15) == 0, warm_log.read_text()
+        finally:
+            if warm.poll() is None:
+                if os.name == 'nt': warm.terminate()
+                else: os.killpg(warm.pid,signal.SIGTERM)
+                warm.wait(timeout=10)
+    invoke(['remove','sample'],game)
+
 log_path = root / 'game.log'
 with log_path.open('w') as log:
     process = subprocess.Popen(command + ['dev' if options.dev else 'run', '--debug-control', '--session', session], cwd=game,
@@ -93,6 +117,8 @@ with log_path.open('w') as log:
             except AssertionError:
                 assert process.poll() is None and time.monotonic() < deadline, log_path.read_text()
                 time.sleep(.1)
+        if options.plugin_removal:
+            assert not (game / 'bin/Debug/net10.0/plugins/sample').exists(), 'Stale empty plugin directory survived rebuild'
         paused = debug('pause')
         baseline = paused['completedFrames']
         time.sleep(.1)

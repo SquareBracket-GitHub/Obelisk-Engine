@@ -85,7 +85,7 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
         var marker = Path.Combine(output, Marker);
         var contents = File.Exists(marker) && new FileInfo(marker).Length <= 2048 ? File.ReadAllText(marker) : null;
         // Only known marker formats for this same project can be replaced.
-        if (!new[] { CliApplication.Version, "0.2.0", "0.1.1", "0.1.0" }.Any(version => contents == $"Obelisk.Cli {version}\n{project}\n"))
+        if (!new[] { CliApplication.Version, "0.3.0-alpha261112", "0.2.0", "0.1.1", "0.1.0" }.Any(version => contents == $"Obelisk.Cli {version}\n{project}\n"))
             throw new IOException($"Output '{output}' is not owned by this CLI/project. Move the existing directory before building; its files were preserved.");
     }
 }

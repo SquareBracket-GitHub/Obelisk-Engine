@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "name": "effects",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engineMinimum": "0.2.0",
-  "engineMaximumExclusive": "0.3.0",
+  "engineMaximumExclusive": "0.4.0",
   "assembly": "Obelisk.Plugins.Effects.dll",
   "entryPoint": "Obelisk.Plugins.Effects.EffectsPlugin"
 }

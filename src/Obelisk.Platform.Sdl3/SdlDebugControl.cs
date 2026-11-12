@@ -106,12 +106,23 @@ internal sealed class SdlDebugControl(string pipeName) : IDisposable
     }
     private void Reply(DebugPipeServer.Request request, Sdl3ApplicationPlatform platform) => request.Response.TrySetResult(JsonSerializer.Serialize(new
     {
-        ok = true, completedFrames = CompletedFrames, elapsedSeconds = _elapsed.TotalSeconds, paused = Paused,
-        processId = Environment.ProcessId, width = platform.OutputSize.Width, height = platform.OutputSize.Height,
-        displayScale = platform.DisplayScale, sampleCount = platform.SampleCount, coordinates = "drawable-pixels-top-left",
+        ok = true,
+        completedFrames = CompletedFrames,
+        elapsedSeconds = _elapsed.TotalSeconds,
+        paused = Paused,
+        processId = Environment.ProcessId,
+        width = platform.OutputSize.Width,
+        height = platform.OutputSize.Height,
+        displayScale = platform.DisplayScale,
+        sampleCount = platform.SampleCount,
+        coordinates = "drawable-pixels-top-left",
         keysDown = Enum.GetValues<Key>().Where(platform.Input.Keyboard.IsDown).Select(k => k.ToString()),
-        mouse = new { x = platform.Input.Mouse.X, y = platform.Input.Mouse.Y,
-            buttonsDown = Enum.GetValues<MouseButton>().Where(platform.Input.Mouse.IsDown).Select(b => b.ToString()) }
+        mouse = new
+        {
+            x = platform.Input.Mouse.X,
+            y = platform.Input.Mouse.Y,
+            buttonsDown = Enum.GetValues<MouseButton>().Where(platform.Input.Mouse.IsDown).Select(b => b.ToString())
+        }
     }));
     public void Dispose() => _server.Dispose();
 }

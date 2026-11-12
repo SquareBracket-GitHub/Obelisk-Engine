@@ -1,124 +1,40 @@
 # Obelisk Engine
 
-## v0.3.0-alpha261112: experimental macOS support
+## v0.3.0: macOS and terminal debugging
 
-### Terminal debug control
-
-Opt in when launching a game; ordinary `run`/`dev` sessions do not open a debug
-endpoint. Both the CLI and engine must be this updated alpha build.
+Version 0.3.0 adds macOS native assets, explicit `win-x64`, `osx-arm64` and
+`osx-x64` distribution targets, and opt-in terminal debugging. Windows x64 remains
+the default for `obelisk build`. Apple Silicon execution is tested; Intel Mac
+execution and signed/notarized .app distribution are not certified.
 
 ```sh
-# Terminal 1, inside the game project:
+dotnet tool install --global Obelisk.Cli --version 0.3.0
+# Existing installation: dotnet tool update --global Obelisk.Cli --version 0.3.0
+obelisk new MyGame
+cd MyGame
 obelisk run --debug-control --session mygame
-# `obelisk dev --debug-control --session mygame` also supports rebuild/restart.
-
-# Terminal 2 (same OS user):
-obelisk debug --session mygame status
-obelisk debug --session mygame pause
+# A second terminal:
 obelisk debug --session mygame click 320 180
-obelisk debug --session mygame key down W
-obelisk debug --session mygame step 30
-obelisk debug --session mygame key up W
 obelisk debug --session mygame screenshot ./frame.png
-obelisk debug --session mygame resume
-obelisk debug --session mygame quit
-```
-
-Omit `--session` in both terminals to select the current project directory. Use
-unique named sessions for different games. `debug help` lists mouse movement,
-button down/up and key press commands. Key names follow the public `Key` enum
-(e.g. `Enter`, `Space`, `Left`, `W`); use `quit` instead of injecting Escape.
-
-Coordinates use drawable output pixels from the top-left, matching Canvas and
-mouse snapshots. `status` reports dimensions, display scale, actual MSAA sample
-count, completed simulation frames/time, held keys/buttons and mouse position.
-It does not introspect game-specific scenes or objects. Existing game stdout and
-stderr remain in the launching terminal.
-
-Pause keeps native events responsive without updating or rendering the game.
-`step N` requires pause and advances 1-600 frames at 1/60 second per frame (subject
-to the configured maximum delta). Input commands automatically advance paused
-simulation: one frame for down/up/move, two for click/press. Click/press release
-on the following simulation frame; successful responses follow frame completion,
-not mere receipt. Real window input remains active and can affect a debug session.
-
-PNG capture reads the last rendered engine frame, including offscreen passes and
-MSAA, without advancing simulation. It excludes window chrome and the OS cursor.
-The client writes the file and refuses to overwrite existing files. Debug capture
-adds an offscreen target/composite pass; normal rendering has no capture overhead.
-Commands use an OS-user-restricted local named pipe, with no network listener or
-arbitrary code evaluation. A timeout can occur after a command has applied; check
-status before retrying. New development processes start with fresh debug state.
-
-```sh
-# Native integration gate; requires the pinned SDK and a desktop GPU:
-python3 tests/Obelisk.Cli.Tests/Verify-DebugControl.py
-# Also exercise dev rebuild/restart and fresh debug session state:
-python3 tests/Obelisk.Cli.Tests/Verify-DebugControl.py --dev
-```
-
-The Apple Silicon gate verifies actual mouse/key observations, pause/step timing,
-frame acknowledgments, PNG dimensions/checksums/pixels (including an offscreen
-pass with MSAA), resume, quit and endpoint cleanup. Installed CLI/NuGet consumption
-and dev restart with a fresh process/session also passed. The automated suite has 310
-passing tests, including preservation of every v0.2 public member signature.
-Windows native debug execution remains to be verified. Locally repacked builds
-reuse this unpublished alpha version; use a fresh NuGet package cache/feed when
-switching candidates to avoid consuming an older build of the same version.
-
-This source alpha adds macOS native dependencies and explicit distribution targets.
-Windows x64 remains the existing default. Apple Silicon is the first macOS test
-platform; Intel macOS packages are included but execution is not yet certified.
-This is a development candidate, not a published or certified release. Historical
-Windows release instructions below still describe the prior release.
-
-```sh
-# From this checkout, using the SDK selected by global.json:
-dotnet build Obelisk.sln
-dotnet test Obelisk.sln --no-build
-# Run native smoke checks on the process main thread (briefly opens three windows):
-dotnet run --project tests/Obelisk.Stability -- --smoke
-```
-
-The source CLI and installed alpha CLI accept:
-
-```sh
+# Build an Apple Silicon distribution:
 obelisk build --runtime osx-arm64
-obelisk build --runtime osx-x64
-obelisk build --runtime win-x64
-# The existing command still targets Windows x64:
-obelisk build
 ```
 
-Each target publishes to `artifacts/build/<runtime>`. macOS distributions use an
-extensionless executable apphost; copy the whole folder and preserve executable
-permissions. `.app` bundles, signing, notarization and Gatekeeper certification
-are outside this alpha. Native plugins must provide dependencies for the chosen
-architecture. The samples use the installed Apple SD Gothic Neo font on macOS
-and Malgun Gothic on Windows; neither font is redistributed.
+Read the dedicated [terminal debugging guide](docs/terminal-debugging.md) for all
+commands, coordinate units, pause/step behavior, frame acknowledgments and dev
+restart handling. [Release notes](docs/release-notes-v0.3.0.md) describe changes,
+compatibility and verification limits. Older release notes below are historical.
 
-Package version `0.3.0-alpha261112` is separate from the retained `0.2.0` public
-assembly and schema-1 project/plugin compatibility contract. Existing project
-manifests and plugin ranges remain valid for this alpha; range checks are not
-bypassed. New projects reference the exact alpha package, so configure a local
-feed containing all packed engine projects until packages are published. Official
-plugins retain their own package versions and previous assembly identities.
-This compatibility contract must be reviewed before the stable 0.3.0 release.
+Existing v0.2 public signatures and assembly contract identities are retained.
+The CLI accepts existing 0.2.0 project manifests; new projects use 0.3.0. Plugins
+are checked against the actual engine version 0.3.0: packages declaring an
+exclusive maximum of 0.3.0 must be validated and their range updated. Official
+Images 0.1.2, Text 0.1.1 and Effects 0.1.1 declare `[0.2.0, 0.4.0)` compatibility.
 
-Validation on 2026-11-12: Apple Silicon source build passed, 306 automated tests
-passed, and MovingRectangle, CanvasShowcase and Pong each rendered 61 frames and
-released all tracked GPU resources in the standalone smoke run. The pinned official
-.NET SDK 10.0.401 also passed the full build/tests. An external generated project
-restored from local alpha packages, published for osx-arm64, and its self-contained
-apphost rendered and shut down normally. Homebrew SDK runtime packs missing
-license notices fail the existing distribution gate; use the official SDK.
-Package-based osx-x64 and default win-x64 cross-publishes also passed; this does
-not certify execution on those machines. Existing native
-xUnit tests guarded for Windows are not macOS graphics evidence. The Windows
-stability scenario's minimize/restore assertion failed on macOS; extended window
-state and long-duration stability certification remain open, along with Intel
-Mac execution, a fresh Windows regression run and a separate SDK-free Mac.
-
+The plugin-removal stale empty output directory defect is fixed. The window
+stability harness now waits for asynchronous minimize/restore completion and
+checks logical sizes separately from Retina drawable pixels. Use the official
+.NET SDK; Homebrew runtime packs without license notices fail the distribution gate.
 
 Obelisk is an experimental, plugin-first 2D game engine for .NET 10 and SDL3.
 The Vanilla MVP includes a moving rectangle and a complete local two-player Pong

@@ -9,6 +9,24 @@
     <Content Include="$(_ObeliskEngineLicense)" Link="licenses/obelisk/LICENSE" Pack="$(_ObeliskEngineLicensePack)" PackagePath="/"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+  <!-- Only prune empty generated package directories. Nonempty malformed packages
+       still fail strict runtime discovery instead of being silently ignored. -->
+  <UsingTask TaskName="ObeliskPruneEmptyPluginDirectories" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup><Root ParameterType="System.String" Required="true" /></ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        foreach (var directory in Directory.GetDirectories(Root))
+            if (Directory.GetFiles(directory, "*", SearchOption.AllDirectories).Length == 0)
+                Directory.Delete(directory, true);
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="ObeliskPruneEmptyOutputPlugins" AfterTargets="Build"
+          Condition="'$(OutputType)' == 'Exe' and Exists('$(TargetDir)plugins')">
+    <ObeliskPruneEmptyPluginDirectories Root="$(TargetDir)plugins" />
+  </Target>
   <Target Name="ObeliskIncludeRuntimeNotices" AfterTargets="ComputeResolvedFilesToPublishList"
           Condition="'$(SelfContained)' == 'true'">
     <ItemGroup>

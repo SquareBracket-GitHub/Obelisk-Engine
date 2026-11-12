@@ -55,7 +55,10 @@ The certified target is Windows x64 with an SDL_GPU-compatible GPU/driver.
 The checkout pins .NET SDK 10.0.401; game/Plugin projects target .NET 10. Visual
 Studio 2026 supports this target; VS Code/Rider can use SDK commands. Actual Rider
 opening and a separate clean-machine distribution check remain release tasks.
-Linux, macOS, x86/ARM64, mobile and web are not certified release targets.
+In 0.3.0, macOS native assets are included. Apple Silicon CLI, sample, window-transition,
+self-contained and terminal-debug flows are tested. Intel Mac native execution,
+macOS signing/notarization, Linux, x86, mobile and web are not certified release targets.
+See the [0.3.0 notes](release-notes-v0.3.0.md) and [debug guide](terminal-debugging.md).
 
 The platform package includes patched SDL `3.4.16-obelisk.1` for Windows x64; normal
 game builds need no C++ tools. Rebuilding that dependency requires the pinned

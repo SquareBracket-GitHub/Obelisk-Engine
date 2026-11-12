@@ -14,11 +14,11 @@ public static class CliExitCodes
 
 public static class CliApplication
 {
-    public const string Version = "0.3.0-alpha261112";
-    // Schema-1 project compatibility contract; package releases use Version.
-    public const string EngineVersion = "0.2.0";
+    public const string Version = "0.3.0";
+    // Current schema-1 project version; the reader also accepts existing 0.2.0 projects.
+    public const string EngineVersion = "0.3.0";
     private const string Help = """
-        Obelisk CLI 0.3.0-alpha261112
+        Obelisk CLI 0.3.0
         Usage: obelisk <command>
 
           new <name>    Create a .NET 10 game in a new child directory.
