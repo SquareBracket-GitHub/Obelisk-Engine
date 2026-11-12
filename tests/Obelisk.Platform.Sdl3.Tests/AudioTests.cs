@@ -128,7 +128,15 @@ public sealed partial class Sdl3ApplicationPlatformTests
         api.ResumeFails = false; api.PutFails = true;
         Assert.Throws<Sdl3Exception>(() => audio.Play(new Sound(8000, 1, new byte[16])));
         Assert.Single(api.Streams);
-        Assert.Throws<InvalidOperationException>(() => Task.Run(() => audio.Play(new Sound(8000, 1, new byte[16]))).GetAwaiter().GetResult());
+        Exception? wrongThreadError = null;
+        var worker = new Thread(() =>
+        {
+            try { audio.Play(new Sound(8000, 1, new byte[16])); }
+            catch (Exception failure) { wrongThreadError = failure; }
+        });
+        worker.Start();
+        Assert.True(worker.Join(TimeSpan.FromSeconds(5)));
+        Assert.IsType<InvalidOperationException>(wrongThreadError);
     }
     [Theory]
     [InlineData(true)]

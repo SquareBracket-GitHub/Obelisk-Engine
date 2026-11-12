@@ -88,5 +88,6 @@ public sealed class ProjectGenerator(Action<string, string>? writeFile = null)
     }
 
     private static string Expand(string text, string name) => text.Replace("{{Name}}", name, StringComparison.Ordinal)
+        .Replace("{{PackageVersion}}", CliApplication.Version, StringComparison.Ordinal)
         .Replace("{{EngineVersion}}", CliApplication.EngineVersion, StringComparison.Ordinal);
 }

@@ -57,8 +57,11 @@ public sealed record ProjectManifest
         if (!path.StartsWith(prefix, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
             throw new InvalidDataException($"Path '{relative}' must be confined to the project directory.");
         for (var cursor = path; !string.IsNullOrEmpty(cursor); cursor = Path.GetDirectoryName(cursor))
-            if (Path.Exists(cursor) && File.GetAttributes(cursor).HasFlag(FileAttributes.ReparsePoint))
+            if (Path.Exists(cursor) && File.GetAttributes(cursor).HasFlag(FileAttributes.ReparsePoint) && !IsMacSystemAlias(cursor))
                 throw new InvalidDataException($"Project path traverses a symbolic link at '{cursor}'.");
         return path;
     }
+    // macOS exposes system-owned /var and /tmp aliases. Package-created links remain rejected.
+    private static bool IsMacSystemAlias(string path) => OperatingSystem.IsMacOS() &&
+        path is "/var" or "/tmp" && new DirectoryInfo(path).ResolveLinkTarget(false)?.FullName == "/private" + path;
 }

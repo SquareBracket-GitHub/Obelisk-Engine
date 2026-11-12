@@ -18,6 +18,7 @@ internal static class Program
     {
         try
         {
+            if (args.Contains("--smoke")) return RunSmoke();
             if (Value(args, "--probe") is { } probe) return NativeProbe.Run(probe, (int)Read(args, "--cycles", 40));
             var quick = args.Contains("--quick");
             var minutes = Read(args, "--minutes", quick ? 0.15 : 30);
@@ -47,8 +48,8 @@ internal static class Program
                     {
                         Name = "images",
                         Version = "0.1.0",
-                        EngineMinimum = "0.1.0",
-                        EngineMaximumExclusive = "0.2.0",
+                        EngineMinimum = "0.2.0",
+                        EngineMaximumExclusive = "0.3.0",
                         Assembly = "Obelisk.Plugins.Images.dll",
                         EntryPoint = typeof(ImagePlugin).FullName!
                     },
@@ -97,6 +98,51 @@ internal static class Program
             return 0;
         }
         catch (Exception error) { Console.Error.WriteLine(error); return 1; }
+    }
+
+    private static int RunSmoke()
+    {
+        // A standalone entry point keeps Cocoa/Metal on the process main thread.
+        foreach (var name in new[] { "MovingRectangle", "CanvasShowcase", "Pong" })
+        {
+            IGame game = name switch
+            {
+                "MovingRectangle" => new MovingRectangle.MovingRectangleGame(),
+                "CanvasShowcase" => new CanvasShowcase.ShowcaseGame(null, null),
+                _ => new Pong.PongGame(),
+            };
+            var platform = new Sdl3ApplicationPlatform(new AppOptions { Title = $"Obelisk macOS smoke: {name}", Width = 640, Height = 360 });
+            using var plugins = new PluginHost(Path.Combine(AppContext.BaseDirectory, "assets"));
+            plugins.Add(new PluginManifest
+            {
+                Name = "images", Version = "0.1.1", EngineMinimum = "0.2.0", EngineMaximumExclusive = "0.3.0",
+                Assembly = "Obelisk.Plugins.Images.dll", EntryPoint = typeof(ImagePlugin).FullName!
+            }, new ImagePlugin(), AppContext.BaseDirectory);
+            var smoke = new SmokeGame(game);
+            var result = new ApplicationHost(platform).Run(plugins.Wrap(smoke));
+            if (result != 0 || smoke.Frames < 60 || GpuResource.LiveCount != 0 || SDL.WasInit(SDL.InitFlags.Video) != 0)
+                throw new InvalidOperationException($"Smoke failure: {name}, frames={smoke.Frames}, live GPU={GpuResource.LiveCount}.");
+            Console.WriteLine($"SMOKE PASSED: {name}, frames={smoke.Frames}, live GPU={GpuResource.LiveCount}");
+        }
+        return 0;
+    }
+
+    private sealed class SmokeGame(IGame game) : IGame
+    {
+        public int Frames { get; private set; }
+        public void Initialize(InitializeContext context) => game.Initialize(context);
+        public void Update(UpdateContext context)
+        {
+            if (game is Pong.PongGame pong && pong.Match.State != Pong.MatchState.Playing) pong.Match.Start();
+            game.Update(context);
+            if (Frames >= 60)
+            {
+                var quit = new SDL.Event { Type = (uint)SDL.EventType.Quit };
+                if (!SDL.PushEvent(ref quit)) throw new InvalidOperationException(SDL.GetError());
+            }
+        }
+        public void Render(RenderContext context) { game.Render(context); Frames++; }
+        public void Shutdown(ShutdownContext context) => game.Shutdown(context);
     }
 
     private static string? Value(string[] args, string name)

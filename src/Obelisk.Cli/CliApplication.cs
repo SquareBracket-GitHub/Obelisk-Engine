@@ -14,16 +14,17 @@ public static class CliExitCodes
 
 public static class CliApplication
 {
-    public const string Version = "0.2.0";
+    public const string Version = "0.3.0-alpha261112";
+    // Schema-1 project compatibility contract; package releases use Version.
     public const string EngineVersion = "0.2.0";
     private const string Help = """
-        Obelisk CLI 0.2.0
+        Obelisk CLI 0.3.0-alpha261112
         Usage: obelisk <command>
 
           new <name>    Create a .NET 10 game in a new child directory.
           run [-- args] Restore, build and run the current project.
           dev [-- args] Rebuild/restart after debounced file changes.
-          build         Publish Release self-contained Windows x64 to artifacts/build/win-x64.
+          build [--runtime <rid>] Publish self-contained win-x64, osx-arm64 or osx-x64.
           add <path>    Install a local Plugin package directory (game must be stopped).
           remove <name> Remove an installed Plugin (game must be stopped).
           list          List installed local Plugins and versions.
@@ -59,7 +60,7 @@ public static class CliApplication
             if (args is ["info"])
             {
                 context.Output.WriteLine($"Obelisk CLI: {Version}");
-                context.Output.WriteLine($"Template: .NET 10 / Obelisk.Vanilla [{EngineVersion}]");
+                context.Output.WriteLine($"Template: .NET 10 / Obelisk.Vanilla [{Version}] (project contract {EngineVersion})");
                 context.Output.WriteLine($"Runtime: {RuntimeInformation.FrameworkDescription}");
                 context.Output.WriteLine($"Platform: {RuntimeInformation.OSDescription} ({RuntimeInformation.ProcessArchitecture})");
                 return CliExitCodes.Success;
@@ -79,6 +80,11 @@ public static class CliApplication
                     args.Length > 1 ? args[2..] : [], args[0] == "dev", cancellation).ConfigureAwait(false);
             }
             if (args is ["build"]) return await (build ?? new BuildCommand()).RunAsync(context, cancellation).ConfigureAwait(false);
+            if (args is ["build", "--runtime", var runtime])
+            {
+                if (!BuildCommand.IsSupportedRuntime(runtime)) return Usage(context, "Supported runtimes: win-x64, osx-arm64, osx-x64.");
+                return await (build ?? new BuildCommand()).RunAsync(context, cancellation, runtime).ConfigureAwait(false);
+            }
             if (args is ["list"]) return new PluginCommands().Run(context, "list");
             if (args is ["add" or "remove", var value])
             {

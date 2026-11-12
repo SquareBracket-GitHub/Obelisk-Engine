@@ -1,5 +1,61 @@
 # Obelisk Engine
 
+## v0.3.0-alpha261112: experimental macOS support
+
+This source alpha adds macOS native dependencies and explicit distribution targets.
+Windows x64 remains the existing default. Apple Silicon is the first macOS test
+platform; Intel macOS packages are included but execution is not yet certified.
+This is a development candidate, not a published or certified release. Historical
+Windows release instructions below still describe the prior release.
+
+```sh
+# From this checkout, using the SDK selected by global.json:
+dotnet build Obelisk.sln
+dotnet test Obelisk.sln --no-build
+# Run native smoke checks on the process main thread (briefly opens three windows):
+dotnet run --project tests/Obelisk.Stability -- --smoke
+```
+
+The source CLI and installed alpha CLI accept:
+
+```sh
+obelisk build --runtime osx-arm64
+obelisk build --runtime osx-x64
+obelisk build --runtime win-x64
+# The existing command still targets Windows x64:
+obelisk build
+```
+
+Each target publishes to `artifacts/build/<runtime>`. macOS distributions use an
+extensionless executable apphost; copy the whole folder and preserve executable
+permissions. `.app` bundles, signing, notarization and Gatekeeper certification
+are outside this alpha. Native plugins must provide dependencies for the chosen
+architecture. The samples use the installed Apple SD Gothic Neo font on macOS
+and Malgun Gothic on Windows; neither font is redistributed.
+
+Package version `0.3.0-alpha261112` is separate from the retained `0.2.0` public
+assembly and schema-1 project/plugin compatibility contract. Existing project
+manifests and plugin ranges remain valid for this alpha; range checks are not
+bypassed. New projects reference the exact alpha package, so configure a local
+feed containing all packed engine projects until packages are published. Official
+plugins retain their own package versions and previous assembly identities.
+This compatibility contract must be reviewed before the stable 0.3.0 release.
+
+Validation on 2026-11-12: Apple Silicon source build passed, 306 automated tests
+passed, and MovingRectangle, CanvasShowcase and Pong each rendered 61 frames and
+released all tracked GPU resources in the standalone smoke run. The pinned official
+.NET SDK 10.0.401 also passed the full build/tests. An external generated project
+restored from local alpha packages, published for osx-arm64, and its self-contained
+apphost rendered and shut down normally. Homebrew SDK runtime packs missing
+license notices fail the existing distribution gate; use the official SDK.
+Package-based osx-x64 and default win-x64 cross-publishes also passed; this does
+not certify execution on those machines. Existing native
+xUnit tests guarded for Windows are not macOS graphics evidence. The Windows
+stability scenario's minimize/restore assertion failed on macOS; extended window
+state and long-duration stability certification remain open, along with Intel
+Mac execution, a fresh Windows regression run and a separate SDK-free Mac.
+
+
 Obelisk is an experimental, plugin-first 2D game engine for .NET 10 and SDL3.
 The Vanilla MVP includes a moving rectangle and a complete local two-player Pong
 game, with local Plugin discovery, scoped Asset loaders and Module lifecycle hooks.

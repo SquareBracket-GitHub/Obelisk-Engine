@@ -32,8 +32,8 @@ internal sealed class PongGame : IGame, IDisposable
             using var images = new ImagePlugin();
             _image = context.Textures.CreateTexture(images.Decode(Convert.FromBase64String(File.ReadAllText(
                 _assets.Resolve(AssetUri.Parse("project:///checker.png.base64"))))));
-            _font = new FontLoader(context.Textures, 24).LoadFile(Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf"));
+            _font = new FontLoader(context.Textures, 24).LoadFile((OperatingSystem.IsMacOS() ? "/System/Library/Fonts/AppleSDGothicNeo.ttc" : Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf")));
             _music = _audio.Play(music, loop: true, volume: 0.15f);
             Match.Sound += PlayEffect;
         }

@@ -6,11 +6,17 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
     private const string Marker = ".obelisk-build.txt";
     private readonly IProcessRunner _runner = runner ?? new ProcessRunner();
 
-    public async Task<int> RunAsync(CliContext context, CancellationToken cancellation)
+    public static bool IsSupportedRuntime(string runtime) => runtime is "win-x64" or "osx-arm64" or "osx-x64";
+
+    public Task<int> RunAsync(CliContext context, CancellationToken cancellation)
+        => RunAsync(context, cancellation, "win-x64");
+
+    public async Task<int> RunAsync(CliContext context, CancellationToken cancellation, string runtime)
     {
+        if (!IsSupportedRuntime(runtime)) throw new ArgumentException("Unsupported runtime.", nameof(runtime));
         var manifest = ProjectManifest.Read(context.WorkingDirectory);
         using var operation = ProjectOperation.Acquire(context.WorkingDirectory);
-        var output = ProjectManifest.Resolve(context.WorkingDirectory, OutputDirectory);
+        var output = ProjectManifest.Resolve(context.WorkingDirectory, $"artifacts/build/{runtime}");
         var owner = $"Obelisk.Cli {CliApplication.Version}\n{manifest.Project}\n";
         CheckOutput(output, manifest.Project);
         var assets = ProjectFiles.ContentRoot(context.WorkingDirectory, manifest.Assets);
@@ -24,7 +30,7 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
         {
             Directory.CreateDirectory(staging);
             string[] args = ["publish", ProjectManifest.Resolve(context.WorkingDirectory, manifest.Project),
-                "-c", "Release", "-r", "win-x64", "--self-contained", "true", "--nologo", "--output", staging,
+                "-c", "Release", "-r", runtime, "--self-contained", "true", "--nologo", "--output", staging,
                 "-p:PublishSingleFile=false", "-p:PublishTrimmed=false", "-p:PublishAot=false", "-p:UseAppHost=true"];
             int exit;
             await using (var child = _runner.Start(new ProcessCommand("dotnet", args, context.WorkingDirectory), context.Output, context.Error))
@@ -32,9 +38,16 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
             if (exit != 0) return exit;
             cancellation.ThrowIfCancellationRequested();
             ProjectFiles.ValidateTree(staging);
-            foreach (var file in new[] { "coreclr.dll", "hostfxr.dll", "hostpolicy.dll", "System.Private.CoreLib.dll" })
-                if (!File.Exists(Path.Combine(staging, file))) throw new InvalidDataException($"Publish output lacks '{file}'; expected a Windows x64 self-contained application.");
-            if (!Directory.EnumerateFiles(staging, "*.exe").Any()) throw new InvalidDataException("Publish output has no executable apphost.");
+            var nativeFiles = runtime == "win-x64"
+                ? new[] { "coreclr.dll", "hostfxr.dll", "hostpolicy.dll", "System.Private.CoreLib.dll" }
+                : new[] { "libcoreclr.dylib", "libhostfxr.dylib", "libhostpolicy.dylib", "System.Private.CoreLib.dll" };
+            foreach (var file in nativeFiles)
+                if (!File.Exists(Path.Combine(staging, file))) throw new InvalidDataException($"Publish output lacks '{file}'; expected a {runtime} self-contained application.");
+            var apphosts = Directory.EnumerateFiles(staging, "*.runtimeconfig.json")
+                .Select(file => file[..^".runtimeconfig.json".Length] + (runtime == "win-x64" ? ".exe" : ""));
+            if (!apphosts.Any(file => File.Exists(file) && (runtime == "win-x64" || OperatingSystem.IsWindows() ||
+                (File.GetUnixFileMode(file) & (UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute)) != 0)))
+                throw new InvalidDataException("Publish output has no executable apphost matching a runtime configuration.");
             foreach (var (source, name) in new[] { (assets, "assets"), (plugins, "plugins") })
             {
                 var target = ProjectManifest.Resolve(staging, name);
@@ -49,7 +62,7 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
             try { Directory.Move(staging, output); }
             catch { if (Directory.Exists(backup) && !Path.Exists(output)) Directory.Move(backup, output); throw; }
             published = true;
-            context.Output.WriteLine($"Built Windows x64 self-contained game at '{output}'. Copy this whole folder; run its .exe without installing .NET.");
+            context.Output.WriteLine($"Built {runtime} self-contained game at '{output}'. Copy this whole folder; run its apphost without installing .NET.");
             return 0;
         }
         finally
@@ -72,7 +85,7 @@ public sealed class BuildCommand(IProcessRunner? runner = null)
         var marker = Path.Combine(output, Marker);
         var contents = File.Exists(marker) && new FileInfo(marker).Length <= 2048 ? File.ReadAllText(marker) : null;
         // Only known marker formats for this same project can be replaced.
-        if (!new[] { CliApplication.Version, "0.1.1", "0.1.0" }.Any(version => contents == $"Obelisk.Cli {version}\n{project}\n"))
+        if (!new[] { CliApplication.Version, "0.2.0", "0.1.1", "0.1.0" }.Any(version => contents == $"Obelisk.Cli {version}\n{project}\n"))
             throw new IOException($"Output '{output}' is not owned by this CLI/project. Move the existing directory before building; its files were preserved.");
     }
 }

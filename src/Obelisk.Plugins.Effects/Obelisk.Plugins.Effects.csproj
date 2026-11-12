@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>0.1.0</Version>
+    <Version>0.1.1-alpha261112</Version>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <Description>Official Obelisk separable Gaussian blur effects plugin.</Description>
   </PropertyGroup>

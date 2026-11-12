@@ -1,0 +1,266 @@
+{
+  "SchemaVersion": 3,
+  "CreatedAtUtc": "2026-10-01T08:28:41.9689360Z",
+  "Component": "SDL_shadercross",
+  "PackageId": "SDL3-CS.MacOS.Shadercross",
+  "Rid": "osx-x64",
+  "Configuration": "Release",
+  "SourceReferences": [
+    {
+      "Component": "SDL",
+      "SourceFolder": "SDL",
+      "Repository": "https://github.com/edwardgushchin/SDL",
+      "UpstreamRepository": "https://github.com/libsdl-org/SDL",
+      "Origin": "https://github.com/edwardgushchin/SDL",
+      "Branch": "",
+      "Head": "fa2c02bb6e21974a89ea9824bc53c9932abe5f9c",
+      "ShortHead": "fa2c02bb6e21",
+      "Dirty": 0
+    },
+    {
+      "Component": "SDL_shadercross",
+      "SourceFolder": "SDL_shadercross",
+      "Repository": "https://github.com/edwardgushchin/SDL_shadercross",
+      "UpstreamRepository": "https://github.com/libsdl-org/SDL_shadercross",
+      "Origin": "https://github.com/edwardgushchin/SDL_shadercross",
+      "Branch": "",
+      "Head": "e55cf5e31ced6f3d1be5cc6d0c50e99384f9f4ba",
+      "ShortHead": "e55cf5e31ced",
+      "Dirty": 0
+    }
+  ],
+  "Toolchain": {
+    "HostOs": "macos",
+    "HostArch": "x64",
+    "CMake": "/usr/local/bin/cmake",
+    "DotNet": "/Users/runner/.dotnet/dotnet",
+    "Git": "/usr/local/bin/git",
+    "CCompiler": "/usr/bin/cc",
+    "CxxCompiler": "/usr/bin/c++",
+    "Make": "/usr/bin/make",
+    "Shell": "/bin/sh",
+    "PkgConfig": "/usr/local/bin/pkg-config",
+    "Bison": "/usr/local/opt/bison/bin/bison",
+    "NASM": "/usr/local/bin/nasm",
+    "Patchelf": null,
+    "InstallNameTool": "/usr/bin/install_name_tool"
+  },
+  "PackageRoot": "/Users/runner/work/SDL3-CS/SDL3-CS/SDL3-CS.NativePackages/SDL3-CS.MacOS.Shadercross",
+  "PackageRidRoot": "/Users/runner/work/SDL3-CS/SDL3-CS/SDL3-CS.NativePackages/SDL3-CS.MacOS.Shadercross/lib/osx-x64",
+  "InstallCollection": [
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libdxcompiler.dylib",
+      "InstallRelativePath": "lib/libdxcompiler.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libdxcompiler.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libdxil.dylib",
+      "InstallRelativePath": "lib/libdxil.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libdxil.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libSDL3_shadercross.0.0.0.dylib",
+      "InstallRelativePath": "lib/libSDL3_shadercross.0.0.0.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libSDL3_shadercross.0.0.0.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libSDL3_shadercross.0.dylib",
+      "InstallRelativePath": "lib/libSDL3_shadercross.0.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libSDL3_shadercross.0.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libSDL3_shadercross.dylib",
+      "InstallRelativePath": "lib/libSDL3_shadercross.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libSDL3_shadercross.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libSDL3.0.dylib",
+      "InstallRelativePath": "lib/libSDL3.0.dylib",
+      "Disposition": "dependency",
+      "PackageRelativePath": null
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libSDL3.dylib",
+      "InstallRelativePath": "lib/libSDL3.dylib",
+      "Disposition": "dependency",
+      "PackageRelativePath": null
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libspirv-cross-c-shared.0.68.0.dylib",
+      "InstallRelativePath": "lib/libspirv-cross-c-shared.0.68.0.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libspirv-cross-c-shared.0.68.0.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libspirv-cross-c-shared.0.dylib",
+      "InstallRelativePath": "lib/libspirv-cross-c-shared.0.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libspirv-cross-c-shared.0.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libspirv-cross-c-shared.dylib",
+      "InstallRelativePath": "lib/libspirv-cross-c-shared.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libspirv-cross-c-shared.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libvkd3d-shader.1.dylib",
+      "InstallRelativePath": "lib/libvkd3d-shader.1.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libvkd3d-shader.1.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libvkd3d-shader.dylib",
+      "InstallRelativePath": "lib/libvkd3d-shader.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libvkd3d-shader.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libvkd3d-utils.1.dylib",
+      "InstallRelativePath": "lib/libvkd3d-utils.1.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libvkd3d-utils.1.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libvkd3d-utils.dylib",
+      "InstallRelativePath": "lib/libvkd3d-utils.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libvkd3d-utils.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libvkd3d.1.dylib",
+      "InstallRelativePath": "lib/libvkd3d.1.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libvkd3d.1.dylib"
+    },
+    {
+      "Component": "SDL_shadercross",
+      "Rid": "osx-x64",
+      "Name": "libvkd3d.dylib",
+      "InstallRelativePath": "lib/libvkd3d.dylib",
+      "Disposition": "collected",
+      "PackageRelativePath": "lib/osx-x64/libvkd3d.dylib"
+    }
+  ],
+  "Artifacts": [
+    {
+      "Name": "libdxcompiler.dylib",
+      "RelativePath": "lib/osx-x64/libdxcompiler.dylib",
+      "Length": 29362280,
+      "Sha256": "b45a4c43541ee6b7807869c06e8ea082168ce41b12790d0f2a33206021059dca"
+    },
+    {
+      "Name": "libdxil.dylib",
+      "RelativePath": "lib/osx-x64/libdxil.dylib",
+      "Length": 2054800,
+      "Sha256": "a63c8284a4b70dfd592c4b3da7e4c8d823fc0f2f56bedd9039e3462b36d6fd38"
+    },
+    {
+      "Name": "libSDL3_shadercross.0.0.0.dylib",
+      "RelativePath": "lib/osx-x64/libSDL3_shadercross.0.0.0.dylib",
+      "Length": 42904,
+      "Sha256": "ebf18bfaf5ace152ae284340d2447d188d44425b90540be112d6aeb78c32ddd2"
+    },
+    {
+      "Name": "libSDL3_shadercross.0.dylib",
+      "RelativePath": "lib/osx-x64/libSDL3_shadercross.0.dylib",
+      "Length": 42904,
+      "Sha256": "ebf18bfaf5ace152ae284340d2447d188d44425b90540be112d6aeb78c32ddd2"
+    },
+    {
+      "Name": "libSDL3_shadercross.dylib",
+      "RelativePath": "lib/osx-x64/libSDL3_shadercross.dylib",
+      "Length": 42904,
+      "Sha256": "ebf18bfaf5ace152ae284340d2447d188d44425b90540be112d6aeb78c32ddd2"
+    },
+    {
+      "Name": "libspirv-cross-c-shared.0.68.0.dylib",
+      "RelativePath": "lib/osx-x64/libspirv-cross-c-shared.0.68.0.dylib",
+      "Length": 3698440,
+      "Sha256": "a0cf8b59df0a3f86ae9fc8de5855f5dc94ae0938183e705c543303a3d6deaa81"
+    },
+    {
+      "Name": "libspirv-cross-c-shared.0.dylib",
+      "RelativePath": "lib/osx-x64/libspirv-cross-c-shared.0.dylib",
+      "Length": 3698440,
+      "Sha256": "a0cf8b59df0a3f86ae9fc8de5855f5dc94ae0938183e705c543303a3d6deaa81"
+    },
+    {
+      "Name": "libspirv-cross-c-shared.dylib",
+      "RelativePath": "lib/osx-x64/libspirv-cross-c-shared.dylib",
+      "Length": 3698440,
+      "Sha256": "a0cf8b59df0a3f86ae9fc8de5855f5dc94ae0938183e705c543303a3d6deaa81"
+    },
+    {
+      "Name": "libvkd3d-shader.1.dylib",
+      "RelativePath": "lib/osx-x64/libvkd3d-shader.1.dylib",
+      "Length": 1550816,
+      "Sha256": "bb88604ba80480e8bb5303a495786d4418f98b84618b0a33bb2122ee61e4546e"
+    },
+    {
+      "Name": "libvkd3d-shader.dylib",
+      "RelativePath": "lib/osx-x64/libvkd3d-shader.dylib",
+      "Length": 1550816,
+      "Sha256": "bb88604ba80480e8bb5303a495786d4418f98b84618b0a33bb2122ee61e4546e"
+    },
+    {
+      "Name": "libvkd3d-utils.1.dylib",
+      "RelativePath": "lib/osx-x64/libvkd3d-utils.1.dylib",
+      "Length": 76776,
+      "Sha256": "e77ab369b61235a962f5985b414b6252fdf46a914e361e47edbc68c780aa6fa1"
+    },
+    {
+      "Name": "libvkd3d-utils.dylib",
+      "RelativePath": "lib/osx-x64/libvkd3d-utils.dylib",
+      "Length": 76776,
+      "Sha256": "e77ab369b61235a962f5985b414b6252fdf46a914e361e47edbc68c780aa6fa1"
+    },
+    {
+      "Name": "libvkd3d.1.dylib",
+      "RelativePath": "lib/osx-x64/libvkd3d.1.dylib",
+      "Length": 607320,
+      "Sha256": "a64d560dfeeb3b0e9a48a7599738a8b28c347e621f2848661850470e4073dcaf"
+    },
+    {
+      "Name": "libvkd3d.dylib",
+      "RelativePath": "lib/osx-x64/libvkd3d.dylib",
+      "Length": 607320,
+      "Sha256": "a64d560dfeeb3b0e9a48a7599738a8b28c347e621f2848661850470e4073dcaf"
+    }
+  ]
+}
