@@ -4,7 +4,7 @@ using SDL3;
 
 namespace Obelisk.Platform.Sdl3;
 
-internal sealed class Sdl3NativeApi : ISdl3Api
+internal sealed partial class Sdl3NativeApi : ISdl3Api
 {
     public static Sdl3NativeApi Instance { get; } = new();
     public ISdlAudioApi AudioApi { get; } = new SdlAudioApi();
@@ -72,8 +72,24 @@ internal sealed class Sdl3NativeApi : ISdl3Api
         {
             if (!SDL.WaitAndAcquireGPUSwapchainTexture(commands, window, out var target, out var width, out var height))
                 return false;
-            if (target != 0 && width > 0 && height > 0 &&
-                !_renderers[pipeline].Record(commands, target, width, height, drawing)) return false;
+            if (target != 0 && width > 0 && height > 0)
+            {
+                var renderer = _renderers[pipeline];
+                if (_debugSnapshots.TryGetValue(pipeline, out var snapshot))
+                {
+                    if (snapshot is null || snapshot.Texture.Width != width || snapshot.Texture.Height != height)
+                    {
+                        snapshot?.Dispose();
+                        snapshot = renderer.CreateRenderTarget((int)width, (int)height);
+                        _debugSnapshots[pipeline] = snapshot;
+                    }
+                    if (!renderer.RecordSnapshot(commands, snapshot, drawing)) return false;
+                    var canvas = new Canvas2D { Blend = BlendMode.Opaque };
+                    canvas.DrawSprite(snapshot.Texture, new(0, 0, width, height));
+                    drawing = canvas.Commands;
+                }
+                if (!renderer.Record(commands, target, width, height, drawing)) return false;
+            }
             submitted = true; // SDL consumes the command buffer even if submission fails.
             return SDL.SubmitGPUCommandBuffer(commands);
         }
@@ -148,6 +164,7 @@ internal sealed class Sdl3NativeApi : ISdl3Api
 
     public void ReleaseGpuPipeline(nint device, nint pipeline)
     {
+        if (_debugSnapshots.Remove(pipeline, out var snapshot)) snapshot?.Dispose();
         if (_renderers.Remove(pipeline, out var renderer)) renderer.Dispose();
     }
 

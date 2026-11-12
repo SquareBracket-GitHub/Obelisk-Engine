@@ -80,6 +80,21 @@ public sealed class DevelopmentTests
         Assert.All(runner.Children, c => Assert.True(c.Disposed));
     }
 
+    [Fact]
+    public async Task DebugOptInOnlyReachesGameAndPreservesArguments()
+    {
+        using var files = new Workspace();
+        var runner = new FakeRunner { GameExit = 0 };
+        Assert.Equal(0, await CliApplication.RunAsync(["run", "--debug-control", "--session", "test_session", "--", "hello"],
+            files.Context, development: new DevelopmentCommands(runner)));
+        Assert.Null(runner.Commands.ElementAt(0).Environment);
+        Assert.Null(runner.Commands.ElementAt(1).Environment);
+        Assert.StartsWith("obd-", runner.Commands.ElementAt(2).Environment!["OBELISK_DEBUG_PIPE"]);
+        Assert.Equal("hello", runner.Commands.ElementAt(2).Arguments.Last());
+        Assert.Equal(1, await CliApplication.RunAsync(["run", "--debug-control", "--session", "../bad"], files.Context));
+        Assert.Equal(2, await CliApplication.RunAsync(["run", "--debug-control", "unexpected"], files.Context));
+    }
+
     [Theory]
     [InlineData(1)]
     [InlineData(2)]

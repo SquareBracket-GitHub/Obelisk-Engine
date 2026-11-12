@@ -7,7 +7,7 @@ namespace Obelisk.Platform.Sdl3;
 
 internal sealed partial class CanvasRenderer
 {
-    private bool RecordFrame(nint commands, nint target, uint width, uint height, IReadOnlyList<RenderCommand2D> drawing)
+    private bool RecordFrame(nint commands, nint target, uint width, uint height, IReadOnlyList<RenderCommand2D> drawing, SDL.GPUTextureFormat? mainFormat = null, TextureHandle mainDestination = default)
     {
         EnsureThread();
         var pending = new List<RenderCommand2D>();
@@ -15,7 +15,7 @@ internal sealed partial class CanvasRenderer
         foreach (var command in drawing)
         {
             if (command is not RenderPassCommand offscreen) { pending.Add(command); continue; }
-            if (!RecordSegment(commands, target, width, height, pending, _format, default, clear,
+            if (!RecordSegment(commands, target, width, height, pending, mainFormat ?? _format, mainDestination, clear,
                 new ColorRgba(0.035f, 0.045f, 0.075f), preserveSamples: true)) return false;
             clear = false; pending.Clear();
             ArgumentNullException.ThrowIfNull(offscreen.Target);
@@ -31,9 +31,13 @@ internal sealed partial class CanvasRenderer
             if (!RecordSegment(commands, entry.Native.Handle, (uint)texture.Width, (uint)texture.Height,
                 offscreen.Commands, SDL.GPUTextureFormat.R8G8B8A8Unorm, texture.Handle, true, color)) return false;
         }
-        return RecordSegment(commands, target, width, height, pending, _format, default, clear,
+        return RecordSegment(commands, target, width, height, pending, mainFormat ?? _format, mainDestination, clear,
             new ColorRgba(0.035f, 0.045f, 0.075f));
     }
+
+    internal bool RecordSnapshot(nint commands, RenderTarget target, IReadOnlyList<RenderCommand2D> drawing)
+        => RecordFrame(commands, Resolve(target.Texture.Handle).Native.Handle, (uint)target.Texture.Width,
+            (uint)target.Texture.Height, drawing, SDL.GPUTextureFormat.R8G8B8A8Unorm, target.Texture.Handle);
 
     private bool RecordSegment(nint commands, nint target, uint width, uint height, IReadOnlyList<RenderCommand2D> drawing,
         SDL.GPUTextureFormat format, TextureHandle destination, bool clear, ColorRgba clearColor, bool preserveSamples = false)

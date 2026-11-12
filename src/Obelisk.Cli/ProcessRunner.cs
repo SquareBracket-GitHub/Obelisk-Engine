@@ -3,7 +3,10 @@ using System.Text;
 
 namespace Obelisk.Cli;
 
-public sealed record ProcessCommand(string FileName, IReadOnlyList<string> Arguments, string WorkingDirectory);
+public sealed record ProcessCommand(string FileName, IReadOnlyList<string> Arguments, string WorkingDirectory)
+{
+    public IReadOnlyDictionary<string, string>? Environment { get; init; }
+}
 
 public interface IChildProcess : IAsyncDisposable
 {
@@ -33,6 +36,9 @@ public sealed class ProcessRunner : IProcessRunner
             StandardErrorEncoding = Encoding.UTF8,
         };
         info.Environment["DOTNET_CLI_FORCE_UTF8_ENCODING"] = "1";
+        info.Environment.Remove("OBELISK_DEBUG_PIPE");
+        if (command.Environment is { } variables)
+            foreach (var (key, value) in variables) info.Environment[key] = value;
         foreach (var argument in command.Arguments) info.ArgumentList.Add(argument);
         var process = new Process { StartInfo = info };
         WindowsJob? job = null;

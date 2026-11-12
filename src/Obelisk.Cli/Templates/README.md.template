@@ -77,3 +77,23 @@ the engine dependency notices under `licenses/`; preserve that directory
 when distributing the game. The VC++ runtime remains a target-machine prerequisite.
 Rebuild replaces only output marked as owned by this CLI/project and removes stale files.
 Failures preserve the previous build; save custom files outside generated output.
+
+## Terminal debug control (alpha)
+
+Run `obelisk run --debug-control --session mygame`, then use another terminal:
+
+```sh
+obelisk debug --session mygame pause
+obelisk debug --session mygame click 320 180
+obelisk debug --session mygame key press Enter
+obelisk debug --session mygame step 1
+obelisk debug --session mygame screenshot ./frame.png
+obelisk debug --session mygame resume
+obelisk debug --session mygame quit
+```
+
+`status` reports output pixel dimensions, scale, completed frames and input state.
+Coordinates are output pixels from the top-left. Click/press advances two frames,
+even while paused. `step` requires pause. PNG captures the last engine frame and
+refuses to overwrite a file. The local endpoint is restricted to the same OS user;
+normal execution does not enable it. Use matching alpha CLI and engine packages.

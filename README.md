@@ -2,6 +2,70 @@
 
 ## v0.3.0-alpha261112: experimental macOS support
 
+### Terminal debug control
+
+Opt in when launching a game; ordinary `run`/`dev` sessions do not open a debug
+endpoint. Both the CLI and engine must be this updated alpha build.
+
+```sh
+# Terminal 1, inside the game project:
+obelisk run --debug-control --session mygame
+# `obelisk dev --debug-control --session mygame` also supports rebuild/restart.
+
+# Terminal 2 (same OS user):
+obelisk debug --session mygame status
+obelisk debug --session mygame pause
+obelisk debug --session mygame click 320 180
+obelisk debug --session mygame key down W
+obelisk debug --session mygame step 30
+obelisk debug --session mygame key up W
+obelisk debug --session mygame screenshot ./frame.png
+obelisk debug --session mygame resume
+obelisk debug --session mygame quit
+```
+
+Omit `--session` in both terminals to select the current project directory. Use
+unique named sessions for different games. `debug help` lists mouse movement,
+button down/up and key press commands. Key names follow the public `Key` enum
+(e.g. `Enter`, `Space`, `Left`, `W`); use `quit` instead of injecting Escape.
+
+Coordinates use drawable output pixels from the top-left, matching Canvas and
+mouse snapshots. `status` reports dimensions, display scale, actual MSAA sample
+count, completed simulation frames/time, held keys/buttons and mouse position.
+It does not introspect game-specific scenes or objects. Existing game stdout and
+stderr remain in the launching terminal.
+
+Pause keeps native events responsive without updating or rendering the game.
+`step N` requires pause and advances 1-600 frames at 1/60 second per frame (subject
+to the configured maximum delta). Input commands automatically advance paused
+simulation: one frame for down/up/move, two for click/press. Click/press release
+on the following simulation frame; successful responses follow frame completion,
+not mere receipt. Real window input remains active and can affect a debug session.
+
+PNG capture reads the last rendered engine frame, including offscreen passes and
+MSAA, without advancing simulation. It excludes window chrome and the OS cursor.
+The client writes the file and refuses to overwrite existing files. Debug capture
+adds an offscreen target/composite pass; normal rendering has no capture overhead.
+Commands use an OS-user-restricted local named pipe, with no network listener or
+arbitrary code evaluation. A timeout can occur after a command has applied; check
+status before retrying. New development processes start with fresh debug state.
+
+```sh
+# Native integration gate; requires the pinned SDK and a desktop GPU:
+python3 tests/Obelisk.Cli.Tests/Verify-DebugControl.py
+# Also exercise dev rebuild/restart and fresh debug session state:
+python3 tests/Obelisk.Cli.Tests/Verify-DebugControl.py --dev
+```
+
+The Apple Silicon gate verifies actual mouse/key observations, pause/step timing,
+frame acknowledgments, PNG dimensions/checksums/pixels (including an offscreen
+pass with MSAA), resume, quit and endpoint cleanup. Installed CLI/NuGet consumption
+and dev restart with a fresh process/session also passed. The automated suite has 310
+passing tests, including preservation of every v0.2 public member signature.
+Windows native debug execution remains to be verified. Locally repacked builds
+reuse this unpublished alpha version; use a fresh NuGet package cache/feed when
+switching candidates to avoid consuming an older build of the same version.
+
 This source alpha adds macOS native dependencies and explicit distribution targets.
 Windows x64 remains the existing default. Apple Silicon is the first macOS test
 platform; Intel macOS packages are included but execution is not yet certified.

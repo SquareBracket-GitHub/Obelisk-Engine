@@ -25,6 +25,8 @@ public static class CliApplication
           run [-- args] Restore, build and run the current project.
           dev [-- args] Rebuild/restart after debounced file changes.
           build [--runtime <rid>] Publish self-contained win-x64, osx-arm64 or osx-x64.
+          debug [--session name] <command> Control an opted-in local game; debug help lists commands.
+          run/dev --debug-control [--session name] [-- args] Enable local debug control.
           add <path>    Install a local Plugin package directory (game must be stopped).
           remove <name> Remove an installed Plugin (game must be stopped).
           list          List installed local Plugins and versions.
@@ -73,8 +75,20 @@ public static class CliApplication
                 context.Output.WriteLine($"Next: cd {name}, then dotnet restore, dotnet build, dotnet run.");
                 return CliExitCodes.Success;
             }
+            if (args[0] == "debug") return await DebugCommand.RunAsync(args[1..], context, cancellation).ConfigureAwait(false);
             if (args[0] is "run" or "dev")
             {
+                if (args.Length > 1 && args[1] == "--debug-control")
+                {
+                    var offset = 2;
+                    string? session = null;
+                    if (args.Length > 3 && args[2] == "--session") { session = args[3]; offset = 4; }
+                    if (args.Length > offset && args[offset] != "--") return Usage(context, "Use run/dev --debug-control [--session name] [-- game arguments].");
+                    var pipe = DebugCommand.PipeName(context.WorkingDirectory, session);
+                    context.Output.WriteLine($"Debug control enabled. Session: {session ?? "project"}. Use obelisk debug from this project directory.");
+                    return await (development ?? new DevelopmentCommands()).RunAsync(context,
+                        args.Length > offset ? args[(offset + 1)..] : [], args[0] == "dev", cancellation, pipe).ConfigureAwait(false);
+                }
                 if (args.Length > 1 && args[1] != "--") return Usage(context, "Use 'obelisk run/dev -- <game arguments>'. Run 'obelisk --help'.");
                 return await (development ?? new DevelopmentCommands()).RunAsync(context,
                     args.Length > 1 ? args[2..] : [], args[0] == "dev", cancellation).ConfigureAwait(false);

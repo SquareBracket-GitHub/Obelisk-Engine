@@ -51,8 +51,20 @@ public sealed class PublicApiTests
         var lines = actual.ToArray();
         // Diagnostic output is ignored build output, never an automatic baseline update.
         File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, $"PublicApi.{scope}.actual.txt"), lines);
-        var baseline = scope == "engine" ? "PublicApi.v0.2.txt" : $"PublicApi.{scope}.v0.1.txt";
+        var baseline = scope == "engine" ? "PublicApi.v0.3.txt" : $"PublicApi.{scope}.v0.1.txt";
         Assert.Equal(File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, baseline)), lines);
+        if (scope == "engine")
+        {
+            // Preserve every reviewed v0.2 signature; adding an implemented interface is additive.
+            foreach (var old in File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "PublicApi.v0.2.txt")))
+            {
+                if (!old.StartsWith("type ", StringComparison.Ordinal)) { Assert.Contains(old, actual); continue; }
+                var parts = old.Split("; interfaces", 2);
+                var declaration = Assert.Single(actual, line => line.StartsWith(parts[0] + "; interfaces", StringComparison.Ordinal));
+                foreach (var contract in parts[1].Trim().Split(',', StringSplitOptions.RemoveEmptyEntries))
+                    Assert.Contains(contract, declaration.Split("; interfaces", 2)[1].Trim().Split(','));
+            }
+        }
 
         string Parameter(ParameterInfo p) => $"{(p.IsOut ? "out " : p.IsIn ? "in " : "")}{TypeName(p.ParameterType, nullable.Create(p))} {p.Name}{(p.IsOptional ? " = " + JsonSerializer.Serialize(p.DefaultValue) : "")}";
         string Parameters(MethodBase m) => string.Join(", ", m.GetParameters().Select(Parameter));
