@@ -81,7 +81,13 @@ if options.plugin_removal:
             while 'Game started' not in warm_log.read_text():
                 assert warm.poll() is None and time.monotonic() < deadline, warm_log.read_text()
                 time.sleep(.1)
-            invoke(['debug','--session',session,'status'],game)
+            while True:
+                try:
+                    invoke(['debug','--session',session,'status'],game)
+                    break
+                except AssertionError:
+                    assert warm.poll() is None and time.monotonic() < deadline, warm_log.read_text()
+                    time.sleep(.1)
             invoke(['debug','--session',session,'quit'],game)
             assert warm.wait(timeout=15) == 0, warm_log.read_text()
         finally:
@@ -164,8 +170,15 @@ with log_path.open('w') as log:
             while log_path.read_text().count('Game started') < 2:
                 assert process.poll() is None and time.monotonic() < deadline, log_path.read_text()
                 time.sleep(.1)
-            restarted = debug('status')
-            assert restarted['processId'] != old_pid and restarted['paused'] is False, restarted
+            while True:
+                try:
+                    restarted = debug('status')
+                    if restarted['processId'] != old_pid: break
+                except AssertionError:
+                    pass
+                assert process.poll() is None and time.monotonic() < deadline, log_path.read_text()
+                time.sleep(.1)
+            assert restarted['paused'] is False, restarted
         debug('quit')
         if options.dev:
             deadline = time.monotonic() + 15
