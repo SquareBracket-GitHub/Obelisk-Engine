@@ -45,9 +45,9 @@ experimental. Publication verification is tracked in the candidate release notes
 
 ## Text plugin v0.2.0: horizontal alignment
 
-`Obelisk.Plugins.Text` is independently versioned at 0.2.0. This source update does
-not publish a NuGet package or change the engine/CLI version. Existing `Draw`
-signatures and the plugin assembly identity are retained; existing calls remain
+`Obelisk.Plugins.Text` is independently versioned at 0.2.0 and was pushed to
+NuGet on 2026-11-24 from source `2907c60`. The engine/CLI version is unchanged.
+Existing `Draw` signatures and the plugin assembly identity are retained; existing calls remain
 left aligned. Rebuild/restart games when upgrading the shared plugin SDK.
 
 Both `DynamicFont.Draw` and `MsdfFont.Draw` accept a required `alignment` argument
@@ -80,6 +80,15 @@ native GPU alignment pixel bounds and right-aligned MSDF rendering. Text's v0.2
 API snapshot adds four overloads and the alignment enum while retaining every
 v0.1 signature. Local NuGet packing verified package/manifest version 0.2.0,
 assembly identity 0.1.0.0 and engine compatibility `[0.2.0, 0.4.0)`.
+
+Publication: NuGet accepted the verified package with HTTP 201 after the owner
+renewed the API key. Candidate SHA-256:
+`58361398135dd001adea5e4fc7dd6aa82333dc826abb0ec50b3dd8fee1c30a90`.
+Before pushing, a separate project with an empty package cache restored this
+candidate and public dependencies and ran all alignment modes and the legacy
+`Draw` API. At the last check, the public package page/registration/download
+still returned 404, so public-feed-only installation verification is pending.
+Do not push this version again while NuGet is processing it.
 
 ## v0.2.0 engine development
 
