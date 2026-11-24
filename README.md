@@ -104,6 +104,11 @@ integration tests passed in Release. An isolated project referencing only the
 Vanilla 0.3.1 candidate restored Text 0.2.0 from NuGet and executed all alignment
 modes and the legacy Draw API without a direct Text reference.
 
+Vanilla 0.3.1 was pushed to NuGet on 2026-11-24 from source `6112e78` after
+explicit owner approval (HTTP 201). At the last check its public-feed indexing
+was still pending; the isolated candidate gate above passed. Do not republish
+the same version while indexing is in progress.
+
 ## v0.2.0 engine development
 
 Engine/CLI `0.2.0` and independently versioned Images `0.1.1`, Text `0.1.0` and
