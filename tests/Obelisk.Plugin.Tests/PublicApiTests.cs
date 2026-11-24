@@ -51,8 +51,11 @@ public sealed class PublicApiTests
         var lines = actual.ToArray();
         // Diagnostic output is ignored build output, never an automatic baseline update.
         File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, $"PublicApi.{scope}.actual.txt"), lines);
-        var baseline = scope == "engine" ? "PublicApi.v0.3.txt" : $"PublicApi.{scope}.v0.1.txt";
+        var baseline = scope == "engine" ? "PublicApi.v0.3.txt" : scope == "text" ? "PublicApi.text.v0.2.txt" : $"PublicApi.{scope}.v0.1.txt";
         Assert.Equal(File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, baseline)), lines);
+        if (scope == "text")
+            foreach (var old in File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "PublicApi.text.v0.1.txt")))
+                Assert.Contains(old, actual);
         if (scope == "engine")
         {
             // Preserve every reviewed v0.2 signature; adding an implemented interface is additive.

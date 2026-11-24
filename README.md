@@ -29,7 +29,7 @@ Existing v0.2 public signatures and assembly contract identities are retained.
 The CLI accepts existing 0.2.0 project manifests; new projects use 0.3.0. Plugins
 are checked against the actual engine version 0.3.0: packages declaring an
 exclusive maximum of 0.3.0 must be validated and their range updated. Official
-Images 0.1.2, Text 0.1.1 and Effects 0.1.1 declare `[0.2.0, 0.4.0)` compatibility.
+Images 0.1.2, Text 0.2.0 and Effects 0.1.1 declare `[0.2.0, 0.4.0)` compatibility.
 
 The plugin-removal stale empty output directory defect is fixed. The window
 stability harness now waits for asynchronous minimize/restore completion and
@@ -42,6 +42,44 @@ game, with local Plugin discovery, scoped Asset loaders and Module lifecycle hoo
 An installable CLI generates independent package-based projects. The v0.1 release
 candidate API surface is reviewed and frozen; advanced backend/GPU contracts remain
 experimental. Publication verification is tracked in the candidate release notes.
+
+## Text plugin v0.2.0: horizontal alignment
+
+`Obelisk.Plugins.Text` is independently versioned at 0.2.0. This source update does
+not publish a NuGet package or change the engine/CLI version. Existing `Draw`
+signatures and the plugin assembly identity are retained; existing calls remain
+left aligned. Rebuild/restart games when upgrading the shared plugin SDK.
+
+Both `DynamicFont.Draw` and `MsdfFont.Draw` accept a required `alignment` argument
+in new overloads, for `RenderContext` and ordinary/RenderTo child canvases:
+
+```csharp
+using Obelisk.Plugins.Text;
+
+font.Draw(context, "Left", new(40, 40), TextAlignment.Left, size: 32);
+font.Draw(context, "Centered\nper line", new(40, 90), TextAlignment.Center,
+    size: 32, layoutWidth: 400);
+font.Draw(context, "Right", new(40, 190), TextAlignment.Right,
+    size: 32, layoutWidth: 400);
+// With no layout width, X is the center/right anchor:
+font.Draw(context, "Centered on X=240", new(240, 240), TextAlignment.Center);
+```
+
+Each explicit line is aligned separately, including CRLF, blank lines and trailing
+line breaks. Alignment uses the same advance widths as `Measure`, including
+spaces/tabs, fallback glyphs and MSDF kerning; glyph ink may overhang its advance.
+`layoutWidth` is a finite nonnegative width in Canvas output pixels and is not
+multiplied by font size, scale or DPI. Its default is zero (point anchoring).
+Text wider than the area extends beyond it; this option does not wrap or clip.
+`Measure` continues to return intrinsic size, independent of alignment.
+Invalid alignment values or negative/nonfinite widths fail before recording draws.
+The core bitmap `Font`/`Canvas.DrawText` API is unchanged.
+
+2026-11-24 verification: Debug and Release each passed all 333 tests, including
+native GPU alignment pixel bounds and right-aligned MSDF rendering. Text's v0.2
+API snapshot adds four overloads and the alignment enum while retaining every
+v0.1 signature. Local NuGet packing verified package/manifest version 0.2.0,
+assembly identity 0.1.0.0 and engine compatibility `[0.2.0, 0.4.0)`.
 
 ## v0.2.0 engine development
 

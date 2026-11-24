@@ -9,6 +9,38 @@ namespace Obelisk.Platform.Sdl3.Tests;
 
 public sealed partial class Sdl3ApplicationPlatformTests
 {
+    [Theory]
+    [InlineData(TextAlignment.Left)]
+    [InlineData(TextAlignment.Center)]
+    [InlineData(TextAlignment.Right)]
+    public void NativeTextAlignmentMovesRenderedPixelsWithinOutputWidth(TextAlignment alignment)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        using var scope = new NativePlatformScope(); using var device = TestDevice();
+        using var renderer = new CanvasRenderer(device.Handle, SDL.GPUTextureFormat.R8G8B8A8Unorm);
+        using var face = FontFace.LoadFile(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf"));
+        using var font = new DynamicFont(renderer, face);
+        var frame = new RenderContext(default);
+        frame.Canvas.FillRectangle(new(0, 0, 256, 256), new(0, 0, 0));
+        font.Draw(frame, "가A", new(20, 10), 32);
+        font.Draw(frame, "가A", new(20, 100), alignment, 32, layoutWidth: 200);
+        var width = font.Measure("가A", 32).X;
+        var offset = alignment == TextAlignment.Center ? (200 - width) / 2 : alignment == TextAlignment.Right ? 200 - width : 0;
+        var pixels = RenderPixels(renderer, frame.Canvas, 256);
+        var first = Bounds(10); var second = Bounds(100);
+        Assert.InRange(second.Left - first.Left - offset, -1, 1);
+        Assert.InRange(second.Right - first.Right - offset, -1, 1);
+
+        (int Left, int Right) Bounds(int top)
+        {
+            var left = 256; var right = -1;
+            for (var y = top; y < top + 70; y++) for (var x = 0; x < 256; x++)
+                if (pixels[(y * 256 + x) * 4] > 100) { left = Math.Min(left, x); right = Math.Max(right, x); }
+            Assert.True(right > left);
+            return (left, right);
+        }
+    }
+
     [Fact]
     public void NativeDynamicTextAddsKoreanAndRerasterizesZoomedGlyphs()
     {
@@ -53,7 +85,7 @@ public sealed partial class Sdl3ApplicationPlatformTests
             """;
         using var font = new MsdfFont(renderer, new MsdfAtlas(new RgbaImage(width, width, bytes), metadata));
         var frame = new RenderContext(default); frame.Canvas.FillRectangle(new(0, 0, 256, 256), new(0, 0, 0));
-        font.Draw(frame, "A", new(0.3f, 0.3f), size);
+        font.Draw(frame, "A", new(size + 0.3f, 0.3f), TextAlignment.Right, size);
         var pixels = RenderPixels(renderer, frame.Canvas, 256);
         Pixel(pixels, 256, size / 2, size / 2, 255, 255, 255);
         Pixel(pixels, 256, 1, 1, 0, 0, 0);

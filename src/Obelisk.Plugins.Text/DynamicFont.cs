@@ -72,9 +72,23 @@ public sealed class DynamicFont : IDisposable
     /// <summary>Draws into a Canvas, including a RenderTo child. Supply the same physical frame number for every draw using this cache.</summary>
     public void Draw(Canvas2D canvas, ulong frameNumber, string text, Vector2 position, float size = 32,
         ColorRgba? color = null, float scale = 1, float dpiScale = 1)
+        => Draw(canvas, frameNumber, text, position, TextAlignment.Left, size, color, scale, dpiScale);
+
+    /// <summary>Aligns each line within layoutWidth output pixels; zero width uses position.X as the alignment anchor. Does not wrap or clip.</summary>
+    public void Draw(RenderContext context, string text, Vector2 position, TextAlignment alignment, float size = 32,
+        ColorRgba? color = null, float scale = 1, float dpiScale = 1, float layoutWidth = 0)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        Draw(context.Canvas, context.Time.FrameNumber, text, position, alignment, size, color, scale, dpiScale, layoutWidth);
+    }
+
+    /// <summary>Aligns each line on an ordinary or child Canvas. layoutWidth is in output pixels, independent of size/scale/DPI; overflow is not clipped.</summary>
+    public void Draw(Canvas2D canvas, ulong frameNumber, string text, Vector2 position, TextAlignment alignment, float size = 32,
+        ColorRgba? color = null, float scale = 1, float dpiScale = 1, float layoutWidth = 0)
     {
         EnsureAlive(); ArgumentNullException.ThrowIfNull(canvas);
         var pixels = Validate(text, size, scale, dpiScale);
+        TextAlignmentLayout.Validate(alignment, layoutWidth);
         if (!float.IsFinite(position.X) || !float.IsFinite(position.Y)) throw new ArgumentOutOfRangeException(nameof(position));
         var tint = color ?? ColorRgba.White;
         if (!float.IsFinite(tint.R) || !float.IsFinite(tint.G) || !float.IsFinite(tint.B) || !float.IsFinite(tint.A)) throw new ArgumentOutOfRangeException(nameof(color));
@@ -85,10 +99,11 @@ public sealed class DynamicFont : IDisposable
         var factor = pixels / fonts.Size;
         var pen = position;
         var draws = new List<(Texture Texture, RectangleF Source, RectangleF Destination)>();
+        var lineStart = 0; var lineWidth = 0f;
         foreach (var rune in text.EnumerateRunes())
         {
             if (rune.Value == '\r') continue;
-            if (rune.Value == '\n') { pen.X = position.X; pen.Y += fonts.LineHeight * factor; continue; }
+            if (rune.Value == '\n') { AlignLine(); pen.X = position.X; pen.Y += fonts.LineHeight * factor; continue; }
             var (face, font, scalar) = Select(fonts, rune.Value == '\t' ? new Rune(' ') : rune);
             var key = (face, font.GetGlyph(scalar.Value), fonts.Size);
             if (!_glyphs.TryGetValue(key, out var glyph))
@@ -106,8 +121,10 @@ public sealed class DynamicFont : IDisposable
                 draws.Add((page.Texture, glyph.Source, destination));
             }
             pen.X += glyph.Advance * factor * (rune.Value == '\t' ? 4 : 1);
+            lineWidth += glyph.Advance * factor * (rune.Value == '\t' ? 4 : 1);
             if (!float.IsFinite(pen.X) || !float.IsFinite(pen.Y)) throw new ArgumentOutOfRangeException(nameof(position));
         }
+        AlignLine();
         var blend = canvas.Blend; var filter = canvas.Filter; var material = canvas.Material; var parameters = canvas.Parameters;
         try
         {
@@ -115,6 +132,19 @@ public sealed class DynamicFont : IDisposable
             foreach (var draw in draws) canvas.DrawSprite(draw.Texture, draw.Destination, draw.Source, tint);
         }
         finally { canvas.Blend = blend; canvas.Filter = filter; canvas.Material = material; canvas.Parameters = parameters; }
+
+        void AlignLine()
+        {
+            var offset = TextAlignmentLayout.Offset(alignment, layoutWidth, lineWidth);
+            for (var i = lineStart; i < draws.Count; i++)
+            {
+                var draw = draws[i]; var d = draw.Destination;
+                var destination = new RectangleF(d.X + offset, d.Y, d.Width, d.Height);
+                if (!destination.IsVisible) throw new ArgumentOutOfRangeException(nameof(position));
+                draws[i] = (draw.Texture, draw.Source, destination);
+            }
+            lineStart = draws.Count; lineWidth = 0;
+        }
     }
 
     private float Validate(string text, float size, float scale, float dpiScale)

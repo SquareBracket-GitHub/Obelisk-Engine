@@ -10,6 +10,109 @@ namespace Obelisk.Plugins.Tests;
 
 public sealed class PluginFeatureTests
 {
+    [Theory]
+    [InlineData(TextAlignment.Left, 0)]
+    [InlineData(TextAlignment.Center, 0)]
+    [InlineData(TextAlignment.Right, 0)]
+    [InlineData(TextAlignment.Left, 200)]
+    [InlineData(TextAlignment.Center, 200)]
+    [InlineData(TextAlignment.Right, 200)]
+    [InlineData(TextAlignment.Center, 10)]
+    [InlineData(TextAlignment.Right, 10)]
+    public void DynamicAlignmentUsesEachLineAdvanceAtActualScaleAndDpi(TextAlignment alignment, float width)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var device = new Device(); using var face = FontFace.LoadFile(FontPath);
+        using var font = new DynamicFont(device, face);
+        const string text = "한A\t \r\n\n나\n";
+        const float size = 18.5f, scale = 1.25f, dpi = 1.5f;
+        var position = new Vector2(180, 30);
+        var original = Frame(0); var aligned = Frame(0);
+        font.Draw(original, text, position, size, scale: scale, dpiScale: dpi);
+        var uploads = device.Updates;
+        aligned.Canvas.Blend = BlendMode.Opaque;
+        aligned.Canvas.Parameters = Vector4.One;
+        font.Draw(aligned.Canvas, 0, text, position, alignment, size, scale: scale, dpiScale: dpi, layoutWidth: width);
+        Assert.Equal(uploads, device.Updates);
+        Assert.Equal(BlendMode.Opaque, aligned.Canvas.Blend);
+        Assert.Equal(Vector4.One, aligned.Canvas.Parameters);
+        Assert.Equal(original.Canvas.Commands.Count, aligned.Canvas.Commands.Count);
+        var index = 0;
+        foreach (var line in text.Replace("\r", "").Split('\n'))
+        {
+            var single = Frame(0); font.Draw(single, line, Vector2.Zero, size, scale: scale, dpiScale: dpi);
+            var lineWidth = font.Measure(line, size, scale, dpi).X;
+            var offset = alignment == TextAlignment.Center ? (width - lineWidth) / 2 : alignment == TextAlignment.Right ? width - lineWidth : 0;
+            foreach (var _ in single.Canvas.Commands)
+            {
+                var before = Assert.IsType<SpriteCommand>(original.Canvas.Commands[index]);
+                var after = Assert.IsType<SpriteCommand>(aligned.Canvas.Commands[index++]);
+                Assert.Equal(before.Destination.X + offset, after.Destination.X, 3);
+                Assert.Equal(before.Destination.Y, after.Destination.Y);
+                Assert.Equal(before.Source, after.Source);
+            }
+        }
+        Assert.Equal(aligned.Canvas.Commands.Count, index);
+        var contextOverload = Frame(0);
+        font.Draw(contextOverload, text, position, alignment, size, scale: scale, dpiScale: dpi, layoutWidth: width);
+        Assert.Equal(aligned.Canvas.Commands, contextOverload.Canvas.Commands);
+    }
+
+    [Theory]
+    [InlineData(TextAlignment.Left, 0)]
+    [InlineData(TextAlignment.Center, 0)]
+    [InlineData(TextAlignment.Right, 0)]
+    [InlineData(TextAlignment.Left, 200)]
+    [InlineData(TextAlignment.Center, 200)]
+    [InlineData(TextAlignment.Right, 200)]
+    [InlineData(TextAlignment.Center, 10)]
+    [InlineData(TextAlignment.Right, 10)]
+    public void MsdfAlignmentRespectsKerningBlankLinesAndOutputWidth(TextAlignment alignment, float width)
+    {
+        var device = new Device();
+        using var font = new MsdfFont(device, new MsdfAtlas(new RgbaImage(8, 8, new byte[256]), Metadata()));
+        var original = Frame(0); var aligned = Frame(0); var position = new Vector2(180, 30);
+        const string text = "AA\r\n\nA\n";
+        font.Draw(original, text, position, 20, scale: 1.25f, dpiScale: 1.6f);
+        aligned.Canvas.Blend = BlendMode.Opaque;
+        font.Draw(aligned, text, position, alignment, 20, scale: 1.25f, dpiScale: 1.6f, layoutWidth: width);
+        Assert.Equal(BlendMode.Opaque, aligned.Canvas.Blend);
+        Assert.Equal(new Vector2(60, 160), font.Measure(text, 20, 1.25f, 1.6f));
+        Assert.Equal(3, aligned.Canvas.Commands.Count);
+        for (var i = 0; i < 3; i++)
+        {
+            var lineWidth = i < 2 ? 60 : 40;
+            var offset = alignment == TextAlignment.Center ? (width - lineWidth) / 2 : alignment == TextAlignment.Right ? width - lineWidth : 0;
+            var before = Assert.IsType<SpriteCommand>(original.Canvas.Commands[i]);
+            var after = Assert.IsType<SpriteCommand>(aligned.Canvas.Commands[i]);
+            Assert.Equal(before.Destination.X + offset, after.Destination.X, 3);
+            Assert.Equal(before.Destination.Y, after.Destination.Y);
+            Assert.Equal(before.Source, after.Source);
+        }
+        var empty = Frame(0); font.Draw(empty, "\r\n\n", position, alignment, layoutWidth: width);
+        Assert.Empty(empty.Canvas.Commands);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    public void TextAlignmentRejectsInvalidWidthBeforeRecording(float width)
+    {
+        var device = new Device();
+        using var msdf = new MsdfFont(device, new MsdfAtlas(new RgbaImage(8, 8, new byte[256]), Metadata()));
+        var context = Frame(0);
+        Assert.Throws<ArgumentOutOfRangeException>(() => msdf.Draw(context, "A", Vector2.Zero, TextAlignment.Center, layoutWidth: width));
+        Assert.Throws<ArgumentOutOfRangeException>(() => msdf.Draw(context, "A", Vector2.Zero, (TextAlignment)99));
+        Assert.Empty(context.Canvas.Commands);
+        if (!OperatingSystem.IsWindows()) return;
+        using var face = FontFace.LoadFile(FontPath); using var dynamicFont = new DynamicFont(device, face);
+        var created = device.Created;
+        Assert.Throws<ArgumentOutOfRangeException>(() => dynamicFont.Draw(context, "A", Vector2.Zero, TextAlignment.Right, layoutWidth: width));
+        Assert.Throws<ArgumentOutOfRangeException>(() => dynamicFont.Draw(context, "A", Vector2.Zero, (TextAlignment)99));
+        Assert.Equal(created, device.Created); Assert.Empty(context.Canvas.Commands);
+    }
+
     private static string FontPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "malgun.ttf");
     private static RenderContext Frame(ulong number) => new(new GameTime(TimeSpan.Zero, TimeSpan.Zero, number));
     [Fact]
