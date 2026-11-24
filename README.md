@@ -45,6 +45,14 @@ experimental. Publication verification is tracked in the candidate release notes
 
 ## Text plugin v0.2.0: horizontal alignment
 
+Vanilla 0.3.1 updates its bundled Text SDK dependency to 0.2.0, retaining Images
+0.1.2, Effects 0.1.1 and engine libraries 0.3.0. Existing published Vanilla 0.3.0
+still references Text 0.1.1. Upgrade the game with
+`dotnet add package Obelisk.Vanilla --version 0.3.1`; keep `engineVersion: 0.3.0`
+in `obelisk.json`. CLI 0.3.0 still generates a Vanilla `[0.3.0]` reference, so
+apply this update after generating a project. No CLI or core engine package is
+republished by this patch.
+
 `Obelisk.Plugins.Text` is independently versioned at 0.2.0 and was pushed to
 NuGet on 2026-11-24 from source `2907c60`. The engine/CLI version is unchanged.
 Existing `Draw` signatures and the plugin assembly identity are retained; existing calls remain
@@ -86,9 +94,15 @@ renewed the API key. Candidate SHA-256:
 `58361398135dd001adea5e4fc7dd6aa82333dc826abb0ec50b3dd8fee1c30a90`.
 Before pushing, a separate project with an empty package cache restored this
 candidate and public dependencies and ran all alignment modes and the legacy
-`Draw` API. At the last check, the public package page/registration/download
-still returned 404, so public-feed-only installation verification is pending.
-Do not push this version again while NuGet is processing it.
+`Draw` API. After NuGet indexing completed, public-feed-only restoration in a new
+project/cache and execution also passed. Every original package entry matches
+the verified candidate (NuGet adds its repository signature). Do not republish
+the immutable Text 0.2.0 package.
+
+Vanilla 0.3.1 verification: the 48 plugin/API tests and 9 native Vanilla/alignment
+integration tests passed in Release. An isolated project referencing only the
+Vanilla 0.3.1 candidate restored Text 0.2.0 from NuGet and executed all alignment
+modes and the legacy Draw API without a direct Text reference.
 
 ## v0.2.0 engine development
 
